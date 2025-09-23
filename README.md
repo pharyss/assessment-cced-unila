@@ -1,0 +1,3 @@
+# Website Layanan Asesmen UPA CCED Universitas Lampung
+
+Website ini dikembangkan untuk mendukung layanan asesmen karakteristik, minat, dan bakat mahasiswa Universitas Lampung. Melalui platform ini, mahasiswa dapat mengikuti asesmen secara online dan memperoleh hasil berupa karakteristik pribadi, tipe emosi, gaya komunikasi, serta gaya berpikir. Hasil asesmen dirancang untuk membantu mahasiswa mengenali potensi diri, menentukan arah pengembangan, serta mendukung perencanaan karier dan masa depan yang lebih terarah.
