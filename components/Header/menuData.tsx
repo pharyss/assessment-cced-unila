@@ -10,7 +10,7 @@ const menuData: Menu[] = [
   {
     id: 2,
     title: "Tes Asesmen",
-    path: "/assessment",
+    path: "/assessment/talenta-mahasiswa",
     newTab: false,
   },
   {

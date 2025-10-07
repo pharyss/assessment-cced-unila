@@ -72,6 +72,7 @@ const Header = () => {
                 />
               </Link>
             </div>
+            
             <div className="flex w-full items-center justify-between px-4">
               <div>
                 <button
@@ -156,8 +157,21 @@ const Header = () => {
                       </li>
                     ))}
                   </ul>
+
+                  {/* Tombol Masuk di Mobile */}
+                  {navbarOpen && (
+                    <div className="mt-4 border-t border-gray-200 dark:border-gray-700 pt-4 lg:hidden">
+                      <Link
+                        href="/signin"
+                        className="block w-full rounded-full bg-primary px-6 py-2 text-center text-sm font-medium text-white hover:bg-primary/90"
+                      >
+                        Masuk
+                      </Link>
+                    </div>
+                  )}
                 </nav>
               </div>
+               {/* Tombol Masuk + ThemeToggler (Desktop) */}
               <div className="flex items-center justify-end pr-16 lg:pr-0">
                 <Link
                   href="/signin"
@@ -165,10 +179,10 @@ const Header = () => {
                 >
                   Masuk
                 </Link>
-                <div>
+                <div className="ml-4">
                   <ThemeToggler />
                 </div>
-              </div>
+            </div>
             </div>
           </div>
         </div>

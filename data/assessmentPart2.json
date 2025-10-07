@@ -1,0 +1,230 @@
+{
+        "part2": {
+        "title": "Pola Perilaku",
+        "instruction": "Cermati setiap pertanyaan dan renungkan seberapa cocok pernyataan tersebut dengan dirimu saat ini. Pilih angka 1 jika tidak sesuai, dan angka 5 jika sangat sesuai.",
+        "scale": {
+        "min": 1,
+        "max": 5,
+        "labels": {
+            "1": "Ngga juga",
+            "2": "Kurang sesuai",
+            "3": "Cukup sesuai",
+            "4": "Sesuai",
+            "5": "Iya lagi"
+        }
+        },
+        "dimensions": {
+        "self_acceptance": {
+            "title": "Self Acceptance",
+            "questions": [
+            {
+                "id": 1,
+                "text": "Secara umum, saya merasa puas dengan kualitas diri saya saat ini",
+                "type": "favorable"
+            },
+            {
+                "id": 2,
+                "text": "Saya sering menginginkan kehidupan seperti orang yang terlihat lebih beruntung",
+                "type": "unfavorable"
+            },
+            {
+                "id": 3,
+                "text": "Saya bisa menerima kekurangan saya tanpa harus membenci diri sendiri",
+                "type": "favorable"
+            },
+            {
+                "id": 4,
+                "text": "Ada hal-hal dalam diri saya yang membuat saya terus merasa insecure (rendah diri)",
+                "type": "unfavorable"
+            },
+            {
+                "id": 5,
+                "text": "Saya sudah mampu berdamai dengan hampir semua pengalaman buruk di masa lalu",
+                "type": "favorable"
+            },
+            {
+                "id": 6,
+                "text": "Masih banyak kejadian di masa lalu yang ingin saya ubah karena membuat saya kecewa saat mengingatnya",
+                "type": "unfavorable"
+            }
+            ]
+        },
+        "autonomy": {
+            "title": "Autonomy",
+            "questions": [
+            {
+                "id": 7,
+                "text": "Saya punya cara sendiri dalam menentukan apa yang penting bagi hidup saya",
+                "type": "favorable"
+            },
+            {
+                "id": 8,
+                "text": "Saya gampang overthinking (berpikir berlebihan) setelah mendapat penilaian negatif dari orang lain",
+                "type": "unfavorable"
+            },
+            {
+                "id": 9,
+                "text": "Saya berani memilih keputusan meski berbeda dari kebanyakan orang",
+                "type": "favorable"
+            },
+            {
+                "id": 10,
+                "text": "Seringkali saya mengikuti apa kata orang meskipun tidak sesuai dengan keinginan saya",
+                "type": "unfavorable"
+            },
+            {
+                "id": 11,
+                "text": "Saya akan tetap berkata jujur meskipun tidak sesuai dengan harapan orang lain",
+                "type": "favorable"
+            },
+            {
+                "id": 12,
+                "text": "Seringkali saya menyesuaikan perilaku agar bisa diterima di lingkungan sosial",
+                "type": "unfavorable"
+            }
+            ]
+        },
+        "purpose_in_life": {
+            "title": "Purpose in Life",
+            "questions": [
+            {
+                "id": 13,
+                "text": "Saya sudah memiliki rencana dengan langkah yang jelas untuk mencapai cita-cita di masa depan",
+                "type": "favorable"
+            },
+            {
+                "id": 14,
+                "text": "Saat ini saya tidak tahu dengan pasti apa yang ingin saya capai di masa depan",
+                "type": "unfavorable"
+            },
+            {
+                "id": 15,
+                "text": "Saya bersyukur atas berbagai pengalaman berharga yang sudah saya dapatkan dalam hidup",
+                "type": "favorable"
+            },
+            {
+                "id": 16,
+                "text": "Rasanya tidak banyak momen berharga dari perjalanan hidup yang telah saya lalui",
+                "type": "unfavorable"
+            },
+            {
+                "id": 17,
+                "text": "Optimis dan yakin, bahwa di masa depan saya akan menjadi pribadi yang berguna bagi banyak orang",
+                "type": "favorable"
+            },
+            {
+                "id": 18,
+                "text": "Jika melihat kondisi diri saat ini, rasanya di masa depan saya akan kesulitan untuk bisa sukses",
+                "type": "unfavorable"
+            }
+            ]
+        },
+        "personal_growth": {
+            "title": "Personal Growth",
+            "questions": [
+            {
+                "id": 19,
+                "text": "Saya merasakan banyak perubahan positif pada diri saya dalam 1 tahun terakhir",
+                "type": "favorable"
+            },
+            {
+                "id": 20,
+                "text": "Beberapa kebiasaan buruk masih menghambat saya untuk berkembang",
+                "type": "unfavorable"
+            },
+            {
+                "id": 21,
+                "text": "Saya rutin melakukan evaluasi & refleksi diri, untuk semakin memahami bakat serta potensi yang dimiliki",
+                "type": "favorable"
+            },
+            {
+                "id": 22,
+                "text": "Saya belum menyadari apa saja potensi diri yang perlu saya kembangkan",
+                "type": "unfavorable"
+            },
+            {
+                "id": 23,
+                "text": "Saya senang mencari tantangan dengan mencoba berbagai pengalaman baru",
+                "type": "favorable"
+            },
+            {
+                "id": 24,
+                "text": "Seringkali saya menghindar untuk mencoba hal-hal baru, karena takut gagal.",
+                "type": "unfavorable"
+            }
+            ]
+        },
+        "environmental_mastery": {
+            "title": "Environmental Mastery",
+            "questions": [
+            {
+                "id": 25,
+                "text": "Saya mampu menata lingkungan agar memberikan suasana yang kondusif untuk saya belajar",
+                "type": "favorable"
+            },
+            {
+                "id": 26,
+                "text": "Seringkali saya merasa kewalahan untuk menghadapi tuntutan lingkungan kepada saya",
+                "type": "unfavorable"
+            },
+            {
+                "id": 27,
+                "text": "Saya mampu menyelesaikan semua tanggung jawab sehari-hari tanpa merasa kewalahan",
+                "type": "favorable"
+            },
+            {
+                "id": 28,
+                "text": "Seringkali saya merasa memiliki terlalu banyak kegiatan, sehingga sulit mengaturnya",
+                "type": "unfavorable"
+            },
+            {
+                "id": 29,
+                "text": "Saya termasuk orang yang jeli menemukan peluang dan kesempatan yang ada di sekitar",
+                "type": "favorable"
+            },
+            {
+                "id": 30,
+                "text": "Seringkali saya terlambat menyadari jika ternyata di sekitar saya terdapat banyak kesempatan & peluang baik",
+                "type": "unfavorable"
+            }
+            ]
+        },
+        "positive_relationships": {
+            "title": "Positive Relationship with Others",
+            "questions": [
+            {
+                "id": 31,
+                "text": "Saya memiliki beberapa teman yang benar-benar dipercaya untuk menyimpan rahasia",
+                "type": "favorable"
+            },
+            {
+                "id": 32,
+                "text": "Rasanya orang-orang di sekitar saya tidak benar-benar bisa memahami saya",
+                "type": "unfavorable"
+            },
+            {
+                "id": 33,
+                "text": "Saya merasa mampu dan nyaman untuk menunjukkan perhatian secara langsung kepada orang lain",
+                "type": "favorable"
+            },
+            {
+                "id": 34,
+                "text": "Seringkali saya menjadi orang yang diabaikan di lingkaran pertemanan",
+                "type": "unfavorable"
+            },
+            {
+                "id": 35,
+                "text": "Mudah bagi saya untuk meredam ego dan mengalah agar perdebatan tidak berlarut-larut",
+                "type": "favorable"
+            },
+            {
+                "id": 36,
+                "text": "Seringkali kesabaran saya berkurang saat menghadapi orang yang pemikirannya tidak sejalan dengan saya",
+                "type": "unfavorable"
+            }
+            ]
+        }
+        }
+    }
+}
+

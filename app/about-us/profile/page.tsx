@@ -21,8 +21,9 @@ const AboutPage = () => {
           <div className="-mx-4 flex flex-wrap justify-center">
             <div className="w-full px-4 lg:w-8/12">
               <div>
-                <h2 className="mb-8 text-3xl font-bold leading-tight text-center text-black dark:text-white sm:text-4xl sm:leading-tight">
-                  Center for Career and Entrepreneurship Development University of Lampung
+                <h2 className="mb-8 text-center text-3xl font-bold leading-tight text-black dark:text-white sm:text-4xl sm:leading-tight">
+                  Center for Career and Entrepreneurship Development University
+                  of Lampung
                 </h2>
                 <div>
                   <div className="mb-10 w-full overflow-hidden rounded">
@@ -36,12 +37,13 @@ const AboutPage = () => {
                     </div>
                   </div>
                   <p className="mb-8 text-base font-medium leading-relaxed text-body-color sm:text-lg sm:leading-relaxed lg:text-base lg:leading-relaxed xl:text-lg xl:leading-relaxed">
-                    UPA Pengembangan Karier dan Kewirausahaan Universitas Lampung
-                    merupakan unit kerja yang berfokus pada peningkatan kualitas
-                    lulusan agar siap bersaing di dunia kerja. UPA ini tidak hanya
-                    memfasilitasi penyerapan lulusan oleh dunia usaha, industri, dan
-                    kerja, tetapi juga berperan aktif dalam menumbuhkan minat serta
-                    budaya kewirausahaan di kalangan mahasiswa dan alumni.
+                    UPA Pengembangan Karier dan Kewirausahaan Universitas
+                    Lampung merupakan unit kerja yang berfokus pada peningkatan
+                    kualitas lulusan agar siap bersaing di dunia kerja. UPA ini
+                    tidak hanya memfasilitasi penyerapan lulusan oleh dunia
+                    usaha, industri, dan kerja, tetapi juga berperan aktif dalam
+                    menumbuhkan minat serta budaya kewirausahaan di kalangan
+                    mahasiswa dan alumni.
                   </p>
 
                   <h3 className="font-xl mb-6 font-bold leading-tight text-black dark:text-white sm:text-2xl sm:leading-tight lg:text-xl lg:leading-tight xl:text-2xl xl:leading-tight">
@@ -49,19 +51,20 @@ const AboutPage = () => {
                   </h3>
                   <ul className="mb-10 list-disc pl-6 text-base font-medium leading-relaxed text-body-color sm:text-lg sm:leading-relaxed lg:text-base lg:leading-relaxed xl:text-lg xl:leading-relaxed">
                     <li>
-                      Inventarisasi dan identifikasi kebutuhan dunia usaha, industri, dan dunia
-                      kerja.
+                      Inventarisasi dan identifikasi kebutuhan dunia usaha,
+                      industri, dan dunia kerja.
                     </li>
                     <li>
-                      Peningkatan kemampuan mahasiswa dalam pengembangan karier dan
+                      Peningkatan kemampuan mahasiswa dalam pengembangan karier
+                      dan kewirausahaan.
+                    </li>
+                    <li>
+                      Fasilitasi serta kerja sama dalam pengembangan karier dan
                       kewirausahaan.
                     </li>
                     <li>
-                      Fasilitasi serta kerja sama dalam pengembangan karier dan kewirausahaan.
-                    </li>
-                    <li>
-                      Penyediaan layanan informasi terkait pengembangan karier dan
-                      kewirausahaan.
+                      Penyediaan layanan informasi terkait pengembangan karier
+                      dan kewirausahaan.
                     </li>
                   </ul>
 
@@ -73,34 +76,37 @@ const AboutPage = () => {
                     1. Pendataan
                   </h4>
                   <p className="mb-6 text-base font-medium leading-relaxed text-body-color sm:text-lg sm:leading-relaxed lg:text-base lg:leading-relaxed xl:text-lg xl:leading-relaxed">
-                    Melaksanakan perencanaan, pelaksanaan, pengendalian, dan pelaporan
-                    penelusuran serta pendataan lulusan sebagai dasar pengembangan karier.
+                    Melaksanakan perencanaan, pelaksanaan, pengendalian, dan
+                    pelaporan penelusuran serta pendataan lulusan sebagai dasar
+                    pengembangan karier.
                   </p>
 
                   <h4 className="mb-2 text-lg font-semibold text-black dark:text-white sm:text-xl lg:text-lg xl:text-xl">
                     2. Menyiapkan Alumni
                   </h4>
                   <p className="mb-6 text-base font-medium leading-relaxed text-body-color sm:text-lg sm:leading-relaxed lg:text-base lg:leading-relaxed xl:text-lg xl:leading-relaxed">
-                    Membekali lulusan dengan keterampilan dan wawasan agar mampu berkompetisi
-                    di dunia kerja, baik sebagai pelaku usaha maupun profesional di berbagai
-                    bidang.
+                    Membekali lulusan dengan keterampilan dan wawasan agar mampu
+                    berkompetisi di dunia kerja, baik sebagai pelaku usaha
+                    maupun profesional di berbagai bidang.
                   </p>
 
                   <h4 className="mb-2 text-lg font-semibold text-black dark:text-white sm:text-xl lg:text-lg xl:text-xl">
                     3. Menyukseskan Program
                   </h4>
                   <p className="text-base font-medium leading-relaxed text-body-color sm:text-lg sm:leading-relaxed lg:text-base lg:leading-relaxed xl:text-lg xl:leading-relaxed">
-                    Mendukung program pemerintah dalam memetakan serta menyelaraskan kebutuhan
-                    dunia kerja dengan pendidikan tinggi di Indonesia, sekaligus menumbuhkan
-                    budaya kewirausahaan di kalangan mahasiswa dan alumni Universitas Lampung.
+                    Mendukung program pemerintah dalam memetakan serta
+                    menyelaraskan kebutuhan dunia kerja dengan pendidikan tinggi
+                    di Indonesia, sekaligus menumbuhkan budaya kewirausahaan di
+                    kalangan mahasiswa dan alumni Universitas Lampung.
                   </p>
 
                   <div className="relative z-10 my-10 overflow-hidden rounded-md bg-gradient-to-r from-primary/10 to-primary/5 p-4 md:p-9 lg:p-8 xl:p-9">
                     <p className="text-center text-base font-medium italic text-body-color">
-                      Karier yang gemilang dan kewirausahaan yang sukses bukanlah hasil instan, 
-                      melainkan perjalanan panjang yang dimulai dari langkah-langkah kecil yang konsisten. 
-                      Bersama UPA CCED Universitas Lampung, mahasiswa dan alumni dibekali keterampilan, 
-                      wawasan, serta jejaring untuk meraih masa depan yang lebih baik.
+                      “Sebagai bagian dari komitmen Universitas Lampung dalam
+                      mendukung pengembangan talenta mahasiswa, asesmen ini
+                      diharapkan mampu memberikan landasan yang kuat bagi
+                      penyusunan strategi pembinaan, pengembangan akademik,
+                      maupun persiapan karir yang berkelanjutan.”
                     </p>
 
                     <span className="absolute left-0 top-0 z-[-1]">

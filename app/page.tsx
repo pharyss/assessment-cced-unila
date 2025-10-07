@@ -1,8 +1,8 @@
 import AboutSectionOne from "@/components/About/AboutSectionOne";
 import ScrollUp from "@/components/Common/ScrollUp";
-import Contact from "@/components/Contact";
-import Features from "@/components/Features";
+import Introduction from "@/components/Introduction";
 import Hero from "@/components/Hero";
+import FAQ from "@/components/Faq";
 import { Metadata } from "next";
 
 export const metadata: Metadata = {
@@ -17,8 +17,8 @@ export default function Home() {
       <ScrollUp />
       <Hero />
       <AboutSectionOne />
-      <Features />
-      <Contact />
+      <Introduction />
+      <FAQ />
     </>
   );
 }

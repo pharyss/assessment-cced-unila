@@ -40,19 +40,23 @@ const AccordionItem = ({ question, answer }: AccordionItemProps) => {
 
 export default function FAQ() {
   return (
-    <div
-      className="wow fadeInUp shadow-three dark:bg-gray-dark mb-12 rounded-sm bg-white px-8 py-11 sm:p-[55px] lg:mb-5 lg:px-8 xl:p-[55px]"
-      data-wow-delay=".15s"
-    >
-      <h2 className="mb-3 text-2xl font-bold text-black dark:text-white sm:text-3xl lg:text-2xl xl:text-3xl">
-        FAQ
-      </h2>
-      <p className="mb-6 text-base font-medium text-body-color">
-        Pertanyaan yang sering diajukan.
-      </p>
-      {faqData.map((item: Faq) => (
-        <AccordionItem key={item.id} {...item} />
-      ))}
-    </div>
+    <section id="faq"  className="pb-10 md:pb-16 lg:pb-20">
+      <div className="container">
+        <div
+          className="wow fadeInUp shadow-three dark:bg-gray-dark mb-12 rounded-md bg-white px-8 py-11 sm:p-[55px] lg:mb-5 lg:px-8 xl:p-[55px]"
+          data-wow-delay=".15s"
+        >
+          <h2 className="mb-3 text-2xl font-bold text-black dark:text-white sm:text-3xl lg:text-2xl xl:text-3xl">
+            FAQ
+          </h2>
+          <p className="mb-6 text-base font-medium text-body-color">
+            Pertanyaan yang sering diajukan.
+          </p>
+          {faqData.map((item: Faq) => (
+            <AccordionItem key={item.id} {...item} />
+          ))}
+        </div>
+      </div>
+    </section>
   );
 }

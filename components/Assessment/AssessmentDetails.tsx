@@ -39,7 +39,7 @@ const AssessmentDetails = ({ assessment }: { assessment: Assessment }) => {
 
                     <div className="sm-items-start flex flex-col items-center justify-center space-y-4 sm:flex-row sm:justify-start sm:space-x-4 sm:space-y-0">
                     <Link
-                        href="/"
+                        href={`/assessment/${assessment.id}/start`}
                         className="flex items-center gap-2 rounded-full bg-primary px-8 py-4 text-base font-semibold text-white duration-300 ease-in-out hover:bg-primary/80"
                     >
                         Mulai Asesmen
@@ -58,13 +58,7 @@ const AssessmentDetails = ({ assessment }: { assessment: Assessment }) => {
                         src="/images/asesmen/detail-asesmen.png"
                         alt="detail-asesmen"
                         fill
-                        className="mx-auto max-w-full drop-shadow-three dark:hidden dark:drop-shadow-none lg:mr-0"
-                    />
-                    <Image
-                        src="/images/asesmen/detail-asesmen.png"
-                        alt="detail-asesmen"
-                        fill
-                        className="mx-auto hidden max-w-full drop-shadow-three dark:block dark:drop-shadow-none lg:mr-0"
+                        className="mx-auto max-w-full drop-shadow-three dark:drop-shadow-none lg:mr-0"
                     />
                     </div>
                 </div>

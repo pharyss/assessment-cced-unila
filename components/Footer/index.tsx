@@ -1,6 +1,7 @@
 "use client";
 import Image from "next/image";
 import Link from "next/link";
+import { MapPin, Phone, Mail } from "lucide-react";
 
 const Footer = () => {
   return (
@@ -92,29 +93,27 @@ const Footer = () => {
 
             <div className="w-full px-4 sm:w-1/2 md:w-1/2 lg:w-2/12 xl:w-3/12">
               <div className="mb-12 lg:mb-16">
-                <h2 className="mb-10 text-xl font-bold text-white">
-                  Alamat
-                </h2>
-                <ul>
-                  <li>
-                    <p
-                      className="text-body-color-dark mb-4 inline-block text-base duration-300"
-                    >
-                      Gedung Rektorat Lama Lantai 1, Jalan Profesor Doktor Sumantri Brojonegoro Nomor 1, Universitas Lampung.
+                <h2 className="mb-10 text-xl font-bold text-white">Alamat</h2>
+                <ul className="space-y-4">
+                  <li className="flex items-start gap-3">
+                    <MapPin className="mt-1 h-5 w-5 text-body-color-dark flex-shrink-0" />
+                    <p className="text-body-color-dark text-base leading-relaxed duration-300">
+                      Gedung Rektorat Lama Lantai 1, Jalan Profesor Doktor Sumantri
+                      Brojonegoro Nomor 1, Universitas Lampung.
                     </p>
                   </li>
-                  <li>
-                    <p
-                      className="text-body-color-dark mb-4 inline-block text-base duration-300"
-                    >
-                      Telp: +6285769510880
+
+                  <li className="flex items-center gap-3">
+                    <Phone className="h-5 w-5 text-body-color-dark" />
+                    <p className="text-body-color-dark text-base duration-300">
+                      +6285769510880
                     </p>
                   </li>
-                  <li>
-                    <p
-                      className="text-body-color-dark mb-4 inline-block text-base duration-300"
-                    >
-                      Email: pjk@kpa.unila.ac.id
+
+                  <li className="flex items-center gap-3">
+                    <Mail className="h-5 w-5 text-body-color-dark" />
+                    <p className="text-body-color-dark text-base duration-300">
+                      pjk@kpa.unila.ac.id
                     </p>
                   </li>
                 </ul>
