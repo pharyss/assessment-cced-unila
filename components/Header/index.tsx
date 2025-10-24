@@ -23,8 +23,9 @@ const Header = () => {
     }
   };
   useEffect(() => {
-    window.addEventListener("scroll", handleStickyNavbar);
-  });
+  window.addEventListener("scroll", handleStickyNavbar);
+  return () => window.removeEventListener("scroll", handleStickyNavbar);
+  }, []);
 
   // submenu handler
   const [openIndex, setOpenIndex] = useState(-1);
@@ -158,7 +159,6 @@ const Header = () => {
                     ))}
                   </ul>
 
-                  {/* Tombol Masuk di Mobile */}
                   {navbarOpen && (
                     <div className="mt-4 border-t border-gray-200 dark:border-gray-700 pt-4 lg:hidden">
                       <Link
@@ -171,8 +171,8 @@ const Header = () => {
                   )}
                 </nav>
               </div>
-               {/* Tombol Masuk + ThemeToggler (Desktop) */}
               <div className="flex items-center justify-end pr-16 lg:pr-0">
+
                 <Link
                   href="/signin"
                   className="ease-in-up shadow-btn hover:shadow-btn-hover hidden rounded-full bg-primary px-8 py-3 text-base font-medium text-white transition duration-300 hover:bg-opacity-90 md:block md:px-9 lg:px-6 xl:px-9"

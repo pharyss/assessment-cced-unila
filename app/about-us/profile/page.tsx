@@ -14,7 +14,7 @@ const AboutPage = () => {
     <>
       <Breadcrumb
         pageName="Profil CCED"
-        description="Tentang Unit Penunjang Akademik Center for Career & Entrepreneurship Development Universitas Lampung."
+        description="Tentang Center for Career & Entrepreneurship Development Universitas Lampung."
       />
       <section className="pb-[120px] pt-[50px]">
         <div className="container">
@@ -46,10 +46,11 @@ const AboutPage = () => {
                     mahasiswa dan alumni.
                   </p>
 
-                  <h3 className="font-xl mb-6 font-bold leading-tight text-black dark:text-white sm:text-2xl sm:leading-tight lg:text-xl lg:leading-tight xl:text-2xl xl:leading-tight">
+                  <h3 className="mb-6 font-bold leading-tight text-black dark:text-white text-xl sm:text-2xl lg:text-3xl">
                     Fungsi Utama
                   </h3>
-                  <ul className="mb-10 list-disc pl-6 text-base font-medium leading-relaxed text-body-color sm:text-lg sm:leading-relaxed lg:text-base lg:leading-relaxed xl:text-lg xl:leading-relaxed">
+
+                  <ul className="mb-10 list-disc pl-6 text-base font-medium leading-relaxed text-body-color sm:text-lg lg:text-xl">
                     <li>
                       Inventarisasi dan identifikasi kebutuhan dunia usaha,
                       industri, dan dunia kerja.
@@ -68,32 +69,32 @@ const AboutPage = () => {
                     </li>
                   </ul>
 
-                  <h3 className="font-xl mb-6 font-bold leading-tight text-black dark:text-white sm:text-2xl sm:leading-tight lg:text-xl lg:leading-tight xl:text-2xl xl:leading-tight">
+                  <h3 className="mb-6 font-bold leading-tight text-black dark:text-white text-xl sm:text-2xl lg:text-3xl">
                     Apa yang Kami Lakukan
                   </h3>
 
-                  <h4 className="mb-2 text-lg font-semibold text-black dark:text-white sm:text-xl lg:text-lg xl:text-xl">
+                  <h4 className="mb-2 font-semibold text-black dark:text-white text-lg sm:text-xl lg:text-2xl">
                     1. Pendataan
                   </h4>
-                  <p className="mb-6 text-base font-medium leading-relaxed text-body-color sm:text-lg sm:leading-relaxed lg:text-base lg:leading-relaxed xl:text-lg xl:leading-relaxed">
+                  <p className="mb-6 text-base font-medium leading-relaxed text-body-color sm:text-lg lg:text-xl">
                     Melaksanakan perencanaan, pelaksanaan, pengendalian, dan
                     pelaporan penelusuran serta pendataan lulusan sebagai dasar
                     pengembangan karier.
                   </p>
 
-                  <h4 className="mb-2 text-lg font-semibold text-black dark:text-white sm:text-xl lg:text-lg xl:text-xl">
+                  <h4 className="mb-2 font-semibold text-black dark:text-white text-lg sm:text-xl lg:text-2xl">
                     2. Menyiapkan Alumni
                   </h4>
-                  <p className="mb-6 text-base font-medium leading-relaxed text-body-color sm:text-lg sm:leading-relaxed lg:text-base lg:leading-relaxed xl:text-lg xl:leading-relaxed">
+                  <p className="mb-6 text-base font-medium leading-relaxed text-body-color sm:text-lg lg:text-xl">
                     Membekali lulusan dengan keterampilan dan wawasan agar mampu
                     berkompetisi di dunia kerja, baik sebagai pelaku usaha
                     maupun profesional di berbagai bidang.
                   </p>
 
-                  <h4 className="mb-2 text-lg font-semibold text-black dark:text-white sm:text-xl lg:text-lg xl:text-xl">
+                  <h4 className="mb-2 font-semibold text-black dark:text-white text-lg sm:text-xl lg:text-2xl">
                     3. Menyukseskan Program
                   </h4>
-                  <p className="text-base font-medium leading-relaxed text-body-color sm:text-lg sm:leading-relaxed lg:text-base lg:leading-relaxed xl:text-lg xl:leading-relaxed">
+                  <p className="text-base font-medium leading-relaxed text-body-color sm:text-lg lg:text-xl">
                     Mendukung program pemerintah dalam memetakan serta
                     menyelaraskan kebutuhan dunia kerja dengan pendidikan tinggi
                     di Indonesia, sekaligus menumbuhkan budaya kewirausahaan di

@@ -1,14 +1,14 @@
-import AboutSectionOne from "@/components/About/AboutSectionOne";
 import ScrollUp from "@/components/Common/ScrollUp";
-import Introduction from "@/components/Introduction";
-import Hero from "@/components/Hero";
+import Hero from "@/components/HomePage/Hero";
 import FAQ from "@/components/Faq";
 import { Metadata } from "next";
+import Overview from "@/components/HomePage/Overview";
+import Benefit from "@/components/HomePage/Benefit";
+import Vision from "@/components/HomePage/Vision";
 
 export const metadata: Metadata = {
   title: "Asesmen CCED Universitas Lampung",
   description: "Layanan Tes Asesmen CCED Universitas Lampung",
-  // other metadata
 };
 
 export default function Home() {
@@ -16,9 +16,10 @@ export default function Home() {
     <>
       <ScrollUp />
       <Hero />
-      <AboutSectionOne />
-      <Introduction />
-      <FAQ />
+      <Overview />
+      <Benefit />
+      <Vision />
+      <FAQ className="bg-gradient-to-b from-primary/10 via-primary/15 to-primary/20 dark:from-gray-800 dark:to-gray-700"/>
     </>
   );
 }

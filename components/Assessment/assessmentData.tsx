@@ -2,7 +2,7 @@ import { Assessment } from "@/types/assessment";
 
 const assessmentData: Assessment[] = [
   {
-    id: "talenta-mahasiswa",
+    id: "talenta",
     title: "Asesmen Talenta Mahasiswa",
     paragraph:
       "Tes ini membantu mahasiswa mengenali kecenderungan, potensi, dan bidang karir yang sesuai dengan dirinya.",

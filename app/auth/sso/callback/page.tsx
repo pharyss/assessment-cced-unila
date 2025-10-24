@@ -1,0 +1,45 @@
+"use client";
+
+import { useEffect } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+
+export default function SsoCallback() {
+  const router = useRouter();
+  const params = useSearchParams();
+
+  useEffect(() => {
+    const token = params.get("token");
+
+    if (!token) {
+      console.error("Token tidak ditemukan di URL callback");
+      router.push("/login");
+      return;
+    }
+
+    fetch("https://asesmen-unila.test/api/auth/sso-verify", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ token }),
+    })
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.status && data.user) {
+          localStorage.setItem("user", JSON.stringify(data.user));
+          router.push("/asesmen");
+        } else {
+          alert("Login gagal. Silakan coba lagi.");
+          router.push("/login");
+        }
+      })
+      .catch((err) => {
+        console.error("Error verifikasi token:", err);
+        router.push("/login");
+      });
+  }, [params, router]);
+
+  return (
+    <div className="flex flex-col items-center justify-center h-screen text-gray-700">
+      <p>Memverifikasi akun Anda...</p>
+    </div>
+  );
+}
