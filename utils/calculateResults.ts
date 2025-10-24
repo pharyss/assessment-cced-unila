@@ -1,6 +1,6 @@
 // @/utils/calculateResults.ts
-import questionsPart1 from "@/data/assessmentPart1.json";
-import questionsPart2 from "@/data/assessmentPart2.json";
+import questionsPart1 from "@/data/CareerPath.json";
+import questionsPart2 from "@/data/BehaviorPattern.json";
 
 interface Answers {
   [key: string]: string | number;
