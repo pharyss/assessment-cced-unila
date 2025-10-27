@@ -1,9 +1,13 @@
-import { Inter } from "next/font/google";
+import { Poppins } from "next/font/google";
 import type { Metadata } from "next";
 import { ClientProviders } from "./ClientProviders";
 import "../styles/index.css";
 
-const inter = Inter({ subsets: ["latin"] });
+const poppins = Poppins({
+  weight: ["400", "500", "600", "700"],
+  subsets: ["latin"],
+  variable: "--font-poppins",
+});
 
 export const metadata: Metadata = {
   title: {
@@ -46,10 +50,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="id" suppressHydrationWarning>
-      <body
-        className={`bg-[#FCFCFC] dark:bg-black text-gray-900 dark:text-gray-100 ${inter.className}`}
-      >
+    <html lang="id" className={poppins.variable} suppressHydrationWarning>
+      <body className="font-poppins bg-[#FCFCFC] dark:bg-black text-gray-900 dark:text-gray-100">
         <ClientProviders>{children}</ClientProviders>
       </body>
     </html>

@@ -1,5 +1,6 @@
 import ScrollUp from "@/components/Common/ScrollUp";
 import Hero from "@/components/HomePage/Hero";
+import HeroTwo from "@/components/HomePage/HeroTwo";
 import FAQ from "@/components/Faq";
 import { Metadata } from "next";
 import Overview from "@/components/HomePage/Overview";
@@ -15,7 +16,7 @@ export default function Home() {
   return (
     <>
       <ScrollUp />
-      <Hero />
+      <HeroTwo />
       <Overview />
       <Benefit />
       <Vision />

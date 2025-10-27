@@ -25,7 +25,7 @@ const Vision = () => {
           whileInView={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8, ease: "easeOut" }}
           viewport={{ once: true }}
-          className="relative bg-white/80 dark:bg-gray-900/60 backdrop-blur-md border border-primary/10 rounded-2xl shadow-lg px-6 py-10 md:px-10 lg:px-16 overflow-hidden"
+          className="relative bg-white/80 dark:bg-gray-900/60 backdrop-blur-md border border-myunila/10 rounded-2xl shadow-lg px-6 py-10 md:px-10 lg:px-16 overflow-hidden"
         >
           <p className="text-lg md:text-xl text-gray-700 dark:text-gray-200 italic font-medium max-w-4xl mx-auto">
             “Sebagai bagian dari komitmen Universitas Lampung dalam mendukung

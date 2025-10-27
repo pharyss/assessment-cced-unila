@@ -11,25 +11,13 @@ module.exports = {
       center: true,
       padding: "1rem",
     },
-
     screens: {
       xs: "450px",
-      // => @media (min-width: 450px) { ... }
-
       sm: "575px",
-      // => @media (min-width: 576px) { ... }
-
       md: "768px",
-      // => @media (min-width: 768px) { ... }
-
       lg: "992px",
-      // => @media (min-width: 992px) { ... }
-
       xl: "1200px",
-      // => @media (min-width: 1200px) { ... }
-
       "2xl": "1400px",
-      // => @media (min-width: 1400px) { ... }
     },
     extend: {
       colors: {
@@ -47,6 +35,33 @@ module.exports = {
         stroke: "#E3E8EF",
         "stroke-dark": "#353943",
         "bg-color-dark": "#161b27ff",
+
+        // Warna myunila
+        myunila: {
+          DEFAULT: "#085EA8",
+          50: "#E6F2FA",
+          100: "#CCE5F5",
+          200: "#99CBEA",
+          300: "#6681E1",
+          400: "#3397D7",
+          500: "#0B5EA8",
+          600: "#094886",
+          700: "#073864",
+          800: "#052542",
+          900: "#021220",
+        },
+      },
+
+      backgroundImage: {
+        "gradient-blue-modern":
+          "linear-gradient(135deg, #3b82f6 0%, #2563eb 50%, #1e40af 100%)",
+        "gradient-ocean": "linear-gradient(135deg, #00d2ff 0%, #3a7bd5 100%)",
+        "gradient-sky":
+          "linear-gradient(135deg, #0ea5e9 0%, #0284c7 50%, #0369a1 100%)",
+      },
+
+      fontFamily: {
+        poppins: ["Poppins", "sans-serif"],
       },
 
       boxShadow: {
@@ -63,6 +78,7 @@ module.exports = {
         "btn-hover": "0px 1px 2px rgba(0, 0, 0, 0.15)",
         "btn-light": "0px 1px 2px rgba(0, 0, 0, 0.1)",
       },
+
       dropShadow: {
         three: "0px 5px 15px rgba(6, 8, 15, 0.05)",
       },

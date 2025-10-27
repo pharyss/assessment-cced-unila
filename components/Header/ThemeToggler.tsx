@@ -18,7 +18,7 @@ export default function ThemeToggler() {
       onClick={() => setTheme(isDark ? "light" : "dark")}
       className={`
         relative flex items-center w-14 h-8 rounded-full transition-colors duration-500
-        ${isDark ? "bg-blue-600" : "bg-gray-300"}
+        ${isDark ? "bg-myunila-600" : "bg-gray-300"}
       `}
     >
       <span

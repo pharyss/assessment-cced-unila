@@ -80,7 +80,7 @@ const Header = () => {
                   onClick={navbarToggleHandler}
                   id="navbarToggler"
                   aria-label="Mobile Menu"
-                  className="absolute right-4 top-1/2 block translate-y-[-50%] rounded-md px-3 py-[6px] ring-primary focus:ring-2 lg:hidden"
+                  className="absolute right-4 top-1/2 block translate-y-[-50%] rounded-md px-3 py-[6px] ring-myunila focus:ring-2 lg:hidden"
                 >
                   <span
                     className={`relative my-1.5 block h-0.5 w-[30px] bg-black transition-all duration-300 dark:bg-white ${
@@ -114,8 +114,8 @@ const Header = () => {
                             href={menuItem.path}
                             className={`flex py-2 text-base lg:mr-0 lg:inline-flex lg:px-0 lg:py-6 ${
                               usePathName === menuItem.path
-                                ? "text-primary dark:text-white"
-                                : "text-dark hover:text-primary dark:text-white/70 dark:hover:text-white"
+                                ? "text-myunila dark:text-white"
+                                : "text-dark hover:text-myunila dark:text-white/70 dark:hover:text-white"
                             }`}
                           >
                             {menuItem.title}
@@ -124,7 +124,7 @@ const Header = () => {
                           <>
                             <p
                               onClick={() => handleSubmenu(index)}
-                              className="flex cursor-pointer items-center justify-between py-2 text-base text-dark group-hover:text-primary dark:text-white/70 dark:group-hover:text-white lg:mr-0 lg:inline-flex lg:px-0 lg:py-6"
+                              className="flex cursor-pointer items-center justify-between py-2 text-base text-dark group-hover:text-myunila dark:text-white/70 dark:group-hover:text-white lg:mr-0 lg:inline-flex lg:px-0 lg:py-6"
                             >
                               {menuItem.title}
                               <span className="pl-3">
@@ -147,7 +147,7 @@ const Header = () => {
                                 <Link
                                   href={submenuItem.path}
                                   key={index}
-                                  className="block rounded-md py-2.5 text-sm text-dark hover:text-primary dark:text-white/70 dark:hover:text-white lg:px-3"
+                                  className="block rounded-md py-2.5 text-sm text-dark hover:text-myunila dark:text-white/70 dark:hover:text-white lg:px-3"
                                 >
                                   {submenuItem.title}
                                 </Link>
@@ -163,7 +163,7 @@ const Header = () => {
                     <div className="mt-4 border-t border-gray-200 dark:border-gray-700 pt-4 lg:hidden">
                       <Link
                         href="/signin"
-                        className="block w-full rounded-full bg-primary px-6 py-2 text-center text-sm font-medium text-white hover:bg-primary/90"
+                        className="block w-full rounded-full bg-myunila px-6 py-2 text-center text-sm font-medium text-white hover:bg-primary/90"
                       >
                         Masuk
                       </Link>
@@ -175,7 +175,7 @@ const Header = () => {
 
                 <Link
                   href="/signin"
-                  className="ease-in-up shadow-btn hover:shadow-btn-hover hidden rounded-full bg-primary px-8 py-3 text-base font-medium text-white transition duration-300 hover:bg-opacity-90 md:block md:px-9 lg:px-6 xl:px-9"
+                  className="ease-in-up shadow-btn hover:shadow-btn-hover hidden rounded-full bg-myunila px-8 py-3 text-base font-medium text-white transition duration-300 hover:bg-opacity-90 md:block md:px-9 lg:px-6 xl:px-9"
                 >
                   Masuk
                 </Link>
