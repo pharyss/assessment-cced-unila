@@ -1,20 +1,33 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
-import TextLoop from "react-text-loop";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
+
+const TEXTS = ["Talenta Diri", "Bidang", "Potensi Diri", "Arah Karier"];
 
 const HeroTwo = () => {
+  const [index, setIndex] = useState(0);
+
+  useEffect(() => {
+    const interval = setInterval(
+      () => setIndex((prev) => (prev + 1) % TEXTS.length),
+      2500
+    );
+    return () => clearInterval(interval);
+  }, []);
+
   return (
     <section
       id="home"
       className="
-        relative z-10 flex items-center justify-center overflow-hidden bg-gradient-to-b
-        from-white via-myunila-50 to-myunila-100 pb-16 
-        pt-[120px] text-center dark:from-gray-900
-        dark:via-gray-800 dark:to-gray-900 md:pb-[120px] md:pt-[150px] 
-        xl:min-h-screen
+        relative z-10 flex items-center justify-center overflow-hidden
+        bg-gradient-to-b from-white via-myunila-50 to-myunila-100
+        pb-16 pt-[120px] text-center 
+        dark:from-gray-950 dark:via-gray-900 dark:to-gray-800 
+        md:pb-[120px] md:pt-[150px] xl:min-h-screen
+        transition-colors duration-500
       "
       style={{
         backgroundImage: "url('/images/hero/background.JPG')",
@@ -22,23 +35,17 @@ const HeroTwo = () => {
         backgroundPosition: "center",
       }}
     >
-      {/* Overlay gradasi lembut */}
-      <div className="absolute inset-0 bg-gradient-to-b from-white/70 via-myunila-50/60 to-myunila-100/50 dark:from-gray-900/80 dark:via-gray-800/70 dark:to-gray-900/80" />
+      <div className="absolute inset-0 bg-gradient-to-b from-white/70 via-myunila-50/60 to-myunila-100/50 dark:from-gray-950/80 dark:via-gray-900/75 dark:to-gray-800/80 transition-colors duration-500" />
 
-      {/* Elemen blur bubble */}
       <motion.div
         initial={{ opacity: 0, scale: 0.9 }}
         whileInView={{ opacity: 1, scale: 1 }}
         transition={{ duration: 1, delay: 0.2 }}
         viewport={{ once: true }}
         className="
-    absolute -right-6 -top-6 h-32 w-32
-    rounded-full bg-myunila blur-3xl sm:-right-8
-    sm:-top-8 sm:h-44 sm:w-44 md:-right-10
-    md:-top-10 md:h-56 md:w-56 lg:-right-12
-    lg:-top-12 lg:h-60 lg:w-60 xl:-right-16
-    xl:-top-16 xl:h-72 xl:w-72
-  "
+          absolute -right-8 -top-8 h-40 w-40 sm:h-52 sm:w-52 md:h-64 md:w-64 lg:h-72 lg:w-72 xl:h-80 xl:w-80
+          rounded-full bg-myunila/60 dark:bg-myunila-300/20 blur-3xl
+        "
       />
 
       <motion.div
@@ -47,36 +54,41 @@ const HeroTwo = () => {
         transition={{ duration: 1, delay: 0.3 }}
         viewport={{ once: true }}
         className="
-    absolute -bottom-8 -left-8 h-40 w-40
-    rounded-full bg-myunila blur-3xl sm:-bottom-10
-    sm:-left-10 sm:h-52 sm:w-52 md:-bottom-12
-    md:-left-12 md:h-64 md:w-64 lg:-bottom-14
-    lg:-left-14 lg:h-72 lg:w-72 xl:-bottom-16
-    xl:-left-16 xl:h-80 xl:w-80
-  "
-      /> 
+          absolute -bottom-10 -left-10 h-48 w-48 sm:h-60 sm:w-60 md:h-72 md:w-72 lg:h-80 lg:w-80 xl:h-96 xl:w-96
+          rounded-full bg-myunila/50 dark:bg-myunila-300/15 blur-3xl
+        "
+      />
 
-      {/* Konten utama */}
       <div className="relative z-10 mx-auto max-w-[800px] px-6">
         <motion.h1
-          className="mb-5 text-3xl font-bold leading-tight text-gray-900 dark:text-white md:text-5xl lg:text-6xl"
+          className="mb-6 text-3xl font-bold leading-tight text-gray-900 dark:text-gray-50 sm:text-4xl md:text-5xl lg:text-6xl"
           initial={{ opacity: 0, y: -30 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8 }}
         >
-          Kenali {" "}
-          <TextLoop interval={2000} springConfig={{ stiffness: 180, damping: 10 }}>
-            <span className="text-myunila">Talenta Dirimu</span>
-            <span className="text-myunila">Bidang yang Tepat</span>
-            <span className="text-myunila">Gaya Belajarmu</span>
-            <span className="text-myunila">Potensi Kariermu</span>
-          </TextLoop>
-          , Persiapkan
-          Sejak Dini!
+          <div className="flex flex-col items-center justify-center text-center">
+            <div>
+              Kenali{" "}
+              <AnimatePresence mode="wait">
+                <motion.span
+                  key={TEXTS[index]}
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -10 }}
+                  transition={{ duration: 0.5 }}
+                  className="mx-1 inline-block text-myunila"
+                >
+                  {TEXTS[index]}
+                </motion.span>
+              </AnimatePresence>
+              ,
+            </div>
+            <div>Persiapkan Sejak Dini!</div>
+          </div>
         </motion.h1>
 
         <motion.p
-          className="mb-8 text-base leading-relaxed text-gray-700 dark:text-gray-300 sm:text-lg md:text-xl"
+          className="mb-8 text-base leading-relaxed text-gray-700 dark:text-gray-300 md:text-lg lg:text-xl"
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.2, duration: 0.8 }}
@@ -93,7 +105,7 @@ const HeroTwo = () => {
         >
           <Link
             href="/assessment/talenta-mahasiswa"
-            className="inline-flex items-center gap-2 rounded-full bg-myunila px-8 py-4 text-base font-semibold text-white shadow-lg transition-all duration-300 hover:scale-105 hover:bg-myunila/80"
+            className="inline-flex items-center gap-2 rounded-full bg-myunila px-8 py-4 text-base font-semibold text-white shadow-lg transition-all duration-300 hover:scale-105 hover:bg-myunila-700 dark:hover:bg-myunila-400"
           >
             Mulai Eksplorasi
             <ArrowRight className="h-5 w-5" />

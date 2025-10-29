@@ -5,16 +5,17 @@ export default function OrganizationStructure() {
     <section className="pb-[120px] pt-[50px]">
       <div className="container">
         <h2 className="mb-8 text-3xl font-bold leading-tight text-center text-black dark:text-white sm:text-4xl sm:leading-tight">
-          Struktur Organisasi UPA CCED Universitas Lampung
+          Struktur Organisasi {" "}
+            <span className="text-myunila">UPA CCED Universitas Lampung</span>
         </h2>
 
         <div className="flex flex-col items-center space-y-6 p-6">
         
-          <div className="rounded-lg border bg-blue-500 px-6 py-3 text-center font-semibold text-white shadow-md dark:bg-blue-600 dark:border-blue-500">
+          <div className="rounded-lg border bg-myunila-500 px-6 py-3 text-center font-semibold text-white shadow-md dark:bg-myunila-600 dark:border-myunila-500">
             Kepala UPA Pengembangan Karier dan Kewirausahaan
           </div>
 
-          <div className="rounded-lg border bg-blue-100 px-6 py-3 text-center text-sm text-black shadow-sm dark:bg-blue-900 dark:text-blue-100 dark:border-blue-700">
+          <div className="rounded-lg border bg-myunila-100 px-6 py-3 text-center text-sm text-black shadow-sm dark:bg-myunila-700 dark:text-white dark:border-myunila-600">
             Fungsional Arsiparis Muda
           </div>
 
@@ -28,7 +29,7 @@ export default function OrganizationStructure() {
             ].map((divisi, index) => (
               <div
                 key={index}
-                className="rounded-lg border bg-blue-50 px-4 py-3 text-center text-sm text-black shadow-sm dark:bg-gray-800 dark:text-gray-200 dark:border-gray-700"
+                className="rounded-lg border bg-myunila-50 px-4 py-3 text-center text-sm text-black shadow-sm dark:bg-myunila-800 dark:text-white dark:border-gray-700"
               >
                 {divisi.title.split(" ").map((word, i) =>
                   divisi.italic && /Tracer|Assessment|Internship/i.test(word) ? (
@@ -41,7 +42,7 @@ export default function OrganizationStructure() {
             ))}
           </div>
 
-          <div className="rounded-lg border bg-blue-100 px-6 py-3 text-center text-sm text-black shadow-sm dark:bg-blue-900 dark:text-blue-100 dark:border-blue-700">
+          <div className="rounded-lg border bg-myunila-100 px-6 py-3 text-center text-sm text-black shadow-sm dark:bg-myunila-700 dark:text-white dark:border-myunila-600">
             Pengelola Keuangan <br />
             Pengolah Data dan Informasi <br />
             Pengadministrasi Perkantoran <br />

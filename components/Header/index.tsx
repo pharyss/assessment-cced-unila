@@ -163,7 +163,7 @@ const Header = () => {
                     <div className="mt-4 border-t border-gray-200 dark:border-gray-700 pt-4 lg:hidden">
                       <Link
                         href="/signin"
-                        className="block w-full rounded-full bg-myunila px-6 py-2 text-center text-sm font-medium text-white hover:bg-primary/90"
+                        className="block w-full rounded-full bg-myunila px-6 py-2 text-center text-sm font-medium text-white hover:bg-myunila-700"
                       >
                         Masuk
                       </Link>
@@ -175,7 +175,7 @@ const Header = () => {
 
                 <Link
                   href="/signin"
-                  className="ease-in-up shadow-btn hover:shadow-btn-hover hidden rounded-full bg-myunila px-8 py-3 text-base font-medium text-white transition duration-300 hover:bg-opacity-90 md:block md:px-9 lg:px-6 xl:px-9"
+                  className="ease-in-up shadow-btn hover:shadow-btn-hover hidden rounded-full bg-myunila px-8 py-3 text-base font-medium text-white transition duration-300 hover:bg-myunila-700 md:block md:px-9 lg:px-6 xl:px-9"
                 >
                   Masuk
                 </Link>

@@ -8,6 +8,10 @@
   body {
     font-family: "Poppins", sans-serif;
   }
+
+  .container {
+    @apply mx-auto px-6 md:px-10 lg:px-20;
+  }
 }
 
 @layer components {

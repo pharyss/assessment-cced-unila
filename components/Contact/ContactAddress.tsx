@@ -4,10 +4,10 @@ const ContactAddress = () => {
       className="wow fadeInUp shadow-three dark:bg-gray-dark mb-12 flex h-full flex-col rounded-md bg-white px-8 py-11 sm:p-[55px] lg:mb-5 lg:px-8 xl:p-[55px]"
       data-wow-delay=".15s"
     >
-      <h2 className="mb-3 text-2xl font-bold text-black dark:text-white sm:text-3xl lg:text-2xl xl:text-3xl">
+      <h2 className="mb-3 text-2xl font-bold text-myunila dark:text-white md:text-3xl lg:text-2xl xl:text-3xl">
         Alamat
       </h2>
-      <p className="mb-6 text-base font-medium text-body-color">
+      <p className="mb-6 mx-auto text-base leading-relaxed text-gray-700 dark:text-gray-300">
         Unit Penunjang Akademik Center for Career & Entrepreneurship Development Universitas Lampung <br />
         Jl. Prof. Dr. Sumantri Brojonegoro No.1, Gedong Meneng, Bandar Lampung, Lampung 35141
       </p>

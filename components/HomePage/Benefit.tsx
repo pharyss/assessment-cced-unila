@@ -6,7 +6,7 @@ import { motion } from "framer-motion";
 const Benefit = () => {
   return (
     <section id="benefits" className="py-20 bg-muted/30">
-      <div className="container mx-auto px-6 md:px-10 lg:px-20 space-y-24">
+      <div className="container mx-auto px-8 md:px-16 lg:px-32 space-y-24">
 
         <motion.div
           initial={{ opacity: 0, y: 40 }}
@@ -15,8 +15,8 @@ const Benefit = () => {
           viewport={{ once: true }}
           className="flex flex-col-reverse lg:flex-row items-center gap-12"
         >
-          <div className="lg:w-1/2 text-center lg:text-left">
-            <h3 className="text-3xl font-bold text-primary mb-4">
+          <div className="lg:w-1/2  text-center lg:text-left">
+            <h3 className="text-3xl font-bold text-myunila mb-4">
               Apa sih manfaatnya untuk kamu?
             </h3>
             <p className="text-lg text-muted-foreground leading-relaxed">
@@ -27,8 +27,8 @@ const Benefit = () => {
           </div>
 
           <div className="lg:w-1/2 flex justify-center">
-            <div className="bg-primary/10 p-10 rounded-2xl shadow-inner flex flex-col items-center hover:scale-105 transition-transform duration-300">
-              <GraduationCap className="w-20 h-20 text-primary" />
+            <div className="bg-myunila-50 p-10 rounded-2xl shadow-inner flex flex-col items-center hover:scale-105 transition-transform duration-300">
+              <GraduationCap className="w-20 h-20 text-myunila" />
             </div>
           </div>
         </motion.div>
@@ -41,7 +41,7 @@ const Benefit = () => {
           className="flex flex-col-reverse lg:flex-row-reverse items-center gap-12"
         >
           <div className="lg:w-1/2 text-center lg:text-left">
-            <h3 className="text-3xl font-bold text-primary mb-4">
+            <h3 className="text-3xl font-bold text-myunila mb-4">
               Apa sih manfaatnya untuk kampus?
             </h3>
             <p className="text-lg text-muted-foreground leading-relaxed">
@@ -52,8 +52,8 @@ const Benefit = () => {
           </div>
 
           <div className="lg:w-1/2 flex justify-center">
-            <div className="bg-primary/10 p-10 rounded-2xl shadow-inner flex flex-col items-center hover:scale-105 transition-transform duration-300">
-              <BarChart3 className="w-20 h-20 text-primary" />
+            <div className="bg-myunila-50 p-10 rounded-2xl shadow-inner flex flex-col items-center hover:scale-105 transition-transform duration-300">
+              <BarChart3 className="w-20 h-20 text-myunila" />
             </div>
           </div>
         </motion.div>

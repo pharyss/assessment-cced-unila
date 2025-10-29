@@ -20,7 +20,7 @@ export default function Home() {
       <Overview />
       <Benefit />
       <Vision />
-      <FAQ className="bg-gradient-to-b from-primary/10 via-primary/15 to-primary/20 dark:from-gray-800 dark:to-gray-700"/>
+      <FAQ className="bg-gradient-to-b from-myunila-100 via-myunila-200 to-myunila-300 dark:from-gray-800 dark:to-gray-700"/>
     </>
   );
 }
