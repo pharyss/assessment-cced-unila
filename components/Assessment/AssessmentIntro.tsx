@@ -107,7 +107,7 @@ const AssessmentIntro = () => {
             <button
               onClick={handleLogin}
               disabled={isLoading}
-              className="inline-flex items-center gap-2 rounded-full bg-myunila px-6 py-3 text-sm font-semibold text-white shadow-lg transition-all duration-300 hover:scale-105 hover:bg-myunila-700 focus:outline-none focus:ring-2 focus:ring-myunila-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 sm:px-8 sm:py-4 sm:text-base md:px-10 md:py-5 md:text-lg"
+              className="inline-flex items-center gap-2 rounded-full bg-myunila px-8 py-4 text-base font-semibold text-white shadow-lg transition-all duration-300 hover:scale-105 hover:bg-myunila-700 dark:hover:bg-myunila-400"
             >
               {isLoading ? "Memuat..." : "Mulai Asesmen"}
               <ArrowRight className="h-4 w-4 sm:h-5 sm:w-5" />

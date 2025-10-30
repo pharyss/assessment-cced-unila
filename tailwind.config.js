@@ -36,6 +36,12 @@ module.exports = {
         "stroke-dark": "#353943",
         "bg-color-dark": "#161b27ff",
 
+        // Warna status
+        success: "#108981",
+        warning: "#F59E0B",
+        danger: "#EF4444",
+        info: "#3882F6",
+
         // Warna myunila
         myunila: {
           DEFAULT: "#085EA8",
