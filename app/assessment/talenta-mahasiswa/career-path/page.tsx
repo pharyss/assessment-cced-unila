@@ -8,7 +8,6 @@ import {
   AlertCircle,
   ClipboardList,
   User,
-  X,
 } from "lucide-react";
 import toast from "react-hot-toast";
 import { useAssessmentFlow } from "@/components/Assessment/useAssessmentFlow";
@@ -19,13 +18,10 @@ export default function CareerPathFill() {
   const { answers, saveAnswer, next, currentStep } = useAssessmentFlow();
 
   const questions = useMemo(() => {
-    const subA = questionsData.part1.subPartA.questions;
-    const subB = questionsData.part1.subPartB.questions.map((q) => ({
-      ...q,
-      id: q.id + 12,
-    }));
-    return [...subA, ...subB];
-  }, []);
+  const subA = questionsData.part1.subPartA.questions.map(q => ({ ...q, key: `A-${q.id}` }));
+  const subB = questionsData.part1.subPartB.questions.map(q => ({ ...q, key: `B-${q.id}` }));
+  return [...subA, ...subB];
+}, []);
 
   const [pageIndex, setPageIndex] = useState(0);
   const [showConfirm, setShowConfirm] = useState(false);
@@ -38,12 +34,17 @@ export default function CareerPathFill() {
   const end = start + pageSize;
   const currentQuestions = questions.slice(start, end);
 
-  const totalAnswered = Object.keys(answers).filter(
-    (key) => !isNaN(Number(key)) && Number(key) <= totalQuestions
-  ).length;
+ const isQuestionAnswered = (q) => {
+  const answer = answers[q.key];
+  return answer !== undefined && answer !== "";
+};
 
-  const isAllComplete = totalAnswered >= totalQuestions;
-  const currentPageAnswered = currentQuestions.every((q) => answers[q.id]);
+
+  const totalAnswered = questions.filter(isQuestionAnswered).length;
+const isAllComplete = totalAnswered === totalQuestions;
+  const currentPageAnswered = currentQuestions.every((q) =>
+    isQuestionAnswered(q),
+  );
   const progressPercent = ((pageIndex + 1) / totalPages) * 100;
 
   useEffect(() => {
@@ -56,26 +57,20 @@ export default function CareerPathFill() {
   }, [pageIndex]);
 
   useEffect(() => {
-  const isModalOpen = showInstruction || showConfirm;
+    const isModalOpen = showInstruction || showConfirm;
 
-  if (isModalOpen) {
-    document.body.style.overflow = "hidden";
-  } else {
-    document.body.style.overflow = "";
-  }
-  return () => {
-    document.body.style.overflow = "";
-  };
-}, [showInstruction, showConfirm]);
-
-  useEffect(() => {
-    if (isAllComplete && currentStep === "career-path/fill") {
-      toast.success("Bidang karir sudah lengkap. Lanjut ke pola perilaku.");
-      router.replace("/assessment/talenta-mahasiswa/behavior-pattern");
+    if (isModalOpen) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "";
     }
-  }, [isAllComplete, currentStep, router]);
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, [showInstruction, showConfirm]);
 
-  const handleSelect = (qid, value) => saveAnswer(String(qid), value);
+ const handleSelect = (q, value) => saveAnswer(q.key, value);
+
 
   const handlePageChange = (newPage) => {
     setPageIndex(newPage);
@@ -87,32 +82,29 @@ export default function CareerPathFill() {
     next();
     router.push("/assessment/talenta-mahasiswa/behavior-pattern");
     localStorage.removeItem("career-path-page");
+    localStorage.removeItem("assessmentData");
   };
+
+  useEffect(() => {
+    console.log("Updated answers count:", Object.keys(answers).length);
+  }, [answers]);
 
   return (
     <>
       {/* ===== MODAL INSTRUKSI ===== */}
       {showInstruction && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
-          <div className="relative mx-4 max-w-2xl rounded-lg border border-gray-200 bg-white p-8 shadow-xl dark:border-gray-700 dark:bg-gray-800">
-            <button
-              onClick={() => setShowInstruction(false)}
-              className="absolute right-3 top-3 text-gray-500 hover:text-gray-800 dark:text-gray-400 dark:hover:text-white"
-              aria-label="Tutup instruksi"
-            >
-              <X className="h-5 w-5" />
-            </button>
-
+        <div className="animate-fadeIn fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm transition-all duration-300">
+          <div className="animate-scaleIn relative mx-4 max-w-2xl scale-95 transform rounded-lg border border-gray-200 bg-white p-8 shadow-xl transition-all duration-300 ease-out dark:border-gray-700 dark:bg-gray-800">
             <h1 className="mb-4 text-center text-2xl font-bold text-myunila md:text-3xl">
               Bidang Karir Ideal
             </h1>
-            <p className="mb-6 text-center">
+            <p className="mb-6 text-center text-base text-gray-700 dark:text-gray-300">
               Bagian ini membantumu memahami kecenderungan bidang karir yang
               paling ideal berdasarkan minat dan karakteristik dirimu. Terdapat
               40 soal yang terbagi menjadi dua subbagian.
             </p>
 
-            <div className="mb-6 flex flex-col gap-4 sm:flex-row">
+            <div className="mb-6 flex flex-col gap-4 text-base text-gray-700 dark:text-gray-300 sm:flex-row">
               {[
                 {
                   icon: <ClipboardList className="h-6 w-6" />,
@@ -127,22 +119,24 @@ export default function CareerPathFill() {
               ].map(({ icon, title, desc }, i) => (
                 <div
                   key={i}
-                  className="flex w-full items-start gap-3 rounded-xl border border-gray-200 bg-white p-4 shadow-sm transition-shadow hover:shadow-lg dark:bg-gray-800"
+                  className="flex w-full items-start gap-3 rounded-xl border border-myunila bg-myunila-50 p-4 shadow-sm transition-shadow hover:shadow-lg dark:bg-gray-800"
                 >
-                  <div className="rounded-lg bg-myunila-100 p-2 text-myunila dark:bg-myunila-900 dark:text-myunila-300">
+                  <div className="rounded-lg bg-myunila p-2 text-white">
                     {icon}
                   </div>
                   <div>
-                    <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100 sm:text-base">
+                    <h3 className="text-sm font-semibold text-myunila dark:text-gray-100 sm:text-base">
                       {title}
                     </h3>
-                    <p className="text-sm text-gray-700 dark:text-gray-300">{desc}</p>
+                    <p className="text-sm text-gray-700 dark:text-gray-300">
+                      {desc}
+                    </p>
                   </div>
                 </div>
               ))}
             </div>
 
-            <p className="mb-8 text-center font-semibold text-gray-900 dark:text-gray-300">
+            <p className="mb-6 text-center font-semibold text-gray-700 dark:text-gray-300">
               Semakin jujur kamu menjawab, semakin akurat hasilnya!
             </p>
 
@@ -182,7 +176,7 @@ export default function CareerPathFill() {
                 aria-valuemax={100}
               >
                 <div
-                  className="h-full bg-myunila transition-all duration-700 ease-in-out"
+                  className="h-full bg-gradient-blue-modern transition-all duration-700 ease-in-out"
                   style={{ width: `${progressPercent}%` }}
                 />
               </div>
@@ -196,35 +190,33 @@ export default function CareerPathFill() {
             <div className="space-y-8">
               {currentQuestions.map((q) => (
                 <div
-                  key={q.id}
+                  key={q.key}
                   className="rounded-xl border border-gray-200 bg-gray-50 p-5 dark:border-gray-700 dark:bg-gray-800"
                 >
-                  <h3 className="mb-4 text-base font-semibold text-gray-800 dark:text-gray-100 sm:text-lg">
-                    {q.id}. {q.question}
-                  </h3>
+                  <p className="mb-4 text-base font-semibold text-gray-800 dark:text-gray-100 md:text-lg">
+                    {q.key}. {q.question}
+                  </p>
                   <div className="grid gap-3">
                     {q.options.map((opt) => (
                       <label
                         key={opt.label}
-                        htmlFor={`opt-${q.id}-${opt.label}`}
-                        className={`flex cursor-pointer items-center rounded-lg border p-3 transition-all duration-200 ${
-                          answers[q.id] === opt.label
-                            ? "border-myunila bg-myunila-100/50 text-myunila dark:border-myunila-600"
+                        htmlFor={`opt-${q.key}-${opt.label}`}
+                        className={`transition-all flex cursor-pointer items-center rounded-lg border p-3 duration-200 ${
+                          answers[String(q.key)] === opt.label
+                            ? "border-myunila bg-myunila-100/50 font-medium text-myunila dark:border-myunila-600"
                             : "border-gray-200 bg-white hover:bg-gray-100 dark:border-gray-700 dark:bg-gray-900 dark:hover:bg-gray-800"
                         }`}
                       >
                         <input
                           type="radio"
-                          id={`opt-${q.id}-${opt.label}`}
-                          name={`q-${q.id}`}
+                          id={`opt-${q.key}-${opt.label}`}
+                          name={`q-${q.key}`}
                           value={opt.label}
-                          checked={answers[q.id] === opt.label}
-                          onChange={() => handleSelect(q.id, opt.label)}
+                          checked={answers[String(q.key)] === opt.label}
+                         onChange={() => handleSelect(q, opt.label)}
                           className="hidden"
                         />
-                        <span className="text-sm font-medium sm:text-base">
-                          {opt.text}
-                        </span>
+                        <span className="text-base">{opt.text}</span>
                       </label>
                     ))}
                   </div>
@@ -248,7 +240,24 @@ export default function CareerPathFill() {
                 type="button"
                 onClick={
                   pageIndex === totalPages - 1
-                    ? () => setShowConfirm(true)
+                    ? () => {
+                        console.log("Total questions:", totalQuestions);
+                        console.log("Total answered:", totalAnswered);
+                        console.log("Is all complete:", isAllComplete);
+                        console.log(
+                          "Answers sample:",
+                          Object.keys(answers)
+                            .slice(0, 5)
+                            .map((key) => `${key}: ${answers[key]}`),
+                        );
+
+                        const allAnswered = questions.every((q) => answers[q.key] !== undefined && answers[q.key] !== "");
+                        if (allAnswered) setShowConfirm(true);
+                        else
+                          toast.error(
+                            "Lengkapi semua soal terlebih dahulu sebelum menyelesaikan.",
+                          );
+                      }
                     : () => handlePageChange(pageIndex + 1)
                 }
                 disabled={!currentPageAnswered}
@@ -268,11 +277,11 @@ export default function CareerPathFill() {
 
       {/* ===== MODAL KONFIRMASI ===== */}
       {showConfirm && (
-        <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/40 backdrop-blur-sm">
-          <div className="mx-4 w-full max-w-md rounded-2xl border border-gray-200 bg-white p-8 transition-all dark:border-gray-700 dark:bg-gray-800">
+        <div className="animate-fadeIn fixed inset-0 z-[9999] flex items-center justify-center bg-black/40 backdrop-blur-sm transition-all duration-300">
+          <div className="animate-scaleIn mx-4 w-full max-w-md scale-95 transform rounded-2xl border border-gray-200 bg-white p-8 transition-all duration-300 ease-out dark:border-gray-700 dark:bg-gray-800">
             <div className="mb-2 flex flex-col items-center text-center">
-              <AlertCircle className="text-warning h-16 w-16 mb-3" />
-              <h3 className="text-warning text-2xl font-bold dark:text-white">
+              <AlertCircle className="mb-3 h-16 w-16 text-warning" />
+              <h3 className="text-2xl font-bold text-warning dark:text-white">
                 Konfirmasi
               </h3>
             </div>

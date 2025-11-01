@@ -39,7 +39,6 @@ const AssessmentIntro = () => {
     try {
       clear?.();
       goTo?.("start");
-      toast.success("Mulai asesmen baru!");
     } catch (error) {
       console.error("Error di handleStartAssessment:", error);
       toast.error("Gagal memulai asesmen. Coba lagi.");
@@ -87,7 +86,7 @@ const AssessmentIntro = () => {
             {instructions.map((item, index) => (
               <div
                 key={index}
-                className="flex flex-col items-center justify-center rounded-2xl border border-gray-200 bg-white p-5 text-sm text-gray-700 shadow-md transition-all hover:-translate-y-1 hover:shadow-lg dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200 sm:p-6 md:text-base"
+                className="flex flex-col items-center justify-center rounded-2xl border border-myunila bg-myunila-50 p-5 text-sm text-gray-700 shadow-md transition-all hover:-translate-y-1 hover:shadow-lg dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200 sm:p-6 md:text-base"
               >
                 <div className="mb-3">{item.icon}</div>
                 <p
@@ -105,7 +104,7 @@ const AssessmentIntro = () => {
 
           <div className="mt-3 md:mt-8">
             <button
-              onClick={handleLogin}
+              onClick={handleStartAssessment}
               disabled={isLoading}
               className="inline-flex items-center gap-2 rounded-full bg-myunila px-8 py-4 text-base font-semibold text-white shadow-lg transition-all duration-300 hover:scale-105 hover:bg-myunila-700 dark:hover:bg-myunila-400"
             >
