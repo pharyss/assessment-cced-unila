@@ -52,10 +52,9 @@ export default function BehaviorPatternFill() {
     };
   }, [currentDimIndex, dimValue, getRenumberedQuestions]);
 
-  const allQuestionIds = dimensions.flatMap(([_, d], dimIndex) =>
+const allQuestionIds = dimensions.flatMap(([_, d], dimIndex) =>
   getRenumberedQuestions(dimIndex, d.questions).map((q) => q.id)
 );
-
 
 const totalAnsweredAll = allQuestionIds.filter(id => answers[id] != null && answers[id] !== undefined).length;
 const totalAnsweredCurrent = currentDimension.questions.filter(
@@ -106,7 +105,6 @@ const isAllComplete = totalAnsweredAll === totalQuestions;
       window.scrollTo({ top: 0, behavior: "smooth" });
     } else {
       prev();
-      router.push("/assessment/talenta-mahasiswa/career-path");
     }
   };
 
@@ -114,9 +112,9 @@ const isAllComplete = totalAnsweredAll === totalQuestions;
     setShowConfirmModal(false);
     localStorage.removeItem("behavior-pattern-dim");
     next();
+
     window.scrollTo({ top: 0 });
     toast.success("Asesmen selesai! Lihat hasil Anda.");
-    router.push("/assessment/talenta-mahasiswa/result");
   };
 
   useEffect(() => {

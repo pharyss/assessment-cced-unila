@@ -1,6 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo } from "react";
+import careerPathData from "@/data/CareerPath.json";
+import behaviorPatternData from "@/data/BehaviorPattern.json";
 
 // =============================
 // 🧩 A. KONFIGURASI DASAR DATA
@@ -88,42 +90,45 @@ const WORKING_STYLE = {
 // ⚙️ B. CUSTOM HOOK UTAMA
 // =============================
 
-export function useAssessmentLogic() {
-  const [careerAnswers, setCareerAnswers] = useState([]); // subPartA
-  const [mbtiAnswers, setMbtiAnswers] = useState([]); // subPartB
-  const [behaviorAnswers, setBehaviorAnswers] = useState([]); // part2
-
+export function useAssessmentLogic(answers: Record<string, any>) {
   // -----------------------------
   // SUBPART A: MINAT KARIR
   // -----------------------------
-  function calculateCareerField() {
+  const calculateCareerField = useMemo(() => {
     const score = { Praktisi: 0, Akademisi: 0, Kreatif: 0, Wirausaha: 0 };
-    careerAnswers.forEach((ans) => {
-      if (ans.id >= 1 && ans.id <= 11 && ans.category) {
-        score[ans.category] += 1;
-      }
-    });
 
-    const bidang = Object.keys(score).reduce((a, b) =>
-      score[a] > score[b] ? a : b,
-    );
+    for (let i = 1; i <= 11; i++) {
+      const key = `A-${i}`;
+      const value = answers[key];
+      if (!value) continue;
 
-    return bidang;
-  }
+      const question = careerPathData.part1.subPartA.questions.find(
+        (q) => q.id === i,
+      );
+      const option = question?.options.find((opt) => opt.label === value);
+      if (option?.category) score[option.category] += 1;
+    }
+
+    return Object.keys(score).reduce((a, b) => (score[a] > score[b] ? a : b));
+  }, [answers]);
 
   // -----------------------------
   // SUBPART B: MBTI
   // -----------------------------
-  function calculateMBTI() {
+  const calculateMBTI = useMemo(() => {
     const dim = { E: 0, I: 0, S: 0, N: 0, T: 0, F: 0, J: 0, P: 0 };
 
-    mbtiAnswers.forEach((ans, idx) => {
-      const id = idx + 1;
-      if (id >= 1 && id <= 7) dim[ans.dimension] += 1;
-      if (id >= 8 && id <= 14) dim[ans.dimension] += 1;
-      if (id >= 15 && id <= 21) dim[ans.dimension] += 1;
-      if (id >= 22 && id <= 28) dim[ans.dimension] += 1;
-    });
+    for (let i = 1; i <= 28; i++) {
+      const key = `B-${i}`;
+      const value = answers[key];
+      if (!value) continue;
+
+      const question = careerPathData.part1.subPartB.questions.find(
+        (q) => q.id === i,
+      );
+      const option = question?.options.find((opt) => opt.label === value);
+      if (option?.dimension) dim[option.dimension] += 1;
+    }
 
     const EI = dim.E >= dim.I ? "E" : "I";
     const SN = dim.S >= dim.N ? "S" : "N";
@@ -131,93 +136,92 @@ export function useAssessmentLogic() {
     const JP = dim.J >= dim.P ? "J" : "P";
 
     return EI + SN + TF + JP;
-  }
+  }, [answers]);
 
   // -----------------------------
   // KORELASI BIDANG & MBTI
   // -----------------------------
-  function analyzeCareerCompatibility(careerField, mbtiType) {
-    const map = MBTI_MAPPING[mbtiType];
+  const analyzeCareerCompatibility = useMemo(() => {
+    const map = MBTI_MAPPING[calculateMBTI];
     if (!map) return "Tidak Diketahui";
 
-    if (careerField === map.dominan) return "Sangat Sesuai";
-    if (careerField === map.sekunder) return "Cukup Sesuai";
+    if (calculateCareerField === map.dominan) return "Sangat Sesuai";
+    if (calculateCareerField === map.sekunder) return "Cukup Sesuai";
     return "Kurang Sesuai";
-  }
+  }, [calculateCareerField, calculateMBTI]);
 
   // -----------------------------
   // PART 2: POLA PERILAKU
   // -----------------------------
-  function calculateBehaviorScores() {
-    const result = {};
-    const grouped = {};
+  const calculateBehaviorScores = useMemo(() => {
+    const result: Record<string, string> = {};
+    const dimensions = Object.entries(behaviorPatternData.part2.dimensions);
 
-    // kelompokkan per dimensi
-    behaviorAnswers.forEach((ans) => {
-      if (!grouped[ans.dimension]) grouped[ans.dimension] = [];
-      grouped[ans.dimension].push(ans);
+    dimensions.forEach(([dimKey, dimValue], dimIndex) => {
+      const baseId = 40 + dimIndex * 6;
+      const scores: number[] = [];
+
+      dimValue.questions.forEach((q, idx) => {
+        const id = baseId + idx;
+        const value = answers[id];
+        if (value === undefined) return;
+
+        const adjusted = q.type === "unfavorable" ? 6 - value : value;
+        scores.push(adjusted);
+      });
+
+      if (scores.length > 0) {
+        const avg = scores.reduce((a, b) => a + b, 0) / scores.length;
+        let level = "Sedang";
+        if (avg < 2.4) level = "Rendah";
+        else if (avg > 3.6) level = "Tinggi";
+        result[dimKey] = level;
+      }
     });
 
-    for (const dim in grouped) {
-      const adjusted = grouped[dim].map((q) =>
-        q.type === "unfavorable" ? 6 - q.value : q.value,
-      );
-      const avg = adjusted.reduce((a, b) => a + b, 0) / adjusted.length;
-
-      let level = "Sedang";
-      if (avg < 2.4) level = "Rendah";
-      else if (avg > 3.6) level = "Tinggi";
-
-      result[dim] = level;
-    }
-
     return result;
-  }
+  }, [answers]);
 
   // -----------------------------
   // HASIL AKHIR
   // -----------------------------
-  function getFinalResult() {
-    const bidang = calculateCareerField();
-    const chosen12 =
-      careerAnswers.find((item) => item.id === 12)?.category || null;
+  const getFinalResult = useMemo(() => {
+    const bidang = calculateCareerField;
+    const mbti = calculateMBTI;
+    const kesesuaian = analyzeCareerCompatibility;
+    const behavior = calculateBehaviorScores;
 
-    const kesesuaianKarir = chosen12
-      ? chosen12 === bidang
-        ? "Sesuai"
-        : "Tidak Sesuai"
-      : "Belum Memilih";
+    const answerA12 = answers["A-12"];
+    let chosenCategory = "Belum Memilih";
 
-    const mbti = calculateMBTI();
-    const kesesuaian = analyzeCareerCompatibility(bidang, mbti);
-    const behavior = calculateBehaviorScores();
+    if (answerA12) {
+      const q12 = careerPathData.part1.subPartA.questions.find(
+        (q) => q.id === 12,
+      );
+      const option = q12?.options.find((opt) => opt.label === answerA12);
+
+      if (option?.category) {
+        chosenCategory = option.category === bidang ? "Sesuai" : "Tidak Sesuai";
+      }
+    }
 
     return {
       bidangKarir: bidang,
       mbtiType: mbti,
       kesesuaian,
-      kesesuaianKarir,
+      kesesuaianKarir: chosenCategory,
       thinkingStyle: THINKING_STYLE[mbti],
       communicationStyle: COMMUNICATION_STYLE[mbti],
       workingStyle: WORKING_STYLE[mbti],
       behaviorDimensions: behavior,
     };
-  }
-
-  return {
-    // states
-    careerAnswers,
-    mbtiAnswers,
-    behaviorAnswers,
-    // setters
-    setCareerAnswers,
-    setMbtiAnswers,
-    setBehaviorAnswers,
-    // functions
+  }, [
     calculateCareerField,
     calculateMBTI,
     analyzeCareerCompatibility,
     calculateBehaviorScores,
-    getFinalResult,
-  };
+    answers,
+  ]);
+
+  return { getFinalResult };
 }

@@ -19,19 +19,31 @@ const isStepComplete = (
 ): boolean => {
   switch (step) {
     case "start":
-      return Boolean(answers.npm && answers.email);
+  return Boolean(
+    answers.nama && answers.nama.trim() &&
+    answers.npm && answers.npm.trim().replace(/\D/g, "").length === 10 &&
+    answers.email && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(answers.email.trim()) &&
+    answers.angkatan && answers.angkatan.trim().replace(/\D/g, "").length === 4 &&
+    answers.fakultas &&
+    answers.prodi
+  );
 
     case "career-path": {
-      const subAKeys = careerPathData.subPartA.questions.map((q) => `A-${q.id}`);
-      const subBKeys = careerPathData.subPartB.questions.map((q) => `B-${q.id}`);
+      const subAKeys = careerPathData.part1.subPartA.questions.map((q) => `A-${q.id}`);
+      const subBKeys = careerPathData.part1.subPartB.questions.map((q) => `B-${q.id}`);
       const allA = subAKeys.every((k) => answers[k] !== undefined && answers[k] !== "");
       const allB = subBKeys.every((k) => answers[k] !== undefined && answers[k] !== "");
       return allA && allB;
     }
 
-    case "behavior-pattern": {
-      const behaviorKeys = behaviorPatternData.questions.map((q) => `C-${q.id}`);
-      return behaviorKeys.every((k) => answers[k] !== undefined && answers[k] !== "");
+     case "behavior-pattern": {
+      const dimensions = Object.entries(behaviorPatternData.part2.dimensions);
+      const totalQuestions = dimensions.length * 6;
+      const allQuestionIds = dimensions.flatMap(([_, d], dimIndex) => {
+        const baseId = 40 + dimIndex * 6;
+        return d.questions.map((q, idx) => baseId + idx);
+      });
+      return allQuestionIds.every((id) => answers[id] !== undefined && answers[id] !== "");
     }
 
     case "result":
@@ -63,7 +75,6 @@ export function useAssessmentFlow() {
         const loadedAnswers = parsed.answers ?? {};
         let loadedIndex = parsed.stepIndex ?? 0;
 
-        // Pastikan step sebelumnya lengkap
         for (let i = loadedIndex; i > 0; i--) {
           const prevStep = DEFAULT_STEPS[i - 1];
           if (!isStepComplete(prevStep, loadedAnswers)) {
@@ -98,12 +109,14 @@ export function useAssessmentFlow() {
     }
   };
 
-  const navigate = (index: number) => {
-    const stepName = DEFAULT_STEPS[index];
-    setStepIndex(index);
-    persist(answers, index);
-    router.replace(`/assessment/${id}/${stepName}`);
-  };
+  const navigate = (index: number, answersOverride?: Answers) => {
+  const stepName = DEFAULT_STEPS[index];
+  const answersToPersist = answersOverride || answers;
+
+  setStepIndex(index);
+  persist(answersToPersist, index);
+  router.replace(`/assessment/${id}/${stepName}`);
+};
 
   /* --------------------------- Actions ----------------------------- */
   const saveAnswer = (key: string, value: any) => {
@@ -112,15 +125,21 @@ export function useAssessmentFlow() {
     persist(updated, stepIndex);
   };
 
-  const next = () => {
-    const currentStep = DEFAULT_STEPS[stepIndex];
-    if (!isStepComplete(currentStep, answers)) {
-      toast.error(`Lengkapi ${currentStep.replace("-", " ")} terlebih dahulu!`);
-      return;
-    }
+  const next = (updatedAnswers?: Answers) => {
+  const currentStep = DEFAULT_STEPS[stepIndex];
+  const answersToCheck = updatedAnswers || answers;
+
+  if (!isStepComplete(currentStep, answersToCheck)) {
+    toast.error(`Lengkapi ${currentStep.replace("-", " ")} terlebih dahulu!`);
+    return;
+  }
+
+  if (updatedAnswers) {
+    setAnswers(updatedAnswers);
+  }
 
     const nextIndex = Math.min(stepIndex + 1, DEFAULT_STEPS.length - 1);
-    navigate(nextIndex);
+    navigate(nextIndex, updatedAnswers);
   };
 
   const prev = () => {

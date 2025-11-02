@@ -18,10 +18,16 @@ export default function CareerPathFill() {
   const { answers, saveAnswer, next, currentStep } = useAssessmentFlow();
 
   const questions = useMemo(() => {
-  const subA = questionsData.part1.subPartA.questions.map(q => ({ ...q, key: `A-${q.id}` }));
-  const subB = questionsData.part1.subPartB.questions.map(q => ({ ...q, key: `B-${q.id}` }));
-  return [...subA, ...subB];
-}, []);
+    const subA = questionsData.part1.subPartA.questions.map((q) => ({
+      ...q,
+      key: `A-${q.id}`,
+    }));
+    const subB = questionsData.part1.subPartB.questions.map((q) => ({
+      ...q,
+      key: `B-${q.id}`,
+    }));
+    return [...subA, ...subB];
+  }, []);
 
   const [pageIndex, setPageIndex] = useState(0);
   const [showConfirm, setShowConfirm] = useState(false);
@@ -34,14 +40,13 @@ export default function CareerPathFill() {
   const end = start + pageSize;
   const currentQuestions = questions.slice(start, end);
 
- const isQuestionAnswered = (q) => {
-  const answer = answers[q.key];
-  return answer !== undefined && answer !== "";
-};
-
+  const isQuestionAnswered = (q) => {
+    const answer = answers[q.key];
+    return answer !== undefined && answer !== "";
+  };
 
   const totalAnswered = questions.filter(isQuestionAnswered).length;
-const isAllComplete = totalAnswered === totalQuestions;
+  const isAllComplete = totalAnswered === totalQuestions;
   const currentPageAnswered = currentQuestions.every((q) =>
     isQuestionAnswered(q),
   );
@@ -69,8 +74,7 @@ const isAllComplete = totalAnswered === totalQuestions;
     };
   }, [showInstruction, showConfirm]);
 
- const handleSelect = (q, value) => saveAnswer(q.key, value);
-
+  const handleSelect = (q, value) => saveAnswer(q.key, value);
 
   const handlePageChange = (newPage) => {
     setPageIndex(newPage);
@@ -80,9 +84,7 @@ const isAllComplete = totalAnswered === totalQuestions;
   const handleConfirm = () => {
     setShowConfirm(false);
     next();
-    router.push("/assessment/talenta-mahasiswa/behavior-pattern");
     localStorage.removeItem("career-path-page");
-    localStorage.removeItem("assessmentData");
   };
 
   useEffect(() => {
@@ -188,40 +190,44 @@ const isAllComplete = totalAnswered === totalQuestions;
 
             {/* Pertanyaan */}
             <div className="space-y-8">
-              {currentQuestions.map((q) => (
-                <div
-                  key={q.key}
-                  className="rounded-xl border border-gray-200 bg-gray-50 p-5 dark:border-gray-700 dark:bg-gray-800"
-                >
-                  <p className="mb-4 text-base font-semibold text-gray-800 dark:text-gray-100 md:text-lg">
-                    {q.key}. {q.question}
-                  </p>
-                  <div className="grid gap-3">
-                    {q.options.map((opt) => (
-                      <label
-                        key={opt.label}
-                        htmlFor={`opt-${q.key}-${opt.label}`}
-                        className={`transition-all flex cursor-pointer items-center rounded-lg border p-3 duration-200 ${
-                          answers[String(q.key)] === opt.label
-                            ? "border-myunila bg-myunila-100/50 font-medium text-myunila dark:border-myunila-600"
-                            : "border-gray-200 bg-white hover:bg-gray-100 dark:border-gray-700 dark:bg-gray-900 dark:hover:bg-gray-800"
-                        }`}
-                      >
-                        <input
-                          type="radio"
-                          id={`opt-${q.key}-${opt.label}`}
-                          name={`q-${q.key}`}
-                          value={opt.label}
-                          checked={answers[String(q.key)] === opt.label}
-                         onChange={() => handleSelect(q, opt.label)}
-                          className="hidden"
-                        />
-                        <span className="text-base">{opt.text}</span>
-                      </label>
-                    ))}
+              {currentQuestions.map((q, index) => {
+                const questionNumber = start + index + 1;
+                return (
+                  <div
+                    key={q.key}
+                    className="rounded-xl border border-gray-200 bg-gray-50 p-5 dark:border-gray-700 dark:bg-gray-800"
+                  >
+                    <p className="mb-4 text-base font-semibold text-gray-800 dark:text-gray-100 md:text-lg">
+                      {questionNumber}. {q.question}
+                    </p>
+
+                    <div className="grid gap-3">
+                      {q.options.map((opt) => (
+                        <label
+                          key={opt.label}
+                          htmlFor={`opt-${q.key}-${opt.label}`}
+                          className={`flex cursor-pointer items-center rounded-lg border p-3 transition-all duration-200 ${
+                            answers[String(q.key)] === opt.label
+                              ? "border-myunila bg-myunila-100/50 font-medium text-myunila dark:border-myunila-600"
+                              : "border-gray-200 bg-white hover:bg-gray-100 dark:border-gray-700 dark:bg-gray-900 dark:hover:bg-gray-800"
+                          }`}
+                        >
+                          <input
+                            type="radio"
+                            id={`opt-${q.key}-${opt.label}`}
+                            name={`q-${q.key}`}
+                            value={opt.label}
+                            checked={answers[q.key] === opt.label}
+                            onChange={() => handleSelect(q, opt.label)}
+                            className="hidden"
+                          />
+                          <span className="text-base">{opt.text}</span>
+                        </label>
+                      ))}
+                    </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
 
             {/* Navigasi */}
@@ -251,7 +257,11 @@ const isAllComplete = totalAnswered === totalQuestions;
                             .map((key) => `${key}: ${answers[key]}`),
                         );
 
-                        const allAnswered = questions.every((q) => answers[q.key] !== undefined && answers[q.key] !== "");
+                        const allAnswered = questions.every(
+                          (q) =>
+                            answers[q.key] !== undefined &&
+                            answers[q.key] !== "",
+                        );
                         if (allAnswered) setShowConfirm(true);
                         else
                           toast.error(

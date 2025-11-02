@@ -5,11 +5,16 @@ import { useRouter } from "next/navigation";
 import { useAssessmentFlow } from "@/components/Assessment/useAssessmentFlow";
 import toast from "react-hot-toast";
 import { Loader2 } from "lucide-react";
+import Select from "react-select";
+import { Faculties, StudyProgramsByFaculty } from "@/data/StudyPrograms";
 
 interface FormData {
   nama: string;
   npm: string;
   email: string;
+  angkatan: string;
+  fakultas: string;
+  prodi: string;
 }
 
 export default function StartPage() {
@@ -20,269 +25,284 @@ export default function StartPage() {
     nama: answers.nama ?? "",
     npm: answers.npm ?? "",
     email: answers.email ?? "",
+    angkatan: answers.angkatan ?? "",
+    fakultas: answers.fakultas ?? "",
+    prodi: answers.prodi ?? "",
   });
 
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [namaError, setNamaError] = useState("");
-  const [npmError, setNpmError] = useState("");
-  const [emailError, setEmailError] = useState("");
+  const [errors, setErrors] = useState<Record<keyof FormData, string>>({
+    nama: "",
+    npm: "",
+    email: "",
+    angkatan: "",
+    fakultas: "",
+    prodi: "",
+  });
 
-  const namaRef = useRef<HTMLInputElement>(null);
-  const npmRef = useRef<HTMLInputElement>(null);
-  const emailRef = useRef<HTMLInputElement>(null);
+  const refs = {
+    nama: useRef<HTMLInputElement>(null),
+    npm: useRef<HTMLInputElement>(null),
+    email: useRef<HTMLInputElement>(null),
+    angkatan: useRef<HTMLInputElement>(null),
+  };
 
-  /* ------------------ Inisialisasi ------------------ */
   useEffect(() => {
-    setFormData({
-      nama: answers.nama ?? "",
-      npm: answers.npm ?? "",
-      email: answers.email ?? "",
-    });
-  }, [answers]);
-
-  useEffect(() => {
-    if (currentStep === "start" && namaRef.current) namaRef.current.focus();
+    if (currentStep === "start" && refs.nama.current) refs.nama.current.focus();
   }, [currentStep]);
 
-  /* ------------------ Validasi Input ------------------ */
-  const validateNama = useCallback((value: string): boolean => {
-    if (!value.trim()) {
-      setNamaError("Nama tidak boleh kosong.");
-      return false;
+  const validateField = useCallback((field: keyof FormData, value: string) => {
+    let msg = "";
+
+    switch (field) {
+      case "nama":
+        if (!value.trim()) msg = "Nama tidak boleh kosong";
+        break;
+      case "npm":
+        if (value.trim().replace(/\D/g, "").length !== 10) msg = "NPM harus 10 digit";
+        break;
+      case "email":
+        if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) msg = "Email tidak valid";
+        break;
+      case "angkatan":
+        if (value.trim().replace(/\D/g, "").length !== 4) msg = "Angkatan harus 4 digit";
+        break;
+      case "fakultas":
+      case "prodi":
+        if (!value) msg = "Harap pilih opsi";
+        break;
     }
-    setNamaError("");
-    return true;
+
+    setErrors((p) => ({ ...p, [field]: msg }));
+    return msg === "";
   }, []);
 
-  const validateNpm = useCallback((value: string): boolean => {
-    const trimmed = value.trim().replace(/\D/g, "");
-    if (trimmed.length !== 10) {
-      setNpmError("NPM harus tepat 10 digit angka (contoh: 2023100001).");
-      return false;
-    }
-    setNpmError("");
-    return true;
-  }, []);
+  const handleChange = useCallback(
+    (field: keyof FormData, value: string) => {
+      setFormData((p) => {
+        const newData = { ...p, [field]: value };
+        if (field === "fakultas") newData.prodi = "";
+        return newData;
+      });
+      if (errors[field]) validateField(field, value);
+    },
+    [errors, validateField]
+  );
 
-  const validateEmail = useCallback((value: string): boolean => {
-    const trimmed = value.trim().toLowerCase();
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmed)) {
-      setEmailError("Format email tidak valid.");
-      return false;
-    }
-    setEmailError("");
-    return true;
-  }, []);
-
-  /* ------------------ Handler Perubahan ------------------ */
-  const handleNamaChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value;
-    setFormData((prev) => ({ ...prev, nama: value }));
-    if (value.trim().length > 1) validateNama(value);
-  }, [validateNama]);
-
-  const handleNpmChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value.replace(/\D/g, "").slice(0, 10);
-    setFormData((prev) => ({ ...prev, npm: value }));
-    if (value.length === 10) validateNpm(value);
-  }, [validateNpm]);
-
-  const handleEmailChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value;
-    setFormData((prev) => ({ ...prev, email: value }));
-    if (value.includes("@")) validateEmail(value);
-  }, [validateEmail]);
-
-  /* ------------------ Handler Blur ------------------ */
-  const handleNamaBlur = useCallback(() => {
-    if (validateNama(formData.nama)) saveAnswer("nama", formData.nama);
-  }, [formData.nama, validateNama, saveAnswer]);
-
-  const handleNpmBlur = useCallback(() => {
-    if (validateNpm(formData.npm)) saveAnswer("npm", formData.npm);
-  }, [formData.npm, validateNpm, saveAnswer]);
-
-  const handleEmailBlur = useCallback(() => {
-    if (validateEmail(formData.email)) saveAnswer("email", formData.email);
-  }, [formData.email, validateEmail, saveAnswer]);
-
-  /* ------------------ Submit ------------------ */
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsSubmitting(true);
+  e.preventDefault();
+  setIsSubmitting(true);
 
-    const validNama = validateNama(formData.nama);
-    const validNpm = validateNpm(formData.npm);
-    const validEmail = validateEmail(formData.email);
+  const valid = Object.entries(formData).every(([k, v]) =>
+    validateField(k as keyof FormData, v)
+  );
 
-    if (!validNama || !validNpm || !validEmail) {
-      toast.error("Periksa kembali data identitas Anda.", { duration: 4000 });
-      setIsSubmitting(false);
-      if (!validNama && namaRef.current) namaRef.current.focus();
-      return;
-    }
+  if (!valid) {
+    toast.error("Periksa kembali data identitas Anda.");
+    setIsSubmitting(false);
+    return;
+  }
 
     try {
-      saveAnswer("nama", formData.nama);
-      saveAnswer("npm", formData.npm);
-      saveAnswer("email", formData.email);
-
-      next();
-      setTimeout(() => router.push("/assessment/talenta-mahasiswa/career-path"), 600);
+      const updatedAnswers = { ...answers, ...formData };
+      next(updatedAnswers);
     } catch (error) {
-      console.error("Save error:", error);
-      toast.error("Gagal menyimpan data. Coba lagi.", { duration: 4000 });
+      console.error("Error saat menyimpan:", error);
+      toast.error("Gagal menyimpan data. Coba lagi.")
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  /* ------------------ Status Lengkap ------------------ */
   const isDataComplete = useMemo(
-    () =>
-      !namaError &&
-      !npmError &&
-      !emailError &&
-      formData.nama.trim().length > 1 &&
-      formData.npm.length === 10 &&
-      formData.email.includes("@"),
-    [namaError, npmError, emailError, formData]
-  );
+  () =>
+    Object.values(errors).every((v) => !v) &&
+    formData.nama.trim() &&
+    formData.npm.length === 10 &&
+    /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email) &&
+    formData.angkatan.length === 4 &&
+    formData.fakultas &&
+    formData.prodi,
+  [errors, formData]
+);
 
   return (
-    <section className="relative z-10 bg-gradient-to-b from-white via-myunila-50 to-myunila-100 pb-20 pt-20 dark:from-gray-950 dark:via-gray-900 dark:to-gray-800 sm:pb-24 sm:pt-32 md:pb-[120px] md:pt-[150px]">
-      <div className="container">
-        <div className="mx-auto max-w-[600px] rounded-md border border-gray-200 bg-white p-6 transition-all duration-300 dark:border-gray-700 dark:bg-gray-900 sm:p-10">
-          <h3 className="mb-3 text-center text-2xl font-bold text-myunila dark:text-white sm:text-3xl">
-            Mulai Asesmen Talenta
-          </h3>
-          <div className="mb-8 flex items-center justify-center">
-          <span className="hidden h-[1px] w-full max-w-[80px] bg-gray-300 dark:bg-gray-700 sm:block" />
-          <p className="w-full px-5 text-center text-base font-medium text-gray-700 dark:text-gray-300">
+    <section className="relative z-10 bg-gradient-to-b from-white via-myunila-50 to-myunila-100 dark:from-gray-950 dark:via-gray-900 dark:to-gray-800 pb-20 pt-20 sm:pb-24 sm:pt-32 md:pb-[120px] md:pt-[150px]">
+      <div className="container mx-auto max-w-[700px] rounded-lg border border-gray-200 bg-white px-6 py-10 shadow-lg dark:border-gray-700 dark:bg-gray-900 sm:p-[60px]">
+        <h3 className="mb-3 text-center text-2xl font-bold text-black dark:text-white md:text-3xl">
+          Mulai Asesmen Talenta
+        </h3>
+
+        <div className="mb-8 flex items-center justify-center">
+          <span className="hidden h-[1px] w-full max-w-[50px] bg-gray-300 dark:bg-gray-700 sm:block" />
+          <p className="w-full text-center text-base font-medium text-gray-700 dark:text-gray-300">
             Lengkapi identitasmu sebelum memulai asesmen
           </p>
-          <span className="hidden h-[1px] w-full max-w-[80px] bg-gray-300 dark:bg-gray-700 sm:block" />
+          <span className="hidden h-[1px] w-full max-w-[50px] bg-gray-300 dark:bg-gray-700 sm:block" />
         </div>
 
-          <form onSubmit={handleSubmit} role="form" aria-label="Form identitas asesmen">
-            {/* Nama */}
-            <div className="mb-6">
-              <label
-                htmlFor="nama"
-                className="mb-2 block text-base font-medium text-gray-800 dark:text-gray-200"
-              >
-                Nama
-              </label>
-              <input
-                ref={namaRef}
-                id="nama"
-                type="text"
-                value={formData.nama}
-                onChange={handleNamaChange}
-                onBlur={handleNamaBlur}
-                placeholder="Masukkan nama lengkap"
-                disabled={isSubmitting}
-                required
-                aria-invalid={!!namaError}
-                aria-describedby={namaError ? "nama-error" : undefined}
-                className={`w-full rounded-md border px-6 py-3 text-base outline-none transition-all duration-300 focus:border-myunila focus-visible:ring-2 focus-visible:ring-myunila-500 dark:border-transparent dark:bg-[#2C303B] dark:text-white ${
-                  namaError
-                    ? "border-danger focus:border-danger"
-                    : "border-gray-300 focus:border-myunila"
-                }`}
-              />
-              {namaError && (
-                <p id="nama-error" className="mt-1 text-xs text-danger">
-                  {namaError}
-                </p>
-              )}
-            </div>
+        <form onSubmit={handleSubmit} className="space-y-8">
+          <div className="flex flex-col sm:flex-row gap-3">
+            <InputField
+              label="Nama"
+              value={formData.nama}
+              onChange={(v) => handleChange("nama", v)}
+              onBlur={() => validateField("nama", formData.nama)}
+              error={errors.nama}
+              ref={refs.nama}
+              placeholder="Masukkan nama lengkap"
+              disabled={isSubmitting}
+            />
+            <InputField
+              label="Email"
+              value={formData.email}
+              onChange={(v) => handleChange("email", v)}
+              onBlur={() => validateField("email", formData.email)}
+              error={errors.email}
+              ref={refs.email}
+              placeholder="Masukkan email"
+              disabled={isSubmitting}
+            />
+          </div>
 
-            {/* NPM */}
-            <div className="mb-6">
-              <label
-                htmlFor="npm"
-                className="mb-2 block text-base font-medium text-gray-800 dark:text-gray-200"
-              >
-                NPM
-              </label>
-              <input
-                ref={npmRef}
-                id="npm"
-                type="text"
-                value={formData.npm}
-                onChange={handleNpmChange}
-                onBlur={handleNpmBlur}
-                placeholder="Masukkan NPM (10 digit)"
-                maxLength={10}
-                disabled={isSubmitting}
-                required
-                aria-invalid={!!npmError}
-                aria-describedby={npmError ? "npm-error" : undefined}
-               className={`w-full rounded-md border px-6 py-3 text-base outline-none transition-all duration-300 focus:border-myunila focus-visible:ring-2 focus-visible:ring-myunila-500 dark:border-transparent dark:bg-[#2C303B] dark:text-white ${
-                  namaError
-                    ? "border-danger focus:border-danger"
-                    : "border-gray-300 focus:border-myunila"
-                }`}
-              />
-              {npmError && (
-                <p id="npm-error" className="mt-1 text-xs text-danger">
-                  {npmError}
-                </p>
-              )}
-            </div>
+          {/* Baris 2 */}
+          <div className="flex flex-col sm:flex-row gap-3">
+            <InputField
+              label="NPM"
+              value={formData.npm}
+              onChange={(v) =>
+                handleChange("npm", v.replace(/\D/g, "").slice(0, 10))
+              }
+              onBlur={() => validateField("npm", formData.npm)}
+              error={errors.npm}
+              ref={refs.npm}
+              placeholder="Masukkan NPM"
+              disabled={isSubmitting}
+            />
+            <InputField
+              label="Angkatan"
+              value={formData.angkatan}
+              onChange={(v) =>
+                handleChange("angkatan", v.replace(/\D/g, "").slice(0, 4))
+              }
+              onBlur={() => validateField("angkatan", formData.angkatan)}
+              error={errors.angkatan}
+              ref={refs.angkatan}
+              placeholder="Contoh: 2023"
+              disabled={isSubmitting}
+            />
+          </div>
 
-            {/* Email */}
-            <div className="mb-6">
-              <label
-                htmlFor="email"
-                className="mb-2 block text-base font-medium text-gray-800 dark:text-gray-200"
-              >
-                Email
-              </label>
-              <input
-                ref={emailRef}
-                id="email"
-                type="email"
-                value={formData.email}
-                onChange={handleEmailChange}
-                onBlur={handleEmailBlur}
-                placeholder="Masukkan email aktif"
-                disabled={isSubmitting}
-                required
-                aria-invalid={!!emailError}
-                aria-describedby={emailError ? "email-error" : undefined}
-                className={`w-full rounded-md border px-6 py-3 text-base outline-none transition-all duration-300 focus:border-myunila focus-visible:ring-2 focus-visible:ring-myunila-500 dark:border-transparent dark:bg-[#2C303B] dark:text-white ${
-                  namaError
-                    ? "border-danger focus:border-danger"
-                    : "border-gray-300 focus:border-myunila"
-                }`}
-              />
-              {emailError && (
-                <p id="email-error" className="mt-1 text-xs text-danger">
-                  {emailError}
-                </p>
-              )}
-            </div>
+          <div className="flex flex-col sm:flex-row gap-3">
+            <SelectField
+              label="Fakultas"
+              value={formData.fakultas}
+              onChange={(v) => handleChange("fakultas", v)}
+              error={errors.fakultas}
+              options={Faculties}
+              disabled={isSubmitting}
+            />
+            <SelectField
+              label="Program Studi"
+              value={formData.prodi}
+              onChange={(v) => handleChange("prodi", v)}
+              error={errors.prodi}
+              options={
+                formData.fakultas ? StudyProgramsByFaculty[formData.fakultas] : []
+              }
+              disabled={isSubmitting || !formData.fakultas}
+            />
+          </div>
 
-            {/* Tombol Submit */}
-            <button
-              type="submit"
-              disabled={isSubmitting || !isDataComplete}
-              className="flex w-full items-center justify-center rounded-full bg-myunila px-9 py-4 text-base font-medium text-white duration-300 hover:bg-myunila-700 disabled:cursor-not-allowed disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-myunila-500 focus:ring-offset-2"
-            >
-              {isSubmitting ? (
-                <>
-                  <Loader2 className="mr-2 h-5 w-5 animate-spin" />
-                  Menyimpan...
-                </>
-              ) : (
-                "Lanjut ke Pertanyaan"
-              )}
-            </button>
-          </form>
-        </div>
+          <button
+            type="submit"
+            disabled={isSubmitting || !isDataComplete}
+            className="flex w-full items-center justify-center rounded-full 
+                bg-myunila px-9 py-4 text-base font-medium text-white 
+                duration-300 hover:bg-myunila-700 
+                shadow-submit dark:shadow-submit-dark"
+          >
+            {isSubmitting ? (
+              <>
+                <Loader2 className="mr-2 animate-spin" />
+                Menyimpan...
+              </>
+            ) : (
+              "Lanjut ke Pertanyaan"
+            )}
+          </button>
+        </form>
       </div>
     </section>
   );
 }
+
+/* ---------- Input Field ---------- */
+const InputField = ({
+  label,
+  value,
+  onChange,
+  onBlur,
+  error,
+  placeholder,
+  disabled,
+  ref,
+}: any) => (
+  <div className="flex-1">
+    <label className="mb-2 block text-base font-medium text-gray-800 dark:text-gray-200">
+      {label}
+    </label>
+    <input
+      ref={ref}
+      type="text"
+      value={value}
+      onChange={(e) => onChange(e.target.value)}
+      onBlur={onBlur}
+      placeholder={placeholder}
+      disabled={disabled}
+      className={`w-full rounded-md border px-5 py-3 text-base outline-none transition focus:border-myunila hover:border-myunila focus-within:border-myunila dark:border-gray-700 dark:bg-gray-800 dark:text-white ${
+        error ? "border-danger hover:border-danger focus:border-danger focus:ring-danger" : "border-gray-300"
+      }`}
+    />
+    {error && <p className="mt-1 text-xs text-danger">{error}</p>}
+  </div>
+);
+
+/* ---------- Select Field ---------- */
+const SelectField = ({
+  label,
+  value,
+  onChange,
+  error,
+  options,
+  disabled,
+}: any) => (
+  <div className="flex-1">
+    <label className="mb-2 block text-base font-medium text-gray-800 dark:text-gray-200">
+      {label}
+    </label>
+    <Select
+      value={value ? { label: value, value } : null}
+      onChange={(opt) => onChange(opt?.value ?? "")}
+      options={options.map((o: string) => ({ label: o, value: o }))}
+      isDisabled={disabled}
+      placeholder={`Pilih ${label.toLowerCase()}`}
+      className="w-full text-base"
+      styles={{
+        control: (base, state) => ({
+          ...base,
+          borderRadius: 8,
+          height: 48,
+          borderColor: error
+            ? "#EF4444"
+            : state.isFocused
+            ? "#085EA8"
+            : "#d1d5db",
+          boxShadow: state.isFocused ? "0 0 0 1px #085EA8" : "none",
+          backgroundColor: disabled ? "#f9fafb" : "white",
+        }),
+      }}
+    />
+    {error && <p className="mt-1 text-xs text-danger">{error}</p>}
+  </div>
+);

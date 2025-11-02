@@ -3,16 +3,14 @@
 import { motion } from "framer-motion";
 import { User, Lock } from "lucide-react";
 
-const Signin = () => {
+const SignIn = () => {
   return (
     <section
       id="signin"
       className="
-        relative z-10 flex items-center justify-center overflow-hidden
-        bg-gradient-to-b from-white via-myunila-50 to-myunila-100
-        pb-16 pt-[120px] text-center 
-        dark:from-gray-950 dark:via-gray-900 dark:to-gray-800 
-        md:pb-[120px] md:pt-[150px] xl:min-h-screen
+        relative z-10 text-center flex items-center justify-center overflow-hidden
+        bg-gradient-to-b from-white via-myunila-50 to-myunila-100 dark:from-gray-950 dark:via-gray-900 dark:to-gray-800 
+        pb-20 pt-20 sm:pb-24 sm:pt-32 md:pb-[120px] md:pt-[150px]
         transition-colors duration-500
       "
       style={{
@@ -21,10 +19,7 @@ const Signin = () => {
         backgroundPosition: "center",
       }}
     >
-      {/* Overlay background */}
       <div className="absolute inset-0 bg-gradient-to-b from-white/70 via-myunila-50/60 to-myunila-100/50 dark:from-gray-950/80 dark:via-gray-900/75 dark:to-gray-800/80 transition-colors duration-500" />
-
-      {/* Dekorasi blur */}
       <motion.div
         initial={{ opacity: 0, scale: 0.9 }}
         whileInView={{ opacity: 1, scale: 1 }}
@@ -40,9 +35,8 @@ const Signin = () => {
         className="absolute -bottom-10 -left-10 h-48 w-48 sm:h-60 sm:w-60 md:h-72 md:w-72 lg:h-80 lg:w-80 xl:h-96 xl:w-96 rounded-full bg-myunila/50 dark:bg-myunila-300/10 blur-3xl"
       />
 
-      {/* Card form */}
-      <div className="relative z-10 shadow-three mx-auto max-w-[600px] rounded-lg bg-white/90 px-6 py-10 backdrop-blur-sm dark:bg-gray-900/90 sm:p-[60px] transition-colors duration-500">
-        <h3 className="mb-3 text-center text-2xl font-bold text-black dark:text-white sm:text-3xl">
+      <div className="relative z-10 shadow-three mx-auto max-w-[600px] rounded-lg bg-white px-6 py-10 backdrop-blur-sm dark:bg-gray-700 sm:p-[60px] transition-colors duration-500">
+        <h3 className="mb-3 text-center text-2xl font-bold text-black dark:text-white md:text-3xl">
           Selamat Datang di{" "}
           <span className="text-myunila dark:text-myunila-400">
             CCED Universitas Lampung
@@ -150,4 +144,4 @@ const Signin = () => {
   );
 };
 
-export default Signin;
+export default SignIn;

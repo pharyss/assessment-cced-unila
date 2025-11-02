@@ -1,4 +1,4 @@
-import SigninComponent from "@/components/SignIn";
+import SignInComponent from "@/components/SignIn";
 import { Metadata } from "next";
 
 export const metadata: Metadata = {
@@ -6,10 +6,10 @@ export const metadata: Metadata = {
   description: "Masuk ke Dashboard CCED Universitas Lampung",
 };
 
-export default function SigninPage() {
+export default function SignInPage() {
   return (
     <>
-      <SigninComponent />
+      <SignInComponent />
     </>
   );
 }
