@@ -26,7 +26,7 @@ const AssessmentDetails = ({ assessment }: { assessment: Assessment }) => {
                         {title}
                     </h2>
 
-                    <div className="mb-4 flex items-center gap-2 text-primary">
+                    <div className="mb-4 flex items-center gap-2 text-myunila">
                     <ClipboardList className="h-5 w-5" />
                     <h2 className="text-lg font-semibold">Petunjuk Pengisian Asesmen</h2>
                     </div>
@@ -40,7 +40,7 @@ const AssessmentDetails = ({ assessment }: { assessment: Assessment }) => {
                     <div className="sm-items-start flex flex-col items-center justify-center space-y-4 sm:flex-row sm:justify-start sm:space-x-4 sm:space-y-0">
                     <Link
                         href={`/assessment/${assessment.id}/start`}
-                        className="flex items-center gap-2 rounded-full bg-primary px-8 py-4 text-base font-semibold text-white duration-300 ease-in-out hover:bg-primary/80"
+                        className="flex items-center gap-2 rounded-full bg-myunila px-8 py-4 text-base font-semibold text-white duration-300 ease-in-out hover:bg-myunila/80"
                     >
                         Mulai Asesmen
                         <ArrowRight className="h-5 w-5" />

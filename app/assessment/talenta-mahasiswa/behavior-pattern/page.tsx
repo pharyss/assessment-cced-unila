@@ -114,14 +114,7 @@ const isAllComplete = totalAnsweredAll === totalQuestions;
     next();
 
     window.scrollTo({ top: 0 });
-    toast.success("Asesmen selesai! Lihat hasil Anda.");
   };
-
-  useEffect(() => {
-    if (currentStep === "behavior-pattern" && isAllComplete && !showConfirmModal) {
-      toast.success("Asesmen pola perilaku sudah lengkap...");
-    }
-  }, [currentStep, isAllComplete, showConfirmModal]);
 
   const handleStartAssessment = () => setShowIntroModal(false);
 
@@ -181,7 +174,7 @@ const isAllComplete = totalAnsweredAll === totalQuestions;
 
       {/* ===== HALAMAN ASESMEN ===== */}
       <section className="relative z-10 bg-gradient-to-b from-white via-myunila-50 to-myunila-100 pb-20 pt-20 dark:from-gray-950 dark:via-gray-900 dark:to-gray-800 sm:pb-24 sm:pt-32 md:pb-[120px] md:pt-[150px]">
-        <div className="container mx-auto px-8 md:px-16 lg:px-32">
+        <div className="container mx-auto px-4 md:px-16 lg:px-32">
           <div className="mx-auto max-w-4xl rounded-2xl border border-gray-200 bg-white p-6 dark:border-gray-700 dark:bg-gray-900 sm:p-10">
             <div className="mb-10 text-center">
               <h2 className="mb-2 text-2xl font-bold text-myunila dark:text-white sm:text-3xl">
@@ -233,8 +226,8 @@ const isAllComplete = totalAnsweredAll === totalQuestions;
                             <span
                               className={`flex h-8 w-8 md:h-12 md:w-12 items-center justify-center rounded-full border transition-all ${
                                 isSelected
-                                  ? "scale-110 border-myunila bg-myunila-100/50 text-myunila font-bold"
-                                  : "border-gray-400 bg-white hover:scale-105 dark:border-gray-600 dark:bg-gray-800"
+                                  ? "scale-110 border-myunila bg-myunila-100/50 text-myunila dark:border-myunila-400 dark:bg-myunila-700/40 dark:text-white font-bold shadow-md dark:shadow-myunila/20"
+                                  : "border-gray-400 bg-white text-gray-700 hover:scale-105 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-200 hover:dark:bg-gray-700"
                               }`}
                             >
                               {val}
@@ -256,7 +249,7 @@ const isAllComplete = totalAnsweredAll === totalQuestions;
               <button
                 onClick={handlePrev}
                 disabled={currentDimIndex === 0}
-                className="flex items-center gap-2 rounded-full border px-5 py-2 text-sm font-medium text-gray-600 hover:bg-gray-100 disabled:opacity-40"
+                className="flex items-center justify-center gap-2 rounded-full border px-6 py-2.5 text-sm font-medium text-gray-600 hover:bg-gray-100 disabled:opacity-40"
               >
                 <ArrowLeft className="h-4 w-4" /> Sebelumnya
               </button>

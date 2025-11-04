@@ -40,7 +40,7 @@ const Footer = () => {
                     target="_blank"
                     rel="noopener noreferrer"
                     aria-label="YouTube"
-                    className="text-body-color-dark mr-6 duration-300 hover:text-primary"
+                    className="text-body-color-dark mr-6 duration-300 hover:text-myunila"
                   >
                     <svg
         xmlns="http://www.w3.org/2000/svg"
@@ -58,7 +58,7 @@ const Footer = () => {
                     target="_blank"
                     rel="noopener noreferrer"
                     aria-label="Instagram"
-                    className="text-body-color-dark mr-6 duration-300 hover:text-primary"
+                    className="text-body-color-dark mr-6 duration-300 hover:text-myunila"
                   >
                     <svg
         xmlns="http://www.w3.org/2000/svg"
@@ -76,7 +76,7 @@ const Footer = () => {
                     target="_blank"
                     rel="noopener noreferrer"
                     aria-label="WhatsApp"
-                    className="text-body-color-dark duration-300 hover:text-primary"
+                    className="text-body-color-dark duration-300 hover:text-myunila"
                   >
                      <svg
         xmlns="http://www.w3.org/2000/svg"
@@ -131,7 +131,7 @@ const Footer = () => {
                       href="https://cced.unila.ac.id/"
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="text-body-color-dark mb-4 inline-block text-base duration-300 hover:text-primary"
+                      className="text-body-color-dark mb-4 inline-block text-base duration-300 hover:text-myunila"
                     >
                       CCED Universitas Lampung
                     </a>
@@ -139,7 +139,7 @@ const Footer = () => {
                   <li>
                     <a
                       href="/tes-asesmen"
-                      className="text-body-color-dark mb-4 inline-block text-base duration-300 hover:text-primary"
+                      className="text-body-color-dark mb-4 inline-block text-base duration-300 hover:text-myunila"
                     >
                       Tes Asesmen
                     </a>
@@ -147,7 +147,7 @@ const Footer = () => {
                   <li>
                     <a
                       href="/infografis"
-                      className="text-body-color-dark mb-4 inline-block text-base duration-300 hover:text-primary"
+                      className="text-body-color-dark mb-4 inline-block text-base duration-300 hover:text-myunila"
                     >
                       Infografis
                     </a>
@@ -165,7 +165,7 @@ const Footer = () => {
                   <li>
                     <a
                       href="/#contact"
-                      className="text-body-color-dark mb-4 inline-block text-base duration-300 hover:text-primary"
+                      className="text-body-color-dark mb-4 inline-block text-base duration-300 hover:text-myunila"
                     >
                       Hubungi Kami
                     </a>
@@ -173,7 +173,7 @@ const Footer = () => {
                   <li>
                     <a
                       href="/"
-                      className="text-body-color-dark mb-4 inline-block text-base duration-300 hover:text-primary"
+                      className="text-body-color-dark mb-4 inline-block text-base duration-300 hover:text-myunila"
                     >
                       Panduan
                     </a>
@@ -181,7 +181,7 @@ const Footer = () => {
                   <li>
                     <a
                       href="/about"
-                      className="text-body-color-dark mb-4 inline-block text-base duration-300 hover:text-primary"
+                      className="text-body-color-dark mb-4 inline-block text-base duration-300 hover:text-myunila"
                     >
                       Tentang Kami
                     </a>

@@ -150,7 +150,7 @@ const ErrorPage = () => {
                 </p>
                 <Link
                   href="/"
-                  className="px-8 py-3 text-base font-bold text-white duration-300 rounded-md bg-primary shadow-signUp hover:bg-white hover:text-primary md:px-9 lg:px-8 xl:px-9"
+                  className="px-8 py-3 text-base font-bold text-white duration-300 rounded-md bg-myunila shadow-signUp hover:bg-white hover:text-myunila md:px-9 lg:px-8 xl:px-9"
                 >
                   Back to Homepage
                 </Link>

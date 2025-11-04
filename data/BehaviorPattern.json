@@ -15,7 +15,7 @@
         },
         "dimensions": {
         "self_acceptance": {
-            "title": "Self Acceptance",
+            "title": "Penerimaan Diri",
             "questions": [
             {
                 "id": 1,
@@ -50,7 +50,7 @@
             ]
         },
         "autonomy": {
-            "title": "Autonomy",
+            "title": "Kemandirian",
             "questions": [
             {
                 "id": 7,
@@ -85,7 +85,7 @@
             ]
         },
         "purpose_in_life": {
-            "title": "Purpose in Life",
+            "title": "Tujuan Hidup Bermakna",
             "questions": [
             {
                 "id": 13,
@@ -120,7 +120,7 @@
             ]
         },
         "personal_growth": {
-            "title": "Personal Growth",
+            "title": "Pertumbuhan Pribadi",
             "questions": [
             {
                 "id": 19,
@@ -155,7 +155,7 @@
             ]
         },
         "environmental_mastery": {
-            "title": "Environmental Mastery",
+            "title": "Pengelolaan Lingkungan",
             "questions": [
             {
                 "id": 25,
@@ -190,7 +190,7 @@
             ]
         },
         "positive_relationships": {
-            "title": "Positive Relationship with Others",
+            "title": "Hubungan Positif dengan Orang Lain",
             "questions": [
             {
                 "id": 31,

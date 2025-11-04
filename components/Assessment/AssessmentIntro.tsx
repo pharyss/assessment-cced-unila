@@ -65,7 +65,7 @@ const AssessmentIntro = () => {
   return (
     <section
       id="about"
-      className="pb-20 pt-20 sm:pb-24 sm:pt-32 md:pb-[120px] md:pt-[150px]"
+      className="pb-20 pt-24 sm:pb-24 sm:pt-32 md:pb-[120px] md:pt-[150px]"
     >
       <div className="container mx-auto px-8 md:px-16 lg:px-32">
         <div className="flex flex-col items-center justify-center gap-8 text-center">

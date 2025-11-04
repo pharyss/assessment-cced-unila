@@ -5,7 +5,7 @@ import careerPathData from "@/data/CareerPath.json";
 import behaviorPatternData from "@/data/BehaviorPattern.json";
 
 // =============================
-// 🧩 A. KONFIGURASI DASAR DATA
+// KONFIGURASI DASAR DATA
 // =============================
 
 // Mapping MBTI → Bidang Karir Dominan & Sekunder
@@ -68,26 +68,26 @@ const COMMUNICATION_STYLE = {
 };
 
 const WORKING_STYLE = {
-  ISTJ: "Structured Solo",
-  ISFJ: "Structured Team",
-  INFJ: "Structured Solo",
-  INTJ: "Structured Solo",
-  ISTP: "Structured Solo",
-  ISFP: "Flexible Solo",
-  INFP: "Flexible Solo",
-  INTP: "Flexible Solo",
-  ESTP: "Flexible Team",
-  ESFP: "Flexible Team",
-  ENFP: "Flexible Team",
-  ENTP: "Flexible Team",
-  ESTJ: "Structured Team",
-  ESFJ: "Structured Team",
-  ENFJ: "Structured Team",
-  ENTJ: "Structured Team",
+  ISTJ: "StructuredSolo",
+  ISFJ: "StructuredTeam",
+  INFJ: "StructuredSolo",
+  INTJ: "StructuredSolo",
+  ISTP: "StructuredSolo",
+  ISFP: "FlexibleSolo",
+  INFP: "FlexibleSolo",
+  INTP: "FlexibleSolo",
+  ESTP: "FlexibleTeam",
+  ESFP: "FlexibleTeam",
+  ENFP: "FlexibleTeam",
+  ENTP: "FlexibleTeam",
+  ESTJ: "StructuredTeam",
+  ESFJ: "StructuredTeam",
+  ENFJ: "StructuredTeam",
+  ENTJ: "StructuredTeam",
 };
 
 // =============================
-// ⚙️ B. CUSTOM HOOK UTAMA
+// B. CUSTOM HOOK UTAMA
 // =============================
 
 export function useAssessmentLogic(answers: Record<string, any>) {
@@ -97,7 +97,7 @@ export function useAssessmentLogic(answers: Record<string, any>) {
   const calculateCareerField = useMemo(() => {
     const score = { Praktisi: 0, Akademisi: 0, Kreatif: 0, Wirausaha: 0 };
 
-    for (let i = 1; i <= 11; i++) {
+    for (let i = 1; i <= 12; i++) {
       const key = `A-${i}`;
       const value = answers[key];
       if (!value) continue;
@@ -147,80 +147,74 @@ export function useAssessmentLogic(answers: Record<string, any>) {
 
     if (calculateCareerField === map.dominan) return "Sangat Sesuai";
     if (calculateCareerField === map.sekunder) return "Cukup Sesuai";
-    return "Kurang Sesuai";
+    return "Tidak Sesuai";
   }, [calculateCareerField, calculateMBTI]);
 
   // -----------------------------
-  // PART 2: POLA PERILAKU
-  // -----------------------------
-  const calculateBehaviorScores = useMemo(() => {
-    const result: Record<string, string> = {};
-    const dimensions = Object.entries(behaviorPatternData.part2.dimensions);
+// PART 2: POLA PERILAKU
+// -----------------------------
+const calculateBehaviorScores = useMemo(() => {
+  const result: Record<string, { percentage: number; level: string }> = {};
+  const dimensions = Object.entries(behaviorPatternData.part2.dimensions);
 
-    dimensions.forEach(([dimKey, dimValue], dimIndex) => {
-      const baseId = 40 + dimIndex * 6;
-      const scores: number[] = [];
+  dimensions.forEach(([dimKey, dimValue], dimIndex) => {
+    const baseId = 40 + dimIndex * 6;
+    const scores: number[] = [];
 
-      dimValue.questions.forEach((q, idx) => {
-        const id = baseId + idx;
-        const value = answers[id];
-        if (value === undefined) return;
+    dimValue.questions.forEach((q, idx) => {
+      const id = baseId + idx;
+      const value = answers[id];
+      if (value === undefined) return;
 
-        const adjusted = q.type === "unfavorable" ? 6 - value : value;
-        scores.push(adjusted);
-      });
-
-      if (scores.length > 0) {
-        const avg = scores.reduce((a, b) => a + b, 0) / scores.length;
-        let level = "Sedang";
-        if (avg < 2.4) level = "Rendah";
-        else if (avg > 3.6) level = "Tinggi";
-        result[dimKey] = level;
-      }
+      const adjusted = q.type === "unfavorable" ? 6 - value : value;
+      scores.push(adjusted);
     });
 
-    return result;
-  }, [answers]);
+    if (scores.length > 0) {
+      const avg = scores.reduce((a, b) => a + b, 0) / scores.length;
+      const percentage = ((avg - 1) / 4) * 100;
+
+      let level = "Sedang";
+      if (percentage < 40) level = "Rendah";
+      else if (percentage > 70) level = "Tinggi";
+
+      result[dimKey] = {
+        percentage: Math.round(percentage),
+        level,
+      };
+    }
+  });
+
+  return result;
+}, [answers]);
+
 
   // -----------------------------
   // HASIL AKHIR
   // -----------------------------
   const getFinalResult = useMemo(() => {
-    const bidang = calculateCareerField;
     const mbti = calculateMBTI;
     const kesesuaian = analyzeCareerCompatibility;
     const behavior = calculateBehaviorScores;
 
-    const answerA12 = answers["A-12"];
-    let chosenCategory = "Belum Memilih";
-
-    if (answerA12) {
-      const q12 = careerPathData.part1.subPartA.questions.find(
-        (q) => q.id === 12,
-      );
-      const option = q12?.options.find((opt) => opt.label === answerA12);
-
-      if (option?.category) {
-        chosenCategory = option.category === bidang ? "Sesuai" : "Tidak Sesuai";
-      }
-    }
+    const mbtiMap = MBTI_MAPPING[mbti] || { dominan: "N/A", sekunder: "N/A" };
 
     return {
-      bidangKarir: bidang,
       mbtiType: mbti,
       kesesuaian,
-      kesesuaianKarir: chosenCategory,
       thinkingStyle: THINKING_STYLE[mbti],
       communicationStyle: COMMUNICATION_STYLE[mbti],
       workingStyle: WORKING_STYLE[mbti],
       behaviorDimensions: behavior,
+      karirDominanMBTI: mbtiMap.dominan,
+      karirSekunderMBTI: mbtiMap.sekunder,
+      karirMinat: calculateCareerField,
     };
   }, [
     calculateCareerField,
     calculateMBTI,
     analyzeCareerCompatibility,
     calculateBehaviorScores,
-    answers,
   ]);
 
   return { getFinalResult };

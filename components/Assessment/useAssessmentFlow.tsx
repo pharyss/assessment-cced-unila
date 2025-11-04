@@ -9,41 +9,57 @@ import behaviorPatternData from "@/data/BehaviorPattern.json";
 
 type Answers = Record<string, any>;
 
-const DEFAULT_STEPS = ["start", "career-path", "behavior-pattern", "result"] as const;
+const DEFAULT_STEPS = [
+  "start",
+  "career-path",
+  "behavior-pattern",
+  "result",
+] as const;
 type StepName = (typeof DEFAULT_STEPS)[number];
 
 /* ------------------------- Helper Validation ------------------------- */
-const isStepComplete = (
-  step: StepName,
-  answers: Answers
-): boolean => {
+const isStepComplete = (step: StepName, answers: Answers): boolean => {
   switch (step) {
     case "start":
-  return Boolean(
-    answers.nama && answers.nama.trim() &&
-    answers.npm && answers.npm.trim().replace(/\D/g, "").length === 10 &&
-    answers.email && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(answers.email.trim()) &&
-    answers.angkatan && answers.angkatan.trim().replace(/\D/g, "").length === 4 &&
-    answers.fakultas &&
-    answers.prodi
-  );
+      return Boolean(
+        answers.nama &&
+          answers.nama.trim() &&
+          answers.npm &&
+          answers.npm.trim().replace(/\D/g, "").length === 10 &&
+          answers.email &&
+          /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(answers.email.trim()) &&
+          answers.angkatan &&
+          answers.angkatan.trim().replace(/\D/g, "").length === 4 &&
+          answers.fakultas &&
+          answers.prodi,
+      );
 
     case "career-path": {
-      const subAKeys = careerPathData.part1.subPartA.questions.map((q) => `A-${q.id}`);
-      const subBKeys = careerPathData.part1.subPartB.questions.map((q) => `B-${q.id}`);
-      const allA = subAKeys.every((k) => answers[k] !== undefined && answers[k] !== "");
-      const allB = subBKeys.every((k) => answers[k] !== undefined && answers[k] !== "");
+      const subAKeys = careerPathData.part1.subPartA.questions.map(
+        (q) => `A-${q.id}`,
+      );
+      const subBKeys = careerPathData.part1.subPartB.questions.map(
+        (q) => `B-${q.id}`,
+      );
+      const allA = subAKeys.every(
+        (k) => answers[k] !== undefined && answers[k] !== "",
+      );
+      const allB = subBKeys.every(
+        (k) => answers[k] !== undefined && answers[k] !== "",
+      );
       return allA && allB;
     }
 
-     case "behavior-pattern": {
+    case "behavior-pattern": {
       const dimensions = Object.entries(behaviorPatternData.part2.dimensions);
       const totalQuestions = dimensions.length * 6;
       const allQuestionIds = dimensions.flatMap(([_, d], dimIndex) => {
         const baseId = 40 + dimIndex * 6;
         return d.questions.map((q, idx) => baseId + idx);
       });
-      return allQuestionIds.every((id) => answers[id] !== undefined && answers[id] !== "");
+      return allQuestionIds.every(
+        (id) => answers[id] !== undefined && answers[id] !== "",
+      );
     }
 
     case "result":
@@ -101,7 +117,7 @@ export function useAssessmentFlow() {
     try {
       localStorage.setItem(
         storageKey,
-        JSON.stringify({ answers: newAnswers, stepIndex: newIndex })
+        JSON.stringify({ answers: newAnswers, stepIndex: newIndex }),
       );
     } catch (err) {
       console.error("❌ Gagal menyimpan asesmen:", err);
@@ -110,13 +126,13 @@ export function useAssessmentFlow() {
   };
 
   const navigate = (index: number, answersOverride?: Answers) => {
-  const stepName = DEFAULT_STEPS[index];
-  const answersToPersist = answersOverride || answers;
+    const stepName = DEFAULT_STEPS[index];
+    const answersToPersist = answersOverride || answers;
 
-  setStepIndex(index);
-  persist(answersToPersist, index);
-  router.replace(`/assessment/${id}/${stepName}`);
-};
+    setStepIndex(index);
+    persist(answersToPersist, index);
+    router.replace(`/assessment/${id}/${stepName}`);
+  };
 
   /* --------------------------- Actions ----------------------------- */
   const saveAnswer = (key: string, value: any) => {
@@ -126,17 +142,17 @@ export function useAssessmentFlow() {
   };
 
   const next = (updatedAnswers?: Answers) => {
-  const currentStep = DEFAULT_STEPS[stepIndex];
-  const answersToCheck = updatedAnswers || answers;
+    const currentStep = DEFAULT_STEPS[stepIndex];
+    const answersToCheck = updatedAnswers || answers;
 
-  if (!isStepComplete(currentStep, answersToCheck)) {
-    toast.error(`Lengkapi ${currentStep.replace("-", " ")} terlebih dahulu!`);
-    return;
-  }
+    if (!isStepComplete(currentStep, answersToCheck)) {
+      toast.error(`Lengkapi ${currentStep.replace("-", " ")} terlebih dahulu!`);
+      return;
+    }
 
-  if (updatedAnswers) {
-    setAnswers(updatedAnswers);
-  }
+    if (updatedAnswers) {
+      setAnswers(updatedAnswers);
+    }
 
     const nextIndex = Math.min(stepIndex + 1, DEFAULT_STEPS.length - 1);
     navigate(nextIndex, updatedAnswers);

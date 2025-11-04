@@ -156,8 +156,8 @@ export default function CareerPathFill() {
       )}
 
       {/* ===== HALAMAN ASESMEN ===== */}
-      <section className="relative z-10 bg-gradient-to-b from-white via-myunila-50 to-myunila-100 pb-20 pt-20 dark:from-gray-950 dark:via-gray-900 dark:to-gray-800 sm:pb-24 sm:pt-32 md:pb-[120px] md:pt-[150px]">
-        <div className="container mx-auto px-8 md:px-16 lg:px-32">
+      <section className="relative z-10 bg-gradient-to-b from-white via-myunila-50 to-myunila-100 pb-20 pt-24 dark:from-gray-950 dark:via-gray-900 dark:to-gray-800 sm:pb-28 sm:pt-32 md:pb-[120px] md:pt-[150px]">
+        <div className="container mx-auto px-4 md:px-16 lg:px-32">
           <div className="mx-auto max-w-4xl rounded-2xl border border-gray-200 bg-white p-6 transition-all duration-300 dark:border-gray-700 dark:bg-gray-900 sm:p-10">
             <div className="mb-10 text-center">
               <h2 className="mb-2 text-2xl font-bold text-myunila dark:text-white sm:text-3xl">
@@ -221,7 +221,7 @@ export default function CareerPathFill() {
                             onChange={() => handleSelect(q, opt.label)}
                             className="hidden"
                           />
-                          <span className="text-base">{opt.text}</span>
+                          <span>{opt.text}</span>
                         </label>
                       ))}
                     </div>

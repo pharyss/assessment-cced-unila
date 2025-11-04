@@ -26,7 +26,7 @@ const Hero = () => {
                 <div className="flex flex-col items-center justify-center space-y-4 sm:flex-row sm:items-start sm:justify-start sm:space-x-4 sm:space-y-0">
                   <Link
                     href="/assessment/talenta-mahasiswa"
-                    className="flex items-center gap-2 rounded-full bg-primary px-8 py-4 text-base font-semibold text-white duration-300 ease-in-out hover:bg-primary/80"
+                    className="flex items-center gap-2 rounded-full bg-myunila px-8 py-4 text-base font-semibold text-white duration-300 ease-in-out hover:bg-myunila/80"
                   >
                     Mulai Eksplorasi
                     <ArrowRight className="h-5 w-5" />
