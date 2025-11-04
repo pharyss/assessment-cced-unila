@@ -6,7 +6,7 @@ import { useAssessmentFlow } from "@/components/Assessment/useAssessmentFlow";
 import toast from "react-hot-toast";
 import { Loader2 } from "lucide-react";
 import Select from "react-select";
-import { Faculties, StudyProgramsByFaculty } from "@/data/StudyPrograms";
+import { useStudentFilters } from "@/lib/hooks/useStudentFilters";
 
 interface FormData {
   nama: string;
@@ -15,11 +15,17 @@ interface FormData {
   angkatan: string;
   fakultas: string;
   prodi: string;
+  jenjang: string;
 }
 
 export default function StartPage() {
   const router = useRouter();
   const { answers, saveAnswer, next, currentStep } = useAssessmentFlow();
+
+  // Fetch student filters from backend
+  const { data: filtersResponse, isLoading: isLoadingFilters } =
+    useStudentFilters();
+  const filters = filtersResponse?.data;
 
   const [formData, setFormData] = useState<FormData>({
     nama: answers.nama ?? "",
@@ -28,6 +34,7 @@ export default function StartPage() {
     angkatan: answers.angkatan ?? "",
     fakultas: answers.fakultas ?? "",
     prodi: answers.prodi ?? "",
+    jenjang: answers.jenjang ?? "",
   });
 
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -38,13 +45,13 @@ export default function StartPage() {
     angkatan: "",
     fakultas: "",
     prodi: "",
+    jenjang: "",
   });
 
   const refs = {
     nama: useRef<HTMLInputElement>(null),
     npm: useRef<HTMLInputElement>(null),
     email: useRef<HTMLInputElement>(null),
-    angkatan: useRef<HTMLInputElement>(null),
   };
 
   useEffect(() => {
@@ -66,11 +73,9 @@ export default function StartPage() {
           msg = "Email tidak valid";
         break;
       case "angkatan":
-        if (value.trim().replace(/\D/g, "").length !== 4)
-          msg = "Angkatan harus 4 digit";
-        break;
       case "fakultas":
       case "prodi":
+      case "jenjang":
         if (!value) msg = "Harap pilih opsi";
         break;
     }
@@ -121,10 +126,48 @@ export default function StartPage() {
       formData.nama.trim() &&
       formData.npm.length === 10 &&
       /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email) &&
-      formData.angkatan.length === 4 &&
+      formData.angkatan &&
       formData.fakultas &&
-      formData.prodi,
+      formData.prodi &&
+      formData.jenjang,
     [errors, formData],
+  );
+
+  // Prepare options for searchable dropdowns
+  const angkatanOptions = useMemo(
+    () =>
+      filters?.enrollmentYears.map((item) => ({
+        label: item.name,
+        value: item.name,
+      })) || [],
+    [filters],
+  );
+
+  const fakultasOptions = useMemo(
+    () =>
+      filters?.faculties.map((item) => ({
+        label: item.name,
+        value: item.name,
+      })) || [],
+    [filters],
+  );
+
+  const prodiOptions = useMemo(
+    () =>
+      filters?.majors.map((item) => ({
+        label: item.name,
+        value: item.name,
+      })) || [],
+    [filters],
+  );
+
+  const jenjangOptions = useMemo(
+    () =>
+      filters?.degrees.map((item) => ({
+        label: item.name,
+        value: item.name,
+      })) || [],
+    [filters],
   );
 
   return (
@@ -142,101 +185,122 @@ export default function StartPage() {
           <span className="hidden h-[1px] w-full max-w-[50px] bg-gray-300 dark:bg-gray-700 sm:block" />
         </div>
 
-        <form onSubmit={handleSubmit} className="flex flex-col gap-6 sm:gap-8">
-          {/* Baris 1 */}
-          <div className="flex flex-col gap-6 sm:flex-row sm:gap-4">
-            <InputField
-              label="Nama"
-              value={formData.nama}
-              onChange={(v) => handleChange("nama", v)}
-              onBlur={() => validateField("nama", formData.nama)}
-              error={errors.nama}
-              ref={refs.nama}
-              placeholder="Masukkan nama lengkap"
-              disabled={isSubmitting}
-            />
-            <InputField
-              label="Email"
-              value={formData.email}
-              onChange={(v) => handleChange("email", v)}
-              onBlur={() => validateField("email", formData.email)}
-              error={errors.email}
-              ref={refs.email}
-              placeholder="Masukkan email"
-              disabled={isSubmitting}
-            />
+        {isLoadingFilters ? (
+          <div className="flex items-center justify-center py-12">
+            <Loader2 className="h-8 w-8 animate-spin text-myunila" />
+            <span className="ml-3 text-base text-gray-600 dark:text-gray-400">
+              Memuat data...
+            </span>
           </div>
+        ) : (
+          <form
+            onSubmit={handleSubmit}
+            className="flex flex-col gap-6 sm:gap-8"
+          >
+            {/* Baris 1 */}
+            <div className="flex flex-col gap-6 sm:flex-row sm:gap-4">
+              <InputField
+                label="Nama"
+                value={formData.nama}
+                onChange={(v) => handleChange("nama", v)}
+                onBlur={() => validateField("nama", formData.nama)}
+                error={errors.nama}
+                ref={refs.nama}
+                placeholder="Masukkan nama lengkap"
+                disabled={isSubmitting}
+              />
+              <InputField
+                label="Email"
+                value={formData.email}
+                onChange={(v) => handleChange("email", v)}
+                onBlur={() => validateField("email", formData.email)}
+                error={errors.email}
+                ref={refs.email}
+                placeholder="Masukkan email"
+                disabled={isSubmitting}
+              />
+            </div>
 
-          {/* Baris 2 */}
-          <div className="flex flex-col gap-6 sm:flex-row sm:gap-4">
-            <InputField
-              label="NPM"
-              value={formData.npm}
-              onChange={(v) =>
-                handleChange("npm", v.replace(/\D/g, "").slice(0, 10))
-              }
-              onBlur={() => validateField("npm", formData.npm)}
-              error={errors.npm}
-              ref={refs.npm}
-              placeholder="Masukkan NPM"
-              disabled={isSubmitting}
-            />
-            <InputField
-              label="Angkatan"
-              value={formData.angkatan}
-              onChange={(v) =>
-                handleChange("angkatan", v.replace(/\D/g, "").slice(0, 4))
-              }
-              onBlur={() => validateField("angkatan", formData.angkatan)}
-              error={errors.angkatan}
-              ref={refs.angkatan}
-              placeholder="Contoh: 2023"
-              disabled={isSubmitting}
-            />
-          </div>
+            {/* Baris 2 */}
+            <div className="flex flex-col gap-6 sm:flex-row sm:gap-4">
+              <InputField
+                label="NPM"
+                value={formData.npm}
+                onChange={(v) =>
+                  handleChange("npm", v.replace(/\D/g, "").slice(0, 10))
+                }
+                onBlur={() => validateField("npm", formData.npm)}
+                error={errors.npm}
+                ref={refs.npm}
+                placeholder="Masukkan NPM"
+                disabled={isSubmitting}
+              />
+              <SearchableSelectField
+                label="Angkatan"
+                value={formData.angkatan}
+                onChange={(v) => handleChange("angkatan", v)}
+                error={errors.angkatan}
+                options={angkatanOptions}
+                disabled={isSubmitting}
+                placeholder="Pilih angkatan"
+              />
+            </div>
 
-          {/* Baris 3 */}
-          <div className="flex flex-col gap-6 sm:flex-row sm:gap-4">
-            <SelectField
-              label="Fakultas"
-              value={formData.fakultas}
-              onChange={(v) => handleChange("fakultas", v)}
-              error={errors.fakultas}
-              options={Faculties}
-              disabled={isSubmitting}
-            />
-            <SelectField
-              label="Program Studi"
-              value={formData.prodi}
-              onChange={(v) => handleChange("prodi", v)}
-              error={errors.prodi}
-              options={
-                formData.fakultas
-                  ? StudyProgramsByFaculty[formData.fakultas]
-                  : []
-              }
-              disabled={isSubmitting || !formData.fakultas}
-            />
-          </div>
+            {/* Baris 3 */}
+            <div className="flex flex-col gap-6 sm:flex-row sm:gap-4">
+              <SearchableSelectField
+                label="Fakultas"
+                value={formData.fakultas}
+                onChange={(v) => handleChange("fakultas", v)}
+                error={errors.fakultas}
+                options={fakultasOptions}
+                disabled={isSubmitting}
+                placeholder="Pilih fakultas"
+              />
+              <SearchableSelectField
+                label="Program Studi"
+                value={formData.prodi}
+                onChange={(v) => handleChange("prodi", v)}
+                error={errors.prodi}
+                options={prodiOptions}
+                disabled={isSubmitting}
+                placeholder="Pilih program studi"
+              />
+            </div>
 
-          <button
-            type="submit"
-            disabled={isSubmitting || !isDataComplete}
-            className={`flex w-full items-center justify-center rounded-full
+            {/* Baris 4 - Jenjang Pendidikan */}
+            <div className="flex flex-col gap-6 sm:flex-row sm:gap-4">
+              <SearchableSelectField
+                label="Jenjang Pendidikan"
+                value={formData.jenjang}
+                onChange={(v) => handleChange("jenjang", v)}
+                error={errors.jenjang}
+                options={jenjangOptions}
+                disabled={isSubmitting}
+                placeholder="Pilih jenjang pendidikan"
+              />
+              <div className="w-full sm:w-1/2" />
+            </div>
+
+            <button
+              type="submit"
+              disabled={isSubmitting || !isDataComplete}
+              className={`flex w-full items-center justify-center rounded-full
               bg-myunila px-8 py-4 text-base font-semibold text-white shadow-md transition
               hover:bg-myunila-700 focus:ring-2 focus:ring-myunila-500 disabled:cursor-not-allowed disabled:opacity-60
               dark:shadow-submit-dark`}
-          >
-            {isSubmitting ? (
-              <>
-                <Loader2 className="mr-2 h-5 w-5 animate-spin" />
-                Menyimpan...
-              </>
-            ) : (
-              "Lanjut ke Pertanyaan"
-            )}
-          </button>
-        </form>
+            >
+              {isSubmitting ? (
+                <>
+                  <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+                  Menyimpan...
+                </>
+              ) : (
+                "Lanjut ke Pertanyaan"
+              )}
+            </button>
+          </form>
+        )}
       </div>
     </section>
   );
@@ -285,24 +349,26 @@ const InputField = ({
   </div>
 );
 
-/* ---------- Select Field ---------- */
-interface SelectFieldProps {
+/* ---------- Searchable Select Field ---------- */
+interface SearchableSelectFieldProps {
   label: string;
   value: string;
   onChange: (value: string) => void;
   error?: string;
-  options: readonly string[];
+  options: readonly { label: string; value: string }[];
   disabled?: boolean;
+  placeholder?: string;
 }
 
-const SelectField = ({
+const SearchableSelectField = ({
   label,
   value,
   onChange,
   error,
   options,
   disabled,
-}: SelectFieldProps) => (
+  placeholder,
+}: SearchableSelectFieldProps) => (
   <div className="flex w-full flex-col">
     <label className="mb-2 block text-base font-medium text-gray-800 dark:text-gray-200">
       {label}
@@ -310,22 +376,49 @@ const SelectField = ({
     <Select
       value={value ? { label: value, value } : null}
       onChange={(opt) => onChange(opt?.value ?? "")}
-      options={options.map((o: string) => ({ label: o, value: o }))}
+      options={options}
       isDisabled={disabled}
-      placeholder={`Pilih ${label.toLowerCase()}`}
-      className="text-base dark:bg-gray-800 dark:text-white"
+      placeholder={placeholder || `Pilih ${label.toLowerCase()}`}
+      className="text-base"
+      classNamePrefix="select"
+      isClearable
+      isSearchable
+      noOptionsMessage={() => "Tidak ada opsi"}
       styles={{
         control: (base, state) => ({
           ...base,
           borderRadius: 8,
-          height: 48,
+          minHeight: 48,
           borderColor: error
             ? "#EF4444"
             : state.isFocused
               ? "#085EA8"
               : "#d1d5db",
-          boxShadow: state.isFocused ? "0 0 0 1px #085EA8" : "none",
+          boxShadow: state.isFocused
+            ? error
+              ? "0 0 0 1px #EF4444"
+              : "0 0 0 1px #085EA8"
+            : "none",
           backgroundColor: disabled ? "#f9fafb" : "white",
+          "&:hover": {
+            borderColor: error ? "#EF4444" : "#085EA8",
+          },
+        }),
+        menu: (base) => ({
+          ...base,
+          zIndex: 50,
+        }),
+        option: (base, state) => ({
+          ...base,
+          backgroundColor: state.isSelected
+            ? "#085EA8"
+            : state.isFocused
+              ? "#E0F2FE"
+              : "white",
+          color: state.isSelected ? "white" : "#1f2937",
+          "&:active": {
+            backgroundColor: "#085EA8",
+          },
         }),
       }}
     />

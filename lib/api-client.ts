@@ -155,3 +155,8 @@ export const testsApi = {
   getTestQuestions: (testId: number) =>
     apiClient.get(`/tests/${testId}/questions`),
 };
+
+// Students API
+export const studentsApi = {
+  getFilters: () => apiClient.get(`/filters/students`),
+};

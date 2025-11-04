@@ -110,3 +110,17 @@ export interface ApiErrorResponse {
   status: "error";
   message: string;
 }
+
+// Student Filters
+export interface FilterItem {
+  id: number;
+  name: string;
+}
+
+export interface StudentFilters {
+  degrees: FilterItem[];
+  departments: FilterItem[];
+  enrollmentYears: FilterItem[];
+  faculties: FilterItem[];
+  majors: FilterItem[];
+}
