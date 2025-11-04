@@ -24,7 +24,7 @@ const Profile = () => {
             </div>
           </div>
 
-          <p className="mx-auto mb-8 text-center text-base leading-relaxed text-gray-700 dark:text-gray-300 md:text-lg lg:text-xl">
+          <p className="mx-auto mb-8 text-center text-base leading-relaxed text-gray-700 dark:text-gray-300">
             UPA Pengembangan Karier dan Kewirausahaan Universitas Lampung
             merupakan unit kerja yang berfokus pada peningkatan kualitas lulusan
             agar siap bersaing di dunia kerja. UPA ini tidak hanya memfasilitasi
@@ -33,10 +33,10 @@ const Profile = () => {
             kewirausahaan di kalangan mahasiswa dan alumni.
           </p>
 
-          <h3 className="dark:text-myunila-light mb-6 text-xl font-bold leading-tight text-myunila md:text-2xl lg:text-3xl">
+          <h3 className="dark:text-myunila-light mb-6 text-xl font-bold leading-tight text-myunila md:text-2xl">
             Fungsi Utama
           </h3>
-          <ul className="mb-10 list-disc pl-6 text-base leading-relaxed text-gray-700 dark:text-gray-300 md:text-lg lg:text-xl">
+          <ul className="mb-10 list-disc pl-6 text-base leading-relaxed text-gray-700 dark:text-gray-300">
             <li>
               Inventarisasi dan identifikasi kebutuhan dunia usaha, industri,
               dan dunia kerja.
@@ -55,16 +55,16 @@ const Profile = () => {
             </li>
           </ul>
 
-          <h3 className="dark:text-myunila-light mb-6 text-xl font-bold leading-tight text-myunila md:text-2xl lg:text-3xl">
+          <h3 className="dark:text-myunila-light mb-6 text-xl font-bold leading-tight text-myunila md:text-2xl">
             Apa yang Kami Lakukan
           </h3>
 
           <div className="space-y-6">
             <div>
-              <h4 className="mb-2 text-lg font-semibold text-black dark:text-white md:text-xl lg:text-2xl">
+              <h4 className="mb-2 text-lg font-semibold text-black dark:text-white md:text-xl">
                 1. Pendataan
               </h4>
-              <p className="text-base leading-relaxed text-gray-700 dark:text-gray-300 md:text-lg lg:text-xl">
+              <p className="text-base leading-relaxed text-gray-700 dark:text-gray-300">
                 Melaksanakan perencanaan, pelaksanaan, pengendalian, dan
                 pelaporan penelusuran serta pendataan lulusan sebagai dasar
                 pengembangan karier.
@@ -72,10 +72,10 @@ const Profile = () => {
             </div>
 
             <div>
-              <h4 className="mb-2 text-lg font-semibold text-black dark:text-white md:text-xl lg:text-2xl">
+              <h4 className="mb-2 text-lg font-semibold text-black dark:text-white md:text-xl">
                 2. Menyiapkan Alumni
               </h4>
-              <p className="text-base leading-relaxed text-gray-700 dark:text-gray-300 md:text-lg lg:text-xl">
+              <p className="text-base leading-relaxed text-gray-700 dark:text-gray-300">
                 Membekali lulusan dengan keterampilan dan wawasan agar mampu
                 berkompetisi di dunia kerja, baik sebagai pelaku usaha maupun
                 profesional di berbagai bidang.
@@ -83,10 +83,10 @@ const Profile = () => {
             </div>
 
             <div>
-              <h4 className="mb-2 text-lg font-semibold text-black dark:text-white md:text-xl lg:text-2xl">
+              <h4 className="mb-2 text-lg font-semibold text-black dark:text-white md:text-xl">
                 3. Menyukseskan Program
               </h4>
-              <p className="text-base leading-relaxed text-gray-700 dark:text-gray-300 md:text-lg lg:text-xl">
+              <p className="text-base leading-relaxed text-gray-700 dark:text-gray-300">
                 Mendukung program pemerintah dalam memetakan serta
                 menyelaraskan kebutuhan dunia kerja dengan pendidikan tinggi di
                 Indonesia, sekaligus menumbuhkan budaya kewirausahaan di
@@ -99,7 +99,7 @@ const Profile = () => {
             className="relative mt-12 overflow-hidden rounded-2xl border border-myunila-100 
             bg-white px-6 py-10 shadow-lg backdrop-blur-md dark:border-gray-700 dark:bg-gray-900/70 md:px-10 lg:px-16"
           >
-            <p className="mx-auto max-w-4xl text-center text-base font-medium italic text-gray-700 dark:text-gray-300 md:text-lg">
+            <p className="mx-auto max-w-4xl text-center text-base font-medium italic text-gray-700 dark:text-gray-300">
               “Sebagai bagian dari komitmen Universitas Lampung dalam mendukung
               pengembangan talenta mahasiswa, asesmen ini diharapkan mampu
               memberikan landasan yang kuat bagi penyusunan strategi pembinaan,

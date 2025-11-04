@@ -1,5 +1,3 @@
-import SingleAssessment from "@/components/Assessment/SingleAssessment";
-import assessmentData from "@/components/Assessment/assessmentData";
 import Breadcrumb from "@/components/Common/Breadcrumb";
 
 import { Metadata } from "next";

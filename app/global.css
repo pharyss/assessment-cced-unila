@@ -93,6 +93,33 @@
   }
 }
 
+@media print {
+  body * {
+    visibility: hidden;
+  }
+
+  .printable-area,
+  .printable-area * {
+    visibility: visible;
+  }
+
+  .printable-area {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    margin: 0;
+    padding: 15mm;
+    border: none;
+    box-shadow: none;
+  }
+
+  .no-print,
+  .no-print * {
+    display: none !important;
+  }
+}
+
 .animate-fadeIn {
   animation: modal-fadeIn 0.3s ease-out forwards;
 }

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 import {
   ArrowLeft,
@@ -12,6 +12,7 @@ import {
   TrendingUp,
   Loader2,
   Target,
+  Download,
 } from "lucide-react";
 
 import { useAssessmentFlow } from "@/components/Assessment/useAssessmentFlow";
@@ -52,10 +53,12 @@ const WORKING_STYLE_TITLES: Record<string, string> = {
 
 export default function TalentResultPage() {
   const router = useRouter();
-  const { answers, goTo, currentStep } = useAssessmentFlow();
+  const { answers, goTo, currentStep, clear } = useAssessmentFlow();
   const { getFinalResult } = useAssessmentLogic(answers);
   const [result, setResult] = useState<AssessmentResult | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [isDownloading, setIsDownloading] = useState(false);
+  const reportRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (
@@ -83,18 +86,74 @@ export default function TalentResultPage() {
     }
   }, [answers, getFinalResult, currentStep]);
 
+  const handleBackAndClear = () => {
+  clear?.();
+  router.push("/assessment/talenta-mahasiswa");
+};
+
+const handleDownloadPDF = async () => {
+  const element = reportRef.current;
+  if (!element || !result) return;
+
+  setIsDownloading(true);
+
+  const { default: jsPDF } = await import("jspdf");
+  const { default: html2canvas } = await import("html2canvas");
+
+  const buttonContainer = element.querySelector<HTMLDivElement>(
+    '[data-id="button-container"]'
+  );
+  if (buttonContainer) buttonContainer.style.display = "none";
+
+  const pdf = new jsPDF("p", "mm", "a4");
+
+  const backgroundColor = document.documentElement.classList.contains("dark")
+    ? "#030712"
+    : "#FFFFFF";
+
+  const canvas = await html2canvas(element, {
+    scale: 2,
+    backgroundColor,
+    useCORS: true,
+  });
+
+  const imgData = canvas.toDataURL("image/png");
+  const pdfWidth = pdf.internal.pageSize.getWidth();
+  const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
+
+  let heightLeft = pdfHeight;
+  let position = 0;
+  const pageHeight = pdf.internal.pageSize.getHeight();
+
+  pdf.addImage(imgData, "PNG", 0, position, pdfWidth, pdfHeight);
+  heightLeft -= pageHeight;
+
+  while (heightLeft > 0) {
+    position = heightLeft - pdfHeight;
+    pdf.addPage();
+    pdf.addImage(imgData, "PNG", 0, position, pdfWidth, pdfHeight);
+    heightLeft -= pageHeight;
+  }
+
+  pdf.save(`Hasil Asesmen - ${result.nama || "Siswa"}.pdf`);
+
+  if (buttonContainer) buttonContainer.style.display = "flex";
+  setIsDownloading(false);
+};
+
+
   if (isLoading)
     return (
       <div className="flex h-screen flex-col items-center justify-center text-gray-600 dark:text-gray-300">
-        <Loader2 className="mb-3 h-6 w-6 animate-spin text-myunila" />
-        <p>Memuat hasil asesmen kamu...</p>
+        <Loader2 className="mb-3 h-12 w-12 animate-spin text-myunila" />
+        <p className="text-lg">Memuat hasil asesmen kamu...</p>
       </div>
     );
 
   if (!result)
     return (
       <div className="flex h-screen flex-col items-center justify-center text-gray-600 dark:text-gray-300">
-        <p>Belum ada hasil asesmen ditemukan.</p>
+        <p className="text-lg">Belum ada hasil asesmen ditemukan.</p>
         <button
           onClick={() => goTo("start")}
           className="mt-4 rounded-full bg-myunila px-6 py-2 text-sm font-medium text-white hover:bg-myunila/90"
@@ -145,19 +204,36 @@ export default function TalentResultPage() {
   return (
     <section className="relative z-10 bg-gradient-to-b from-white via-myunila-50 to-myunila-100 pb-20 pt-24 dark:from-gray-950 dark:via-gray-900 dark:to-gray-800 sm:pb-24 sm:pt-32 md:pb-[120px] md:pt-[150px]">
       <div className="container mx-auto px-4 md:px-16 lg:px-32">
-        <div className="mx-auto max-w-4xl rounded-2xl border border-gray-200 bg-white p-6 dark:border-gray-700 dark:bg-gray-900 sm:p-10">
-          <div className="mb-8 flex items-center justify-between">
-            <button
-              onClick={() => router.push("/assessment/talenta-mahasiswa")}
-              className="flex items-center gap-2 rounded-full border border-gray-300 px-4 py-2 text-sm text-gray-600 transition hover:bg-gray-100 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-800"
-            >
-              <ArrowLeft size={16} />
-              Kembali
-            </button>
-            <h1 className="text-xl font-semibold text-gray-800 dark:text-gray-100">
-              Hasil Asesmen Talenta Mahasiswa
-            </h1>
-          </div>
+        <div ref={reportRef} className="printable-area mx-auto max-w-4xl rounded-2xl border border-gray-200 bg-white p-6 dark:border-gray-700 dark:bg-gray-900 sm:p-10">
+          <div
+  data-id="button-container"
+  className="no-print mb-6 flex flex-wrap items-center justify-between gap-4"
+>
+  <button
+    onClick={handleBackAndClear}
+    className="flex items-center gap-2 rounded-full border border-gray-300 px-4 py-2 text-sm text-gray-600 transition hover:bg-gray-100 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-800"
+  >
+    <ArrowLeft size={16} />
+    Kembali
+  </button>
+
+  <button
+    onClick={() => window.print()}
+    disabled={isDownloading}
+    className="flex items-center gap-2 rounded-full bg-myunila px-4 py-2 text-sm font-medium text-white transition hover:bg-myunila/80 disabled:cursor-not-allowed disabled:bg-myunila/50"
+  >
+    {isDownloading ? (
+      <Loader2 size={16} className="animate-spin" />
+    ) : (
+      <Download size={16} />
+    )}
+    {isDownloading ? "Mengunduh..." : "Unduh PDF"}
+  </button>
+</div>
+
+<h1 className="mb-8 text-xl font-semibold text-gray-800 dark:text-gray-100 md:text-2xl lg:text-3xl">
+  Hasil Asesmen Talenta Mahasiswa
+</h1>
 
           {(nama || npm || email) && (
             <div className="mb-8 rounded-2xl border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-700 dark:bg-gray-800">
@@ -224,7 +300,7 @@ export default function TalentResultPage() {
           </div>
 
           <div className="mb-8 rounded-2xl border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-700 dark:bg-gray-800">
-            <h2 className="mb-4 flex items-center gap-2 text-lg font-semibold text-gray-800 dark:text-gray-100">
+            <h2 className="mb-4 flex items-center gap-2 text-xl font-bold text-gray-800 dark:text-gray-100">
               <Brain size={20} /> Gaya Berpikir, Komunikasi, dan Kerja
             </h2>
             <div className="grid gap-3 md:grid-cols-3">
@@ -256,7 +332,7 @@ export default function TalentResultPage() {
           </div>
 
           <div className="mb-8 rounded-2xl border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-700 dark:bg-gray-800">
-            <h2 className="mb-6 flex items-center gap-2 text-lg font-semibold text-gray-800 dark:text-gray-100">
+            <h2 className="mb-6 flex items-center gap-2 text-xl font-bold text-gray-800 dark:text-gray-100">
               <CheckCircle size={20} /> Overview Keterampilan Psikologis
             </h2>
 
@@ -303,13 +379,17 @@ export default function TalentResultPage() {
 
           <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-700 dark:bg-gray-800">
             {/* Bidang Karir Ideal */}
+            <h2 className="mb-6 flex items-center gap-2 text-xl font-bold text-gray-800 dark:text-gray-100">
+              <Briefcase size={20} /> Bakat Bidang Karir
+            </h2>
+
             <h2 className="mb-2 text-sm font-medium text-gray-500 dark:text-gray-400">
               Bidang Karir Ideal
             </h2>
-            <p className="text-2xl font-semibold text-myunila-600 dark:text-myunila-400">
+            <p className="text-2xl font-bold text-myunila-600 dark:text-myunila-400">
               {karirDominanMBTI}
             </p>
-            <p className="mt-4 whitespace-pre-line text-sm text-gray-700 dark:text-gray-300">
+            <p className="mt-4 whitespace-pre-line text-base text-gray-700 dark:text-gray-300">
               {dominantCareerDesc}
             </p>
 
@@ -317,22 +397,22 @@ export default function TalentResultPage() {
             <h2 className="mb-2 mt-6 text-sm font-medium text-gray-500 dark:text-gray-400">
               Alternatif Bidang Karir Sekunder
             </h2>
-            <p className="text-xl font-semibold text-myunila-600/80 dark:text-myunila-400/80">
+            <p className="text-xl font-bold text-myunila-600/80 dark:text-myunila-400/80">
               {karirSekunderMBTI}
             </p>
-            <p className="mt-3 whitespace-pre-line text-sm text-gray-700 dark:text-gray-300">
+            <p className="mt-3 whitespace-pre-line text-base text-gray-700 dark:text-gray-300">
               {secondaryCareerDesc}
             </p>
           </div>
 
           {/* Kesesuaian Bakat & Minat */}
           <div className="mb-8 rounded-2xl border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-700 dark:bg-gray-800">
-            <h2 className="mb-4 flex items-center gap-2 text-lg font-semibold text-gray-800 dark:text-gray-100">
+            <h2 className="mb-4 flex items-center gap-2 text-xl font-bold text-gray-800 dark:text-gray-100">
               <Target size={20} /> Kesesuaian Bakat & Minat
             </h2>
 
             {/* Status Keseluruhan */}
-            <p className="mb-2 text-sm text-gray-600 dark:text-gray-300">
+            <p className="mb-2 text-base text-gray-600 dark:text-gray-300">
               Status Kesesuaian:{" "}
               <span
                 className={`font-semibold ${
@@ -354,7 +434,7 @@ export default function TalentResultPage() {
                 <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400">
                   Minat Kamu
                 </h3>
-                <p className="text-lg font-semibold text-myunila-600 dark:text-myunila-400">
+                <p className="text-lg font-bold text-myunila-600 dark:text-myunila-400">
                   {karirMinat}
                 </p>
               </div>
@@ -364,7 +444,7 @@ export default function TalentResultPage() {
                 <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400">
                   Bakat Dominan
                 </h3>
-                <p className={`text-lg font-semibold ${dominantColorClass}`}>
+                <p className={`text-lg font-bold ${dominantColorClass}`}>
                   {karirDominanMBTI}
                 </p>
               </div>
@@ -374,61 +454,60 @@ export default function TalentResultPage() {
                 <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400">
                   Bakat Alternatif
                 </h3>
-                <p className={`text-lg font-semibold ${secondaryColorClass}`}>
+                <p className={`text-lg font-bold ${secondaryColorClass}`}>
                   {karirSekunderMBTI}
                 </p>
               </div>
             </div>
             {/* === AKHIR BLOK BARU === */}
 
-            <p className="mt-4 whitespace-pre-line text-sm text-gray-700 dark:text-gray-300">
+            <p className="mt-4 whitespace-pre-line text-base text-gray-700 dark:text-gray-300">
               {kesesuaianDesc}
             </p>
           </div>
 
           {/* Gaya Berpikir */}
           <div className="mb-8 rounded-2xl border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-700 dark:bg-gray-800">
-            <h2 className="mb-4 flex items-center gap-2 text-lg font-semibold text-gray-800 dark:text-gray-100">
+            <h2 className="mb-4 flex items-center gap-2 text-xl font-bold text-gray-800 dark:text-gray-100">
               <Brain size={20} /> Kecenderungan Gaya Berpikir
             </h2>
-            <h3 className="text-xl font-semibold text-myunila-600 dark:text-myunila-400">
+            <h3 className="text-xl font-bold text-myunila-600 dark:text-myunila-400">
               {thinkingStyle}
             </h3>
-            <p className="mt-3 whitespace-pre-line text-sm text-gray-700 dark:text-gray-300">
+            <p className="mt-3 whitespace-pre-line text-base text-gray-700 dark:text-gray-300">
               {thinkingStyleDesc}
             </p>
           </div>
 
           {/* Gaya Komunikasi */}
           <div className="mb-8 rounded-2xl border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-700 dark:bg-gray-800">
-            <h2 className="mb-4 flex items-center gap-2 text-lg font-semibold text-gray-800 dark:text-gray-100">
+            <h2 className="mb-4 flex items-center gap-2 text-xl font-bold text-gray-800 dark:text-gray-100">
               <MessageSquare size={20} /> Kecenderungan Gaya Komunikasi
             </h2>
-            <h3 className="text-xl font-semibold text-myunila-600 dark:text-myunila-400">
+            <h3 className="text-xl font-bold text-myunila-600 dark:text-myunila-400">
               {communicationStyle}
             </h3>
-            <p className="mt-3 whitespace-pre-line text-sm text-gray-700 dark:text-gray-300">
+            <p className="mt-3 whitespace-pre-line text-base text-gray-700 dark:text-gray-300">
               {communicationStyleDesc}
             </p>
           </div>
 
           {/* Pola Kerja */}
           <div className="mb-8 rounded-2xl border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-700 dark:bg-gray-800">
-            <h2 className="mb-4 flex items-center gap-2 text-lg font-semibold text-gray-800 dark:text-gray-100">
+            <h2 className="mb-4 flex items-center gap-2 text-xl font-bold text-gray-800 dark:text-gray-100">
               <Briefcase size={20} /> Kecenderungan Pola Kerja
             </h2>
-            <h3 className="text-xl font-semibold text-emerald-600 dark:text-emerald-400">
+            <h3 className="text-xl font-bold text-emerald-600 dark:text-emerald-400">
               {WORKING_STYLE_TITLES[workingStyle] || workingStyle}
             </h3>
-            <p className="mt-3 whitespace-pre-line text-sm text-gray-700 dark:text-gray-300">
+            <p className="mt-3 whitespace-pre-line text-base text-gray-700 dark:text-gray-300">
               {workingStyleDesc}
             </p>
           </div>
 
           {/* Keterampilan Psikologis (PWB) */}
-          {/* --- PERBAIKAN 2: Perbaiki loop Rincian PWB --- */}
           <div className="mb-10 rounded-2xl border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-700 dark:bg-gray-800">
-            <h2 className="mb-6 flex items-center gap-2 text-lg font-semibold text-gray-800 dark:text-gray-100">
+            <h2 className="mb-6 flex items-center gap-2 text-xl font-bold text-gray-800 dark:text-gray-100">
               <CheckCircle size={20} /> Keterampilan Psikologis - Rincian
             </h2>
 
@@ -457,21 +536,21 @@ export default function TalentResultPage() {
                     key={key}
                     className="border-b border-gray-100 pb-6 last:border-b-0 dark:border-gray-800"
                   >
-                    <h3 className="font-semibold text-gray-800 dark:text-gray-100">
+                    <h3 className="font-bold text-base text-gray-800 dark:text-gray-100">
                       {PWB_TITLES[key] || key}
                     </h3>
-                    <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">
+                    <p className="mt-1 text-base text-gray-600 dark:text-gray-400">
                       {pwbInfo}
                     </p>
 
                     <div className="mt-3 rounded-lg bg-gray-50 p-4 dark:bg-gray-800">
-                      <p className="text-sm font-medium text-gray-500 dark:text-gray-300">
+                      <p className="text-base font-medium text-gray-500 dark:text-gray-300">
                         Tingkat Kamu:{" "}
                         <span className={`font-semibold ${levelColor}`}>
                           {level}
                         </span>
                       </p>
-                      <p className="mt-1 text-sm text-gray-700 dark:text-gray-200">
+                      <p className="mt-1 text-base text-gray-700 dark:text-gray-200">
                         {pwbLevelDesc}
                       </p>
                     </div>
@@ -483,29 +562,28 @@ export default function TalentResultPage() {
 
           {/* --- Saran Pengembangan Talenta --- */}
           <div className="mb-8">
-            <h2 className="mb-6 text-center text-2xl font-semibold text-gray-900 dark:text-gray-100">
+            <h2 className="mb-6 text-center text-2xl font-bold text-gray-900 dark:text-gray-100">
               Saran Pengembangan Talenta
             </h2>
 
             {/* Strategi Belajar */}
             <div className="mb-8 rounded-2xl border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-700 dark:bg-gray-800">
-              <h3 className="mb-4 flex items-center gap-2 text-lg font-semibold text-gray-800 dark:text-gray-100">
+              <h3 className="mb-4 flex items-center gap-2 text-xl font-bold text-gray-800 dark:text-gray-100">
                 <BookOpen size={20} /> Strategi Belajar
               </h3>
-              <p className="mt-3 whitespace-pre-line text-sm text-gray-700 dark:text-gray-300">
+              <p className="mt-3 whitespace-pre-line text-base text-gray-700 dark:text-gray-300">
                 {learningStrategyDesc}
               </p>
             </div>
 
             {/* --- PERBAIKAN 3: Perbaiki loop Saran PWB --- */}
             <div className="mb-8 rounded-2xl border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-700 dark:bg-gray-800">
-              <h3 className="mb-4 flex items-center gap-2 text-lg font-semibold text-gray-800 dark:text-gray-100">
+              <h3 className="mb-4 flex items-center gap-2 text-xl font-bold text-gray-800 dark:text-gray-100">
                 <TrendingUp size={20} /> Peningkatan Keterampilan Psikologis
               </h3>
 
               <p className="mb-4 text-sm text-gray-600 dark:text-gray-400">
-                Berikut saran pengembangan untuk 3 dimensi prioritas (level
-                Rendah atau Sedang):
+                Berikut beberapa saran pengembangan yang dapat kamu lakukan untuk meningkatkan keterampilan psikologis mu.
               </p>
 
               <div className="space-y-4">
@@ -528,10 +606,10 @@ export default function TalentResultPage() {
                         key={key}
                         className="rounded-lg bg-gray-50 p-4 dark:bg-gray-800"
                       >
-                        <h4 className="font-semibold text-gray-800 dark:text-gray-100">
+                        <h4 className="font-bold text-base text-gray-800 dark:text-gray-100">
                           {PWB_TITLES[key] || key}
                         </h4>
-                        <p className="mt-1 text-sm text-gray-700 dark:text-gray-200">
+                        <p className="mt-1 text-base text-gray-700 dark:text-gray-200">
                           {pwbDevDesc}
                         </p>
                       </div>
