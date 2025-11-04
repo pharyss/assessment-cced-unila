@@ -222,7 +222,7 @@ export default function StartPage() {
           <button
             type="submit"
             disabled={isSubmitting || !isDataComplete}
-            className={`flex w-full items-center justify-center rounded-full 
+            className={`flex w-full items-center justify-center rounded-full
               bg-myunila px-8 py-4 text-base font-semibold text-white shadow-md transition
               hover:bg-myunila-700 focus:ring-2 focus:ring-myunila-500 disabled:cursor-not-allowed disabled:opacity-60
               dark:shadow-submit-dark`}
@@ -243,6 +243,17 @@ export default function StartPage() {
 }
 
 /* ---------- Input Field ---------- */
+interface InputFieldProps {
+  label: string;
+  value: string;
+  onChange: (value: string) => void;
+  onBlur?: () => void;
+  error?: string;
+  placeholder?: string;
+  disabled?: boolean;
+  ref?: React.RefObject<HTMLInputElement | null>;
+}
+
 const InputField = ({
   label,
   value,
@@ -252,7 +263,7 @@ const InputField = ({
   placeholder,
   disabled,
   ref,
-}: any) => (
+}: InputFieldProps) => (
   <div className="flex w-full flex-col">
     <label className="mb-2 block text-base font-medium text-gray-800 dark:text-gray-200">
       {label}
@@ -266,8 +277,8 @@ const InputField = ({
       placeholder={placeholder}
       disabled={disabled}
       className={`w-full rounded-lg border px-4 py-3 text-base outline-none transition
-        focus:ring-2 focus:ring-myunila focus:border-myunila 
-        dark:border-gray-700 dark:bg-gray-800 dark:text-white 
+        focus:border-myunila focus:ring-2 focus:ring-myunila
+        dark:border-gray-700 dark:bg-gray-800 dark:text-white
         ${error ? "border-danger focus:ring-danger" : "border-gray-300"}`}
     />
     {error && <p className="mt-1 text-xs text-danger">{error}</p>}
@@ -275,6 +286,15 @@ const InputField = ({
 );
 
 /* ---------- Select Field ---------- */
+interface SelectFieldProps {
+  label: string;
+  value: string;
+  onChange: (value: string) => void;
+  error?: string;
+  options: readonly string[];
+  disabled?: boolean;
+}
+
 const SelectField = ({
   label,
   value,
@@ -282,9 +302,7 @@ const SelectField = ({
   error,
   options,
   disabled,
-}: any) => 
-  
-  (
+}: SelectFieldProps) => (
   <div className="flex w-full flex-col">
     <label className="mb-2 block text-base font-medium text-gray-800 dark:text-gray-200">
       {label}
@@ -304,8 +322,8 @@ const SelectField = ({
           borderColor: error
             ? "#EF4444"
             : state.isFocused
-            ? "#085EA8"
-            : "#d1d5db",
+              ? "#085EA8"
+              : "#d1d5db",
           boxShadow: state.isFocused ? "0 0 0 1px #085EA8" : "none",
           backgroundColor: disabled ? "#f9fafb" : "white",
         }),

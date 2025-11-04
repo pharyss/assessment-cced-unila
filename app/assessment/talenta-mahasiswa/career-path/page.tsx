@@ -40,7 +40,7 @@ export default function CareerPathFill() {
   const end = start + pageSize;
   const currentQuestions = questions.slice(start, end);
 
-  const isQuestionAnswered = (q) => {
+  const isQuestionAnswered = (q: { key: string }) => {
     const answer = answers[q.key];
     return answer !== undefined && answer !== "";
   };
@@ -74,9 +74,10 @@ export default function CareerPathFill() {
     };
   }, [showInstruction, showConfirm]);
 
-  const handleSelect = (q, value) => saveAnswer(q.key, value);
+  const handleSelect = (q: { key: string }, value: string) =>
+    saveAnswer(q.key, value);
 
-  const handlePageChange = (newPage) => {
+  const handlePageChange = (newPage: number) => {
     setPageIndex(newPage);
     localStorage.setItem("career-path-page", newPage.toString());
   };
