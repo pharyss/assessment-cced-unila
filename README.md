@@ -47,6 +47,10 @@ Hasil asesmen dirancang untuk membantu mahasiswa mengenali potensi diri, menentu
 - **Framer Motion** 12.23.24
 - **Lucide React** 0.544.0 (Icons)
 
+### Data Fetching & State Management
+- **TanStack Query** 5.x (React Query)
+- **API Client** with TypeScript
+
 ### Assessment Tools
 - **jsPDF** 3.0.3 (PDF Generation)
 - **React Select** 5.10.2
@@ -56,6 +60,39 @@ Hasil asesmen dirancang untuk membantu mahasiswa mengenali potensi diri, menentu
 - **ESLint** 9.39.1
 - **Prettier** 3.6.2
 - **PostCSS** & **Autoprefixer**
+
+---
+
+## 🔄 Data Fetching with TanStack Query
+
+This project uses **TanStack Query** (React Query) for efficient data fetching and state management.
+
+### Features
+- ✅ Automatic caching and background refetching
+- ✅ Built-in loading and error states
+- ✅ Type-safe API client
+- ✅ Request deduplication
+- ✅ Optimistic updates support
+
+### Quick Example
+
+```typescript
+import { useTest } from "@/lib/hooks/useTests";
+
+function TestComponent() {
+  const { data, isLoading, isError } = useTest(1);
+  
+  if (isLoading) return <div>Loading...</div>;
+  if (isError) return <div>Error loading test</div>;
+  
+  return <div>{data?.data?.name}</div>;
+}
+```
+
+### Documentation
+- 📖 [Complete TanStack Query Guide](./docs/TANSTACK_QUERY.md)
+- 📝 [Implementation Summary](./TANSTACK_QUERY_IMPLEMENTATION.md)
+- 🔗 [API Schema](http://localhost:3000/docs/json)
 
 ---
 
