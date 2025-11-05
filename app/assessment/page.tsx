@@ -1,14 +1,37 @@
 import Breadcrumb from "@/components/Common/Breadcrumb";
-
+import SingleAssessment from "@/components/Assessment/SingleAssessment";
+import type { Assessment } from "@/types/assessment";
 import { Metadata } from "next";
 
 export const metadata: Metadata = {
   title: "Tes Asesmen | CCED Universitas Lampung",
-  description: "Ikuti asesmen untuk mengenali karakteristik, emosi, gaya komunikasi, dan cara berpikirmu",
-  // other metadata
+  description:
+    "Ikuti asesmen untuk mengenali karakteristik, emosi, gaya komunikasi, dan cara berpikirmu",
 };
 
-const Assessment = () => {
+const assessmentData: Assessment[] = [
+  {
+    id: "talenta-mahasiswa",
+    title: "Asesmen Talenta Mahasiswa",
+    paragraph:
+      "Asesmen ini membantumu memahami minat karier, pola perilaku, dan kekuatan talenta untuk pengembangan diri yang lebih terarah.",
+    rules: [
+      "Siapkan waktu 20–30 menit di tempat yang tenang.",
+      "Jawab sesuai kondisi dan pengalamanmu saat ini.",
+      "Tidak ada jawaban benar atau salah — yang penting jujur.",
+    ],
+    image: "/images/assessment/assessment-01.jpg",
+    author: {
+      name: "CCED Universitas Lampung",
+      image: "/images/assessment/author-01.png",
+      designation: "Center for Career & Entrepreneurship Development",
+    },
+    tags: ["Karier", "Talenta", "Perilaku"],
+    publishDate: "2025-01-01",
+  },
+];
+
+export default function Assessment() {
   return (
     <>
       <Breadcrumb
@@ -29,6 +52,7 @@ const Assessment = () => {
             ))}
           </div>
 
+          {/* Pagination placeholder (non-functional) */}
           <div
             className="wow fadeInUp -mx-4 flex flex-wrap"
             data-wow-delay=".15s"
@@ -36,36 +60,24 @@ const Assessment = () => {
             <div className="w-full px-4">
               <ul className="flex items-center justify-center pt-8">
                 <li className="mx-1">
-                  <a
-                    href="#0"
-                    className="flex h-9 min-w-[36px] items-center justify-center rounded-md bg-body-color bg-opacity-[15%] px-4 text-sm text-body-color transition hover:bg-myunila hover:bg-opacity-100 hover:text-white"
-                  >
+                  <span className="flex h-9 min-w-[36px] cursor-not-allowed items-center justify-center rounded-md bg-body-color bg-opacity-[15%] px-4 text-sm text-body-color">
                     Sebelumnya
-                  </a>
+                  </span>
                 </li>
                 <li className="mx-1">
-                  <a
-                    href="#0"
-                    className="flex h-9 min-w-[36px] items-center justify-center rounded-md bg-body-color bg-opacity-[15%] px-4 text-sm text-body-color transition hover:bg-myunila hover:bg-opacity-100 hover:text-white"
-                  >
+                  <span className="flex h-9 min-w-[36px] items-center justify-center rounded-md bg-myunila px-4 text-sm text-white">
                     1
-                  </a>
+                  </span>
                 </li>
                 <li className="mx-1">
-                  <a
-                    href="#0"
-                    className="flex h-9 min-w-[36px] items-center justify-center rounded-md bg-body-color bg-opacity-[15%] px-4 text-sm text-body-color transition hover:bg-myunila hover:bg-opacity-100 hover:text-white"
-                  >
+                  <span className="flex h-9 min-w-[36px] items-center justify-center rounded-md bg-body-color bg-opacity-[15%] px-4 text-sm text-body-color">
                     2
-                  </a>
+                  </span>
                 </li>
                 <li className="mx-1">
-                  <a
-                    href="#0"
-                    className="flex h-9 min-w-[36px] items-center justify-center rounded-md bg-body-color bg-opacity-[15%] px-4 text-sm text-body-color transition hover:bg-myunila hover:bg-opacity-100 hover:text-white"
-                  >
+                  <span className="flex h-9 min-w-[36px] items-center justify-center rounded-md bg-body-color bg-opacity-[15%] px-4 text-sm text-body-color">
                     3
-                  </a>
+                  </span>
                 </li>
                 <li className="mx-1">
                   <span className="flex h-9 min-w-[36px] cursor-not-allowed items-center justify-center rounded-md bg-body-color bg-opacity-[15%] px-4 text-sm text-body-color">
@@ -73,20 +85,14 @@ const Assessment = () => {
                   </span>
                 </li>
                 <li className="mx-1">
-                  <a
-                    href="#0"
-                    className="flex h-9 min-w-[36px] items-center justify-center rounded-md bg-body-color bg-opacity-[15%] px-4 text-sm text-body-color transition hover:bg-myunila hover:bg-opacity-100 hover:text-white"
-                  >
+                  <span className="flex h-9 min-w-[36px] items-center justify-center rounded-md bg-body-color bg-opacity-[15%] px-4 text-sm text-body-color">
                     12
-                  </a>
+                  </span>
                 </li>
                 <li className="mx-1">
-                  <a
-                    href="#0"
-                    className="flex h-9 min-w-[36px] items-center justify-center rounded-md bg-body-color bg-opacity-[15%] px-4 text-sm text-body-color transition hover:bg-myunila hover:bg-opacity-100 hover:text-white"
-                  >
+                  <span className="flex h-9 min-w-[36px] cursor-not-allowed items-center justify-center rounded-md bg-body-color bg-opacity-[15%] px-4 text-sm text-body-color">
                     Selanjutnya
-                  </a>
+                  </span>
                 </li>
               </ul>
             </div>
@@ -95,6 +101,4 @@ const Assessment = () => {
       </section>
     </>
   );
-};
-
-export default Assessment;
+}

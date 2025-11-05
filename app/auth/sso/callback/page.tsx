@@ -1,9 +1,9 @@
 "use client";
 
-import { useEffect } from "react";
+import React, { Suspense, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 
-export default function SsoCallback() {
+function SsoCallbackClient() {
   const router = useRouter();
   const params = useSearchParams();
 
@@ -38,8 +38,22 @@ export default function SsoCallback() {
   }, [params, router]);
 
   return (
-    <div className="flex flex-col items-center justify-center h-screen text-gray-700">
+    <div className="flex h-screen flex-col items-center justify-center text-gray-700">
       <p>Memverifikasi akun Anda...</p>
     </div>
+  );
+}
+
+export default function SsoCallback() {
+  return (
+    <Suspense
+      fallback={
+        <div className="flex h-screen flex-col items-center justify-center text-gray-700">
+          <p>Memverifikasi akun Anda...</p>
+        </div>
+      }
+    >
+      <SsoCallbackClient />
+    </Suspense>
   );
 }
