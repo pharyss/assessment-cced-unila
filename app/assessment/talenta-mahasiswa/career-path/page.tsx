@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import {
   ArrowLeft,
@@ -12,7 +12,7 @@ import {
 } from "lucide-react";
 import toast from "react-hot-toast";
 import { useAssessmentFlow } from "@/components/Assessment/useAssessmentFlow";
-import { testsApi, resultsApi, ApiError } from "@/lib/api-client";
+import { testsApi, resultsApi, studentsApi, ApiError } from "@/lib/api-client";
 import { TestQuestion, TestSubmissionAnswer } from "@/types/api";
 
 // Interface for processed questions
@@ -31,9 +31,9 @@ interface ProcessedQuestion {
 
 export default function CareerPathFill() {
   const router = useRouter();
-  const { answers: globalAnswers, next } = useAssessmentFlow();
+  const { answers: globalAnswers, next, saveAnswer } = useAssessmentFlow();
 
-  // Use local state for answers instead of localStorage
+  // Use local state for answers (no localStorage)
   const [localAnswers, setLocalAnswers] = useState<Record<string, string>>({});
   const [questions, setQuestions] = useState<ProcessedQuestion[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -45,6 +45,16 @@ export default function CareerPathFill() {
     Map<string, { questionId: string; optionId: string; answerId?: string }>
   >(new Map());
   const [hasLoadedAnswers, setHasLoadedAnswers] = useState(false);
+  const [test4SubmissionId, setTest4SubmissionId] = useState<string | null>(
+    null,
+  );
+  const [test5SubmissionId, setTest5SubmissionId] = useState<string | null>(
+    null,
+  );
+
+  // Ref to prevent multiple initialization calls
+  const isInitializingRef = useRef(false);
+  const hasInitializedRef = useRef(false);
 
   const pageSize = 4;
   const totalQuestions = questions.length;
@@ -130,98 +140,203 @@ export default function CareerPathFill() {
     fetchQuestions();
   }, []);
 
-  // Load existing answers if resuming an in-progress submission
+  // Create or load test submissions
   useEffect(() => {
-    const loadExistingAnswers = async () => {
-      if (hasLoadedAnswers || questions.length === 0) {
+    const initializeSubmissions = async () => {
+      // Prevent multiple simultaneous calls
+      if (
+        hasInitializedRef.current ||
+        isInitializingRef.current ||
+        questions.length === 0
+      ) {
         return;
       }
 
-      const testSubmissionId = globalAnswers.testSubmissionId as
-        | string
-        | undefined;
-      const hasExistingSubmission = globalAnswers.hasExistingSubmission as
-        | boolean
-        | undefined;
+      const studentId = globalAnswers.studentId as string | undefined;
 
-      if (testSubmissionId && hasExistingSubmission) {
-        // SCENARIO: Resuming in-progress submission - load existing answers
-        try {
-          console.log(
-            "Loading existing answers for submission:",
-            testSubmissionId,
-          );
-
-          const submissionResponse =
-            await resultsApi.getSubmissionAnswers(testSubmissionId);
-
-          if (
-            submissionResponse.status === "success" &&
-            submissionResponse.data
-          ) {
-            const submissionData = submissionResponse.data as any;
-            const existingAnswers =
-              submissionData.answers as TestSubmissionAnswer[];
-
-            if (existingAnswers && existingAnswers.length > 0) {
-              console.log(`Found ${existingAnswers.length} existing answers`);
-
-              const loadedAnswers: Record<string, string> = {};
-              const loadedPendingAnswers = new Map<
-                string,
-                { questionId: string; optionId: string; answerId?: string }
-              >();
-
-              existingAnswers.forEach((answer) => {
-                const question = questions.find(
-                  (q) => q.id === answer.testQuestionId,
-                );
-
-                if (question) {
-                  const key = question.key;
-                  // Store in local state (memory only, no localStorage)
-                  loadedAnswers[key] = answer.selectedOptionId;
-
-                  // Track answer IDs for updates
-                  loadedPendingAnswers.set(key, {
-                    questionId: answer.testQuestionId,
-                    optionId: answer.selectedOptionId,
-                    answerId: answer.id,
-                  });
-                }
-              });
-
-              setLocalAnswers(loadedAnswers);
-              setPendingAnswers(loadedPendingAnswers);
-
-              toast.success(
-                `${existingAnswers.length} jawaban sebelumnya telah dimuat`,
-              );
-            }
-          }
-        } catch (error) {
-          console.error("Error loading existing answers:", error);
-          toast.error("Gagal memuat jawaban sebelumnya. Memulai dari awal.");
-        }
-      } else {
-        // NEW submission - start with empty answers (no localStorage)
-        console.log("New submission - starting fresh (no localStorage)");
-        setLocalAnswers({});
-        setPendingAnswers(new Map());
+      if (!studentId) {
+        toast.error("Student ID tidak ditemukan. Silakan mulai ulang asesmen.");
+        return;
       }
 
-      setHasLoadedAnswers(true);
+      isInitializingRef.current = true;
+
+      try {
+        console.log("Initializing test submissions for student:", studentId);
+
+        // First, fetch student data to check existing submissions
+        const studentResponse = await studentsApi.getStudentByNpm(
+          globalAnswers.npm as string,
+        );
+
+        let submission4Id: string | undefined;
+        let submission5Id: string | undefined;
+
+        if (studentResponse.status === "success" && studentResponse.data) {
+          const studentData = studentResponse.data as any;
+          const submissions = studentData.submissions || [];
+
+          // Find existing in_progress submissions for test 4 and 5
+          const existingTest4 = submissions.find(
+            (sub: any) => sub.testId === 4 && sub.status === "in_progress",
+          );
+          const existingTest5 = submissions.find(
+            (sub: any) => sub.testId === 5 && sub.status === "in_progress",
+          );
+
+          submission4Id = existingTest4?.id;
+          submission5Id = existingTest5?.id;
+
+          console.log("Existing submissions:", {
+            test4: submission4Id,
+            test5: submission5Id,
+          });
+        }
+
+        // Create test 4 submission only if it doesn't exist
+        if (!submission4Id) {
+          console.log("Creating new test 4 submission");
+          const response4 = await resultsApi.createTestSubmission({
+            studentId,
+            testId: 4,
+            status: "in_progress",
+          });
+
+          if (response4.status === "success" && response4.data) {
+            submission4Id = (response4.data as any).id;
+            console.log("Created test 4 submission:", submission4Id);
+          }
+        }
+
+        // Create test 5 submission only if it doesn't exist
+        if (!submission5Id) {
+          console.log("Creating new test 5 submission");
+          const response5 = await resultsApi.createTestSubmission({
+            studentId,
+            testId: 5,
+            status: "in_progress",
+          });
+
+          if (response5.status === "success" && response5.data) {
+            submission5Id = (response5.data as any).id;
+            console.log("Created test 5 submission:", submission5Id);
+          }
+        }
+
+        // Save to global answers
+        if (submission4Id) {
+          saveAnswer("test4SubmissionId", submission4Id);
+        }
+        if (submission5Id) {
+          saveAnswer("test5SubmissionId", submission5Id);
+        }
+
+        setTest4SubmissionId(submission4Id || null);
+        setTest5SubmissionId(submission5Id || null);
+
+        // Load existing answers if submissions exist
+        if (submission4Id || submission5Id) {
+          const loadedAnswers: Record<string, string> = {};
+          const loadedPendingAnswers = new Map<
+            string,
+            { questionId: string; optionId: string; answerId?: string }
+          >();
+
+          // Load test 4 answers
+          if (submission4Id) {
+            try {
+              const submissionResponse =
+                await resultsApi.getSubmissionAnswers(submission4Id);
+
+              if (
+                submissionResponse.status === "success" &&
+                submissionResponse.data
+              ) {
+                const submissionData = submissionResponse.data as any;
+                const existingAnswers =
+                  submissionData.answers as TestSubmissionAnswer[];
+
+                if (existingAnswers && existingAnswers.length > 0) {
+                  existingAnswers.forEach((answer) => {
+                    const question = questions.find(
+                      (q) => q.id === answer.testQuestionId && q.testId === 4,
+                    );
+
+                    if (question) {
+                      const key = question.key;
+                      loadedAnswers[key] = answer.selectedOptionId;
+
+                      loadedPendingAnswers.set(key, {
+                        questionId: answer.testQuestionId,
+                        optionId: answer.selectedOptionId,
+                        answerId: answer.id,
+                      });
+                    }
+                  });
+                }
+              }
+            } catch (error) {
+              console.error("Error loading test 4 answers:", error);
+            }
+          }
+
+          // Load test 5 answers
+          if (submission5Id) {
+            try {
+              const submissionResponse =
+                await resultsApi.getSubmissionAnswers(submission5Id);
+
+              if (
+                submissionResponse.status === "success" &&
+                submissionResponse.data
+              ) {
+                const submissionData = submissionResponse.data as any;
+                const existingAnswers =
+                  submissionData.answers as TestSubmissionAnswer[];
+
+                if (existingAnswers && existingAnswers.length > 0) {
+                  existingAnswers.forEach((answer) => {
+                    const question = questions.find(
+                      (q) => q.id === answer.testQuestionId && q.testId === 5,
+                    );
+
+                    if (question) {
+                      const key = question.key;
+                      loadedAnswers[key] = answer.selectedOptionId;
+
+                      loadedPendingAnswers.set(key, {
+                        questionId: answer.testQuestionId,
+                        optionId: answer.selectedOptionId,
+                        answerId: answer.id,
+                      });
+                    }
+                  });
+                }
+              }
+            } catch (error) {
+              console.error("Error loading test 5 answers:", error);
+            }
+          }
+
+          const totalLoaded = Object.keys(loadedAnswers).length;
+          if (totalLoaded > 0) {
+            setLocalAnswers(loadedAnswers);
+            setPendingAnswers(loadedPendingAnswers);
+            toast.success(`${totalLoaded} jawaban sebelumnya telah dimuat`);
+          }
+        }
+      } catch (error) {
+        console.error("Error initializing submissions:", error);
+        toast.error("Gagal menginisialisasi test submission.");
+      } finally {
+        hasInitializedRef.current = true;
+        isInitializingRef.current = false;
+        setHasLoadedAnswers(true);
+      }
     };
 
-    loadExistingAnswers();
-  }, [
-    questions,
-    hasLoadedAnswers,
-    globalAnswers.testSubmissionId,
-    globalAnswers.hasExistingSubmission,
-  ]);
-
-  // No localStorage for page index - start from page 0
+    initializeSubmissions();
+  }, [questions.length]);
 
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: "smooth" });
@@ -268,56 +383,108 @@ export default function CareerPathFill() {
       return true;
     }
 
-    const testSubmissionId = globalAnswers.testSubmissionId as
-      | string
-      | undefined;
-
-    if (!testSubmissionId) {
-      toast.error(
-        "Test submission ID tidak ditemukan. Silakan mulai ulang asesmen.",
-      );
-      console.error("Missing testSubmissionId in answers");
-      return false;
-    }
-
     setIsSaving(true);
 
     try {
-      // Prepare batch data
-      const batchData = Array.from(pendingAnswers.values()).map((answer) => ({
-        ...(answer.answerId ? { id: answer.answerId } : {}),
-        testQuestionId: answer.questionId,
-        selectedOptionId: answer.optionId,
-      }));
+      // Separate answers by test
+      const test4Answers: Array<{
+        id?: string;
+        testQuestionId: string;
+        selectedOptionId: string;
+      }> = [];
+      const test5Answers: Array<{
+        id?: string;
+        testQuestionId: string;
+        selectedOptionId: string;
+      }> = [];
 
-      // Submit batch update
-      const response = await resultsApi.batchUpdateTestSubmissionAnswers(
-        testSubmissionId,
-        batchData,
-      );
+      pendingAnswers.forEach((answer, key) => {
+        const question = questions.find((q) => q.key === key);
+        if (question) {
+          const answerData = {
+            ...(answer.answerId ? { id: answer.answerId } : {}),
+            testQuestionId: answer.questionId,
+            selectedOptionId: answer.optionId,
+          };
 
-      // Update answerId for each saved answer
-      if (response.data && Array.isArray(response.data)) {
-        setPendingAnswers((prev) => {
-          const next = new Map(prev);
-          (response.data as any[]).forEach(
-            (savedAnswer: any, index: number) => {
-              const key = Array.from(prev.keys())[index];
-              const existing = prev.get(key);
-              if (existing) {
-                next.set(key, {
-                  ...existing,
-                  answerId: savedAnswer.id,
-                });
+          if (question.testId === 4) {
+            test4Answers.push(answerData);
+          } else if (question.testId === 5) {
+            test5Answers.push(answerData);
+          }
+        }
+      });
+
+      // Save test 4 answers
+      if (test4Answers.length > 0 && test4SubmissionId) {
+        const response = await resultsApi.batchUpdateTestSubmissionAnswers(
+          test4SubmissionId,
+          test4Answers,
+        );
+
+        if (response.data && Array.isArray(response.data)) {
+          // Update answerId for saved answers
+          setPendingAnswers((prev) => {
+            const next = new Map(prev);
+            (response.data as any[]).forEach((savedAnswer: any) => {
+              const question = questions.find(
+                (q) => q.id === savedAnswer.testQuestionId && q.testId === 4,
+              );
+              if (question) {
+                const key = question.key;
+                const existing = prev.get(key);
+                if (existing) {
+                  next.set(key, {
+                    ...existing,
+                    answerId: savedAnswer.id,
+                  });
+                }
               }
-            },
-          );
-          return next;
-        });
+            });
+            return next;
+          });
+        }
+
+        console.log(`✓ Saved ${test4Answers.length} test 4 answers`);
       }
 
-      console.log(`✓ Batch saved ${batchData.length} answers`);
-      toast.success(`${batchData.length} jawaban berhasil disimpan`);
+      // Save test 5 answers
+      if (test5Answers.length > 0 && test5SubmissionId) {
+        const response = await resultsApi.batchUpdateTestSubmissionAnswers(
+          test5SubmissionId,
+          test5Answers,
+        );
+
+        if (response.data && Array.isArray(response.data)) {
+          // Update answerId for saved answers
+          setPendingAnswers((prev) => {
+            const next = new Map(prev);
+            (response.data as any[]).forEach((savedAnswer: any) => {
+              const question = questions.find(
+                (q) => q.id === savedAnswer.testQuestionId && q.testId === 5,
+              );
+              if (question) {
+                const key = question.key;
+                const existing = prev.get(key);
+                if (existing) {
+                  next.set(key, {
+                    ...existing,
+                    answerId: savedAnswer.id,
+                  });
+                }
+              }
+            });
+            return next;
+          });
+        }
+
+        console.log(`✓ Saved ${test5Answers.length} test 5 answers`);
+      }
+
+      const totalSaved = test4Answers.length + test5Answers.length;
+      if (totalSaved > 0) {
+        toast.success(`${totalSaved} jawaban berhasil disimpan`);
+      }
 
       // Clear pending answers after successful save
       setPendingAnswers(new Map());
@@ -349,11 +516,44 @@ export default function CareerPathFill() {
     // Save any remaining pending answers before completing
     const success = await savePendingAnswers();
 
-    if (success) {
-      setShowConfirm(false);
-      next();
-    } else {
+    if (!success) {
       toast.error("Gagal menyimpan jawaban. Silakan coba lagi.");
+      return;
+    }
+
+    // Mark both submissions as completed
+    try {
+      setIsSaving(true);
+
+      if (test4SubmissionId) {
+        await resultsApi.updateTestSubmission(test4SubmissionId, {
+          status: "completed",
+          completedAt: new Date().toISOString(),
+        });
+        console.log("✓ Test 4 marked as completed");
+      }
+
+      if (test5SubmissionId) {
+        await resultsApi.updateTestSubmission(test5SubmissionId, {
+          status: "completed",
+          completedAt: new Date().toISOString(),
+        });
+        console.log("✓ Test 5 marked as completed");
+      }
+
+      // Mark career-path as complete in global answers
+      saveAnswer("careerPathComplete", true);
+
+      setShowConfirm(false);
+      toast.success("Career Path berhasil diselesaikan!");
+
+      // Navigate to next step
+      next();
+    } catch (error) {
+      console.error("Error completing submissions:", error);
+      toast.error("Gagal menyelesaikan test. Silakan coba lagi.");
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -528,16 +728,6 @@ export default function CareerPathFill() {
                     onClick={
                       pageIndex === totalPages - 1
                         ? async () => {
-                            console.log("Total questions:", totalQuestions);
-                            console.log("Total answered:", totalAnswered);
-                            console.log("Is all complete:", isAllComplete);
-                            console.log(
-                              "Answers sample:",
-                              Object.keys(localAnswers)
-                                .slice(0, 5)
-                                .map((key) => `${key}: ${localAnswers[key]}`),
-                            );
-
                             const allAnswered = questions.every(
                               (q) =>
                                 localAnswers[q.key] !== undefined &&
@@ -603,7 +793,8 @@ export default function CareerPathFill() {
               <button
                 type="button"
                 onClick={() => setShowConfirm(false)}
-                className="rounded-full border border-gray-200 px-10 py-2.5 text-gray-700 transition-all hover:bg-gray-100 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-700"
+                disabled={isSaving}
+                className="rounded-full border border-gray-200 px-10 py-2.5 text-gray-700 transition-all hover:bg-gray-100 disabled:opacity-50 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-700"
               >
                 Batal
               </button>

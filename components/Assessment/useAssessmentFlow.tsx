@@ -4,9 +4,6 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import toast from "react-hot-toast";
 
-import careerPathData from "@/data/CareerPath.json";
-import behaviorPatternData from "@/data/BehaviorPattern.json";
-
 type Answers = Record<string, any>;
 
 const DEFAULT_STEPS = [
@@ -31,35 +28,18 @@ const isStepComplete = (step: StepName, answers: Answers): boolean => {
           answers.angkatan &&
           answers.angkatan.trim().replace(/\D/g, "").length === 4 &&
           answers.fakultas &&
-          answers.prodi,
+          answers.prodi &&
+          answers.studentId,
       );
 
     case "career-path": {
-      const subAKeys = careerPathData.part1.subPartA.questions.map(
-        (q) => `A-${q.id}`,
-      );
-      const subBKeys = careerPathData.part1.subPartB.questions.map(
-        (q) => `B-${q.id}`,
-      );
-      const allA = subAKeys.every(
-        (k) => answers[k] !== undefined && answers[k] !== "",
-      );
-      const allB = subBKeys.every(
-        (k) => answers[k] !== undefined && answers[k] !== "",
-      );
-      return allA && allB;
+      // Check if career path is marked as complete via backend API
+      return Boolean(answers.careerPathComplete);
     }
 
     case "behavior-pattern": {
-      const dimensions = Object.entries(behaviorPatternData.part2.dimensions);
-      const totalQuestions = dimensions.length * 6;
-      const allQuestionIds = dimensions.flatMap(([_, d], dimIndex) => {
-        const baseId = 40 + dimIndex * 6;
-        return d.questions.map((q, idx) => baseId + idx);
-      });
-      return allQuestionIds.every(
-        (id) => answers[id] !== undefined && answers[id] !== "",
-      );
+      // Check if behavior pattern is marked as complete via backend API
+      return Boolean(answers.behaviorPatternComplete);
     }
 
     case "result":
