@@ -95,12 +95,12 @@ export default function CareerPathFill() {
     <>
       {/* ===== MODAL INSTRUKSI ===== */}
       {showInstruction && (
-        <div className="animate-fadeIn fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm transition-all duration-300">
+        <div className="animate-fadeIn fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-black/50 backdrop-blur-sm transition-all duration-300">
           <div className="animate-scaleIn relative mx-4 max-w-2xl scale-95 transform rounded-lg border border-gray-200 bg-white p-8 shadow-xl transition-all duration-300 ease-out dark:border-gray-700 dark:bg-gray-800">
-            <h1 className="mb-4 text-center text-2xl font-bold text-myunila md:text-3xl">
+            <h1 className="my-4 text-center text-2xl font-bold text-myunila md:text-3xl">
               Bidang Karir Ideal
             </h1>
-            <p className="mb-6 text-center text-base text-gray-700 dark:text-gray-300">
+            <p className="mb-6 text-center text-sm md:text-base text-gray-700 dark:text-gray-300">
               Bagian ini membantumu memahami kecenderungan bidang karir yang
               paling ideal berdasarkan minat dan karakteristik dirimu. Terdapat
               40 soal yang terbagi menjadi dua subbagian.
@@ -138,7 +138,7 @@ export default function CareerPathFill() {
               ))}
             </div>
 
-            <p className="mb-6 text-center font-semibold text-gray-700 dark:text-gray-300">
+            <p className="mb-6 text-center text-sm md:text-base font-semibold text-gray-700 dark:text-gray-300">
               Semakin jujur kamu menjawab, semakin akurat hasilnya!
             </p>
 
