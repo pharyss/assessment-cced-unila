@@ -159,6 +159,7 @@ export const testsApi = {
 // Students API
 export const studentsApi = {
   getFilters: () => apiClient.get(`/filters/students`),
+  getStudentByNpm: (npm: string) => apiClient.get(`/students/${npm}`),
   createStudent: (data: {
     npm: string;
     name: string;
@@ -178,4 +179,19 @@ export const resultsApi = {
     status: "in_progress" | "completed";
     completedAt?: string | null;
   }) => apiClient.post(`/results/test-submission`, data),
+  getSubmissionAnswers: (submissionId: string) =>
+    apiClient.get(`/results/test-submission/${submissionId}`),
+  createTestSubmissionAnswer: (data: {
+    testSubmissionId: string;
+    testQuestionId: string;
+    selectedOptionId: string;
+  }) => apiClient.post(`/results/test-submission/answer`, data),
+  batchUpdateTestSubmissionAnswers: (
+    submissionId: string,
+    data: Array<{
+      id?: string;
+      testQuestionId: string;
+      selectedOptionId: string;
+    }>,
+  ) => apiClient.put(`/results/test-submission/${submissionId}/answer`, data),
 };

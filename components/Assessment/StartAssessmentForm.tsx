@@ -135,51 +135,114 @@ export default function StartAssessmentForm({
         return;
       }
 
-      // Step 2: Create student
-      const studentData = {
-        npm: formData.npm,
-        name: formData.nama,
-        email: formData.email,
-        enrollmentYearId: enrollmentYear.id,
-        majorId: major.id,
-        facultyId: faculty.id,
-        degreeId: degree.id,
-      };
+      // Step 2: Check if student exists and has an in-progress submission
+      let student: Student;
+      let submission: TestSubmission | null = null;
+      let existingSubmissionId: string | null = null;
 
-      const studentResponse = await studentsApi.createStudent(studentData);
+      try {
+        // Try to get existing student by NPM
+        const studentResponse = await studentsApi.getStudentByNpm(formData.npm);
 
-      if (studentResponse.status !== "success" || !studentResponse.data) {
-        throw new Error("Gagal membuat data mahasiswa");
+        if (studentResponse.status === "success" && studentResponse.data) {
+          student = studentResponse.data as Student;
+          console.log("Found existing student:", student.id);
+
+          // Check if there are any test submissions for this student
+          const studentWithSubmissions = student as any;
+          if (
+            studentWithSubmissions.submissions &&
+            Array.isArray(studentWithSubmissions.submissions)
+          ) {
+            // Find an in-progress submission for this test
+            const inProgressSubmission =
+              studentWithSubmissions.submissions.find(
+                (sub: TestSubmission) =>
+                  sub.testId === TALENTA_MAHASISWA_TEST_ID &&
+                  sub.status === "in_progress",
+              );
+
+            if (inProgressSubmission) {
+              submission = inProgressSubmission;
+              existingSubmissionId = inProgressSubmission.id;
+              console.log(
+                "Found in-progress submission:",
+                inProgressSubmission.id,
+              );
+              toast.success("Melanjutkan tes yang sedang berlangsung...");
+            }
+          }
+        } else {
+          throw new Error("Student not found");
+        }
+      } catch (error) {
+        // Student doesn't exist, create new one
+        console.log("Student not found, creating new student");
+        const studentData = {
+          npm: formData.npm,
+          name: formData.nama,
+          email: formData.email,
+          enrollmentYearId: enrollmentYear.id,
+          majorId: major.id,
+          facultyId: faculty.id,
+          degreeId: degree.id,
+        };
+
+        const studentResponse = await studentsApi.createStudent(studentData);
+
+        if (studentResponse.status !== "success" || !studentResponse.data) {
+          throw new Error("Gagal membuat data mahasiswa");
+        }
+
+        student = studentResponse.data as Student;
+        console.log("Created new student:", student.id);
       }
 
-      const student = studentResponse.data as Student;
+      // Step 3: Create test submission if no in-progress submission exists
+      if (!submission) {
+        console.log("Creating new test submission");
+        const submissionData = {
+          studentId: student.id,
+          testId: TALENTA_MAHASISWA_TEST_ID,
+          status: "in_progress" as const,
+          completedAt: null,
+        };
 
-      // Step 3: Create test submission with status "in_progress"
-      const submissionData = {
-        studentId: student.id,
-        testId: TALENTA_MAHASISWA_TEST_ID,
-        status: "in_progress" as const,
-        completedAt: null,
-      };
+        const submissionResponse =
+          await resultsApi.createTestSubmission(submissionData);
 
-      const submissionResponse =
-        await resultsApi.createTestSubmission(submissionData);
+        if (
+          submissionResponse.status !== "success" ||
+          !submissionResponse.data
+        ) {
+          throw new Error("Gagal membuat submission test");
+        }
 
-      if (submissionResponse.status !== "success" || !submissionResponse.data) {
-        throw new Error("Gagal membuat submission test");
+        submission = submissionResponse.data as TestSubmission;
+        console.log("Created new submission:", submission.id);
+        toast.success("Data berhasil disimpan!");
       }
 
-      const submission = submissionResponse.data as TestSubmission;
+      // Step 4: Ensure we have a submission before proceeding
+      if (!submission) {
+        throw new Error("Gagal mendapatkan submission ID");
+      }
 
-      // Step 4: Save all data including studentId and submissionId
+      // Step 5: Save all data including studentId and submissionId
       const updatedAnswers = {
         ...answers,
         ...formData,
         studentId: student.id,
         testSubmissionId: submission.id,
+        hasExistingSubmission: !!existingSubmissionId,
       };
 
-      toast.success("Data berhasil disimpan!");
+      console.log("Proceeding with submission:", {
+        studentId: student.id,
+        submissionId: submission.id,
+        hasExisting: !!existingSubmissionId,
+      });
+
       next(updatedAnswers);
     } catch (error) {
       console.error("Error saat menyimpan:", error);

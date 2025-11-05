@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import {
   ArrowLeft,
@@ -8,30 +8,43 @@ import {
   AlertCircle,
   ClipboardList,
   User,
+  Loader2,
 } from "lucide-react";
 import toast from "react-hot-toast";
 import { useAssessmentFlow } from "@/components/Assessment/useAssessmentFlow";
-import questionsData from "@/data/CareerPath.json";
+import { testsApi, resultsApi, ApiError } from "@/lib/api-client";
+import { TestQuestion, TestSubmissionAnswer } from "@/types/api";
+
+// Interface for processed questions
+interface ProcessedQuestion {
+  id: string;
+  question: string;
+  key: string;
+  testId: number;
+  options: Array<{
+    id: string;
+    label: string;
+    text: string;
+    value: string;
+  }>;
+}
 
 export default function CareerPathFill() {
   const router = useRouter();
-  const { answers, saveAnswer, next, currentStep } = useAssessmentFlow();
+  const { answers: globalAnswers, next } = useAssessmentFlow();
 
-  const questions = useMemo(() => {
-    const subA = questionsData.part1.subPartA.questions.map((q) => ({
-      ...q,
-      key: `A-${q.id}`,
-    }));
-    const subB = questionsData.part1.subPartB.questions.map((q) => ({
-      ...q,
-      key: `B-${q.id}`,
-    }));
-    return [...subA, ...subB];
-  }, []);
-
+  // Use local state for answers instead of localStorage
+  const [localAnswers, setLocalAnswers] = useState<Record<string, string>>({});
+  const [questions, setQuestions] = useState<ProcessedQuestion[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [pageIndex, setPageIndex] = useState(0);
   const [showConfirm, setShowConfirm] = useState(false);
   const [showInstruction, setShowInstruction] = useState(true);
+  const [isSaving, setIsSaving] = useState(false);
+  const [pendingAnswers, setPendingAnswers] = useState<
+    Map<string, { questionId: string; optionId: string; answerId?: string }>
+  >(new Map());
+  const [hasLoadedAnswers, setHasLoadedAnswers] = useState(false);
 
   const pageSize = 4;
   const totalQuestions = questions.length;
@@ -41,7 +54,7 @@ export default function CareerPathFill() {
   const currentQuestions = questions.slice(start, end);
 
   const isQuestionAnswered = (q: { key: string }) => {
-    const answer = answers[q.key];
+    const answer = localAnswers[q.key];
     return answer !== undefined && answer !== "";
   };
 
@@ -50,12 +63,165 @@ export default function CareerPathFill() {
   const currentPageAnswered = currentQuestions.every((q) =>
     isQuestionAnswered(q),
   );
-  const progressPercent = ((pageIndex + 1) / totalPages) * 100;
+  const progressPercent =
+    totalPages > 0 ? ((pageIndex + 1) / totalPages) * 100 : 0;
 
+  // Fetch questions from test 4 and 5
   useEffect(() => {
-    const stored = localStorage.getItem("career-path-page");
-    if (stored) setPageIndex(Number(stored));
+    const fetchQuestions = async () => {
+      try {
+        setIsLoading(true);
+
+        // Fetch test 4 and test 5 questions
+        const [test4Response, test5Response] = await Promise.all([
+          testsApi.getTestQuestions(4),
+          testsApi.getTestQuestions(5),
+        ]);
+
+        const test4Questions = test4Response.data as TestQuestion[];
+        const test5Questions = test5Response.data as TestQuestion[];
+
+        // Process test 4 questions (prefix with "4-")
+        const processedTest4 = test4Questions
+          .sort((a, b) => a.order - b.order)
+          .map((q) => ({
+            id: q.id,
+            question: q.text,
+            key: `4-${q.id}`,
+            testId: 4,
+            options: q.options
+              .sort((a, b) => a.order - b.order)
+              .map((opt, idx) => ({
+                id: opt.id,
+                label: String.fromCharCode(65 + idx), // A, B, C, D...
+                text: opt.text,
+                value: opt.value,
+              })),
+          }));
+
+        // Process test 5 questions (prefix with "5-")
+        const processedTest5 = test5Questions
+          .sort((a, b) => a.order - b.order)
+          .map((q) => ({
+            id: q.id,
+            question: q.text,
+            key: `5-${q.id}`,
+            testId: 5,
+            options: q.options
+              .sort((a, b) => a.order - b.order)
+              .map((opt, idx) => ({
+                id: opt.id,
+                label: String.fromCharCode(65 + idx), // A, B, C, D...
+                text: opt.text,
+                value: opt.value,
+              })),
+          }));
+
+        // Combine: test 4 first, then test 5
+        setQuestions([...processedTest4, ...processedTest5]);
+      } catch (error) {
+        console.error("Error fetching questions:", error);
+        toast.error("Gagal memuat pertanyaan. Silakan refresh halaman.");
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchQuestions();
   }, []);
+
+  // Load existing answers if resuming an in-progress submission
+  useEffect(() => {
+    const loadExistingAnswers = async () => {
+      if (hasLoadedAnswers || questions.length === 0) {
+        return;
+      }
+
+      const testSubmissionId = globalAnswers.testSubmissionId as
+        | string
+        | undefined;
+      const hasExistingSubmission = globalAnswers.hasExistingSubmission as
+        | boolean
+        | undefined;
+
+      if (testSubmissionId && hasExistingSubmission) {
+        // SCENARIO: Resuming in-progress submission - load existing answers
+        try {
+          console.log(
+            "Loading existing answers for submission:",
+            testSubmissionId,
+          );
+
+          const submissionResponse =
+            await resultsApi.getSubmissionAnswers(testSubmissionId);
+
+          if (
+            submissionResponse.status === "success" &&
+            submissionResponse.data
+          ) {
+            const submissionData = submissionResponse.data as any;
+            const existingAnswers =
+              submissionData.answers as TestSubmissionAnswer[];
+
+            if (existingAnswers && existingAnswers.length > 0) {
+              console.log(`Found ${existingAnswers.length} existing answers`);
+
+              const loadedAnswers: Record<string, string> = {};
+              const loadedPendingAnswers = new Map<
+                string,
+                { questionId: string; optionId: string; answerId?: string }
+              >();
+
+              existingAnswers.forEach((answer) => {
+                const question = questions.find(
+                  (q) => q.id === answer.testQuestionId,
+                );
+
+                if (question) {
+                  const key = question.key;
+                  // Store in local state (memory only, no localStorage)
+                  loadedAnswers[key] = answer.selectedOptionId;
+
+                  // Track answer IDs for updates
+                  loadedPendingAnswers.set(key, {
+                    questionId: answer.testQuestionId,
+                    optionId: answer.selectedOptionId,
+                    answerId: answer.id,
+                  });
+                }
+              });
+
+              setLocalAnswers(loadedAnswers);
+              setPendingAnswers(loadedPendingAnswers);
+
+              toast.success(
+                `${existingAnswers.length} jawaban sebelumnya telah dimuat`,
+              );
+            }
+          }
+        } catch (error) {
+          console.error("Error loading existing answers:", error);
+          toast.error("Gagal memuat jawaban sebelumnya. Memulai dari awal.");
+        }
+      } else {
+        // NEW submission - start with empty answers (no localStorage)
+        console.log("New submission - starting fresh (no localStorage)");
+        setLocalAnswers({});
+        setPendingAnswers(new Map());
+      }
+
+      setHasLoadedAnswers(true);
+    };
+
+    loadExistingAnswers();
+  }, [
+    questions,
+    hasLoadedAnswers,
+    globalAnswers.testSubmissionId,
+    globalAnswers.hasExistingSubmission,
+  ]);
+
+  // No localStorage for page index - start from page 0
 
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: "smooth" });
@@ -74,23 +240,122 @@ export default function CareerPathFill() {
     };
   }, [showInstruction, showConfirm]);
 
-  const handleSelect = (q: { key: string }, value: string) =>
-    saveAnswer(q.key, value);
+  const handleSelect = (
+    q: { id: string; key: string; testId: number },
+    selectedOptionId: string,
+  ) => {
+    // Save answer in local state (memory only)
+    setLocalAnswers((prev) => ({
+      ...prev,
+      [q.key]: selectedOptionId,
+    }));
 
-  const handlePageChange = (newPage: number) => {
-    setPageIndex(newPage);
-    localStorage.setItem("career-path-page", newPage.toString());
+    // Track the pending answer for batch submission
+    setPendingAnswers((prev) => {
+      const next = new Map(prev);
+      next.set(q.key, {
+        questionId: q.id,
+        optionId: selectedOptionId,
+        // Keep existing answerId if updating an answer
+        answerId: prev.get(q.key)?.answerId,
+      });
+      return next;
+    });
   };
 
-  const handleConfirm = () => {
-    setShowConfirm(false);
-    next();
-    localStorage.removeItem("career-path-page");
+  const savePendingAnswers = async () => {
+    if (pendingAnswers.size === 0) {
+      return true;
+    }
+
+    const testSubmissionId = globalAnswers.testSubmissionId as
+      | string
+      | undefined;
+
+    if (!testSubmissionId) {
+      toast.error(
+        "Test submission ID tidak ditemukan. Silakan mulai ulang asesmen.",
+      );
+      console.error("Missing testSubmissionId in answers");
+      return false;
+    }
+
+    setIsSaving(true);
+
+    try {
+      // Prepare batch data
+      const batchData = Array.from(pendingAnswers.values()).map((answer) => ({
+        ...(answer.answerId ? { id: answer.answerId } : {}),
+        testQuestionId: answer.questionId,
+        selectedOptionId: answer.optionId,
+      }));
+
+      // Submit batch update
+      const response = await resultsApi.batchUpdateTestSubmissionAnswers(
+        testSubmissionId,
+        batchData,
+      );
+
+      // Update answerId for each saved answer
+      if (response.data && Array.isArray(response.data)) {
+        setPendingAnswers((prev) => {
+          const next = new Map(prev);
+          (response.data as any[]).forEach(
+            (savedAnswer: any, index: number) => {
+              const key = Array.from(prev.keys())[index];
+              const existing = prev.get(key);
+              if (existing) {
+                next.set(key, {
+                  ...existing,
+                  answerId: savedAnswer.id,
+                });
+              }
+            },
+          );
+          return next;
+        });
+      }
+
+      console.log(`✓ Batch saved ${batchData.length} answers`);
+      toast.success(`${batchData.length} jawaban berhasil disimpan`);
+
+      // Clear pending answers after successful save
+      setPendingAnswers(new Map());
+      return true;
+    } catch (error) {
+      console.error("Error saving answers:", error);
+
+      if (error instanceof ApiError) {
+        toast.error(`Gagal menyimpan jawaban: ${error.message}`);
+      } else {
+        toast.error("Gagal menyimpan jawaban. Coba lagi.");
+      }
+      return false;
+    } finally {
+      setIsSaving(false);
+    }
   };
 
-  useEffect(() => {
-    console.log("Updated answers count:", Object.keys(answers).length);
-  }, [answers]);
+  const handlePageChange = async (newPage: number) => {
+    // Save pending answers before changing page
+    const success = await savePendingAnswers();
+
+    if (success) {
+      setPageIndex(newPage);
+    }
+  };
+
+  const handleConfirm = async () => {
+    // Save any remaining pending answers before completing
+    const success = await savePendingAnswers();
+
+    if (success) {
+      setShowConfirm(false);
+      next();
+    } else {
+      toast.error("Gagal menyimpan jawaban. Silakan coba lagi.");
+    }
+  };
 
   return (
     <>
@@ -160,128 +425,162 @@ export default function CareerPathFill() {
       <section className="relative z-10 bg-gradient-to-b from-white via-myunila-50 to-myunila-100 pb-20 pt-24 dark:from-gray-950 dark:via-gray-900 dark:to-gray-800 sm:pb-28 sm:pt-32 md:pb-[120px] md:pt-[150px]">
         <div className="container mx-auto px-4 md:px-16 lg:px-32">
           <div className="mx-auto max-w-4xl rounded-2xl border border-gray-200 bg-white p-6 transition-all duration-300 dark:border-gray-700 dark:bg-gray-900 sm:p-10">
-            <div className="mb-10 text-center">
-              <h2 className="mb-2 text-2xl font-bold text-myunila dark:text-white sm:text-3xl">
-                {questionsData.part1.title}
-              </h2>
-              <p className="text-sm text-gray-600 dark:text-gray-300 sm:text-base">
-                {questionsData.part1.instruction}
-              </p>
-            </div>
-
-            {/* Progress Bar */}
-            <div className="mb-8">
-              <div
-                className="h-2 w-full overflow-hidden rounded-full bg-gray-200 dark:bg-gray-700"
-                role="progressbar"
-                aria-valuenow={progressPercent}
-                aria-valuemin={0}
-                aria-valuemax={100}
-              >
-                <div
-                  className="h-full bg-gradient-blue-modern transition-all duration-700 ease-in-out"
-                  style={{ width: `${progressPercent}%` }}
-                />
+            {isLoading ? (
+              <div className="flex min-h-[400px] flex-col items-center justify-center">
+                <Loader2 className="mb-4 h-12 w-12 animate-spin text-myunila" />
+                <p className="text-lg text-gray-600 dark:text-gray-300">
+                  Memuat pertanyaan...
+                </p>
               </div>
-              <p className="mt-2 text-center text-sm text-gray-500 dark:text-gray-400">
-                Halaman <strong>{pageIndex + 1}</strong> dari{" "}
-                <strong>{totalPages}</strong>
-              </p>
-            </div>
+            ) : (
+              <>
+                <div className="mb-10 text-center">
+                  <h2 className="mb-2 text-2xl font-bold text-myunila dark:text-white sm:text-3xl">
+                    Bidang Karir Ideal
+                  </h2>
+                  <p className="text-sm text-gray-600 dark:text-gray-300 sm:text-base">
+                    Pilih jawaban yang paling sesuai dengan dirimu untuk setiap
+                    pertanyaan.
+                  </p>
+                </div>
 
-            {/* Pertanyaan */}
-            <div className="space-y-8">
-              {currentQuestions.map((q, index) => {
-                const questionNumber = start + index + 1;
-                return (
+                {/* Progress Bar */}
+                <div className="mb-8">
                   <div
-                    key={q.key}
-                    className="rounded-xl border border-gray-200 bg-gray-50 p-5 dark:border-gray-700 dark:bg-gray-800"
+                    className="h-2 w-full overflow-hidden rounded-full bg-gray-200 dark:bg-gray-700"
+                    role="progressbar"
+                    aria-valuenow={progressPercent}
+                    aria-valuemin={0}
+                    aria-valuemax={100}
                   >
-                    <p className="mb-4 text-base font-semibold text-gray-800 dark:text-gray-100 md:text-lg">
-                      {questionNumber}. {q.question}
-                    </p>
-
-                    <div className="grid gap-3">
-                      {q.options.map((opt) => (
-                        <label
-                          key={opt.label}
-                          htmlFor={`opt-${q.key}-${opt.label}`}
-                          className={`flex cursor-pointer items-center rounded-lg border p-3 transition-all duration-200 ${
-                            answers[String(q.key)] === opt.label
-                              ? "border-myunila bg-myunila-100/50 font-medium text-myunila dark:border-myunila-600"
-                              : "border-gray-200 bg-white hover:bg-gray-100 dark:border-gray-700 dark:bg-gray-900 dark:hover:bg-gray-800"
-                          }`}
-                        >
-                          <input
-                            type="radio"
-                            id={`opt-${q.key}-${opt.label}`}
-                            name={`q-${q.key}`}
-                            value={opt.label}
-                            checked={answers[q.key] === opt.label}
-                            onChange={() => handleSelect(q, opt.label)}
-                            className="hidden"
-                          />
-                          <span>{opt.text}</span>
-                        </label>
-                      ))}
-                    </div>
+                    <div
+                      className="h-full bg-gradient-blue-modern transition-all duration-700 ease-in-out"
+                      style={{ width: `${progressPercent}%` }}
+                    />
                   </div>
-                );
-              })}
-            </div>
+                  <p className="mt-2 text-center text-sm text-gray-500 dark:text-gray-400">
+                    Halaman <strong>{pageIndex + 1}</strong> dari{" "}
+                    <strong>{totalPages}</strong>
+                  </p>
+                </div>
 
-            {/* Navigasi */}
-            <div className="mt-10 flex flex-col justify-between gap-3 sm:flex-row">
-              <button
-                type="button"
-                onClick={() => handlePageChange(pageIndex - 1)}
-                disabled={pageIndex === 0}
-                className="flex items-center justify-center gap-2 rounded-full border border-gray-300 px-6 py-2.5 text-sm font-medium text-gray-700 transition hover:bg-gray-100 disabled:opacity-40 dark:border-gray-600 dark:text-gray-200 dark:hover:bg-gray-800"
-              >
-                <ArrowLeft className="h-4 w-4" />
-                Sebelumnya
-              </button>
+                {/* Pertanyaan */}
+                <div className="space-y-8">
+                  {currentQuestions.map((q, index) => {
+                    const questionNumber = start + index + 1;
+                    return (
+                      <div
+                        key={q.key}
+                        className="rounded-xl border border-gray-200 bg-gray-50 p-5 dark:border-gray-700 dark:bg-gray-800"
+                      >
+                        <p className="mb-4 text-base font-semibold text-gray-800 dark:text-gray-100 md:text-lg">
+                          {questionNumber}. {q.question}
+                        </p>
 
-              <button
-                type="button"
-                onClick={
-                  pageIndex === totalPages - 1
-                    ? () => {
-                        console.log("Total questions:", totalQuestions);
-                        console.log("Total answered:", totalAnswered);
-                        console.log("Is all complete:", isAllComplete);
-                        console.log(
-                          "Answers sample:",
-                          Object.keys(answers)
-                            .slice(0, 5)
-                            .map((key) => `${key}: ${answers[key]}`),
-                        );
+                        <div className="grid gap-3">
+                          {q.options.map((opt) => {
+                            return (
+                              <label
+                                key={opt.id}
+                                htmlFor={`opt-${q.key}-${opt.id}`}
+                                className={`flex cursor-pointer items-center rounded-lg border p-3 transition-all duration-200 ${
+                                  localAnswers[String(q.key)] === opt.id
+                                    ? "border-myunila bg-myunila-100/50 font-medium text-myunila dark:border-myunila-600"
+                                    : "border-gray-200 bg-white hover:bg-gray-100 dark:border-gray-700 dark:bg-gray-900 dark:hover:bg-gray-800"
+                                } ${isSaving ? "opacity-60" : ""}`}
+                              >
+                                <input
+                                  type="radio"
+                                  id={`opt-${q.key}-${opt.id}`}
+                                  name={`q-${q.key}`}
+                                  value={opt.id}
+                                  checked={localAnswers[q.key] === opt.id}
+                                  onChange={() => handleSelect(q, opt.id)}
+                                  disabled={isSaving}
+                                  className="hidden"
+                                />
+                                <span className="flex items-center gap-2">
+                                  <strong>{opt.label}.</strong> {opt.text}
+                                </span>
+                              </label>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
 
-                        const allAnswered = questions.every(
-                          (q) =>
-                            answers[q.key] !== undefined &&
-                            answers[q.key] !== "",
-                        );
-                        if (allAnswered) setShowConfirm(true);
-                        else
-                          toast.error(
-                            "Lengkapi semua soal terlebih dahulu sebelum menyelesaikan.",
-                          );
-                      }
-                    : () => handlePageChange(pageIndex + 1)
-                }
-                disabled={!currentPageAnswered}
-                className={`flex items-center justify-center gap-2 rounded-full px-6 py-2.5 text-sm font-medium transition-all ${
-                  currentPageAnswered
-                    ? "bg-myunila text-white hover:bg-myunila-700"
-                    : "cursor-not-allowed bg-gray-300 text-gray-500"
-                }`}
-              >
-                {pageIndex === totalPages - 1 ? "Selesai Part 1" : "Lanjut"}
-                <ArrowRight className="h-4 w-4" />
-              </button>
-            </div>
+                {/* Navigasi */}
+                <div className="mt-10 flex flex-col justify-between gap-3 sm:flex-row">
+                  <button
+                    type="button"
+                    onClick={() => handlePageChange(pageIndex - 1)}
+                    disabled={pageIndex === 0}
+                    className="flex items-center justify-center gap-2 rounded-full border border-gray-300 px-6 py-2.5 text-sm font-medium text-gray-700 transition hover:bg-gray-100 disabled:opacity-40 dark:border-gray-600 dark:text-gray-200 dark:hover:bg-gray-800"
+                  >
+                    <ArrowLeft className="h-4 w-4" />
+                    Sebelumnya
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={
+                      pageIndex === totalPages - 1
+                        ? async () => {
+                            console.log("Total questions:", totalQuestions);
+                            console.log("Total answered:", totalAnswered);
+                            console.log("Is all complete:", isAllComplete);
+                            console.log(
+                              "Answers sample:",
+                              Object.keys(localAnswers)
+                                .slice(0, 5)
+                                .map((key) => `${key}: ${localAnswers[key]}`),
+                            );
+
+                            const allAnswered = questions.every(
+                              (q) =>
+                                localAnswers[q.key] !== undefined &&
+                                localAnswers[q.key] !== "",
+                            );
+                            if (allAnswered) {
+                              // Save pending answers before showing confirmation
+                              const success = await savePendingAnswers();
+                              if (success) {
+                                setShowConfirm(true);
+                              }
+                            } else {
+                              toast.error(
+                                "Lengkapi semua soal terlebih dahulu sebelum menyelesaikan.",
+                              );
+                            }
+                          }
+                        : () => handlePageChange(pageIndex + 1)
+                    }
+                    disabled={!currentPageAnswered || isSaving}
+                    className={`flex items-center justify-center gap-2 rounded-full px-6 py-2.5 text-sm font-medium transition-all ${
+                      currentPageAnswered && !isSaving
+                        ? "bg-myunila text-white hover:bg-myunila-700"
+                        : "cursor-not-allowed bg-gray-300 text-gray-500"
+                    }`}
+                  >
+                    {isSaving ? (
+                      <>
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                        Menyimpan...
+                      </>
+                    ) : (
+                      <>
+                        {pageIndex === totalPages - 1
+                          ? "Selesai Part 1"
+                          : "Lanjut"}
+                        <ArrowRight className="h-4 w-4" />
+                      </>
+                    )}
+                  </button>
+                </div>
+              </>
+            )}
           </div>
         </div>
       </section>
@@ -311,10 +610,17 @@ export default function CareerPathFill() {
               <button
                 type="button"
                 onClick={handleConfirm}
-                disabled={!isAllComplete}
+                disabled={!isAllComplete || isSaving}
                 className="rounded-full bg-myunila px-8 py-2.5 font-medium text-white shadow-lg transition-all hover:bg-myunila-700 disabled:cursor-not-allowed disabled:opacity-50 dark:hover:bg-myunila-400"
               >
-                Ya, Lanjut
+                {isSaving ? (
+                  <>
+                    <Loader2 className="mr-2 inline h-4 w-4 animate-spin" />
+                    Menyimpan...
+                  </>
+                ) : (
+                  "Ya, Lanjut"
+                )}
               </button>
             </div>
           </div>
