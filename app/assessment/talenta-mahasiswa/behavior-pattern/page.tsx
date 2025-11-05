@@ -124,7 +124,7 @@ const isAllComplete = totalAnsweredAll === totalQuestions;
     <>
       {/* ===== MODAL INSTRUKSI ===== */}
       {showIntroModal && (
-        <div className="animate-fadeIn fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm transition-all duration-300">
+        <div className="animate-fadeIn fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-black/50 backdrop-blur-sm transition-all duration-300">
           <div className="animate-scaleIn mx-4 max-w-2xl scale-95 transform rounded-lg border border-gray-200 bg-white p-8 shadow-2xl dark:border-gray-700 dark:bg-gray-800">
             <h1 className="mb-4 text-center text-2xl font-bold text-myunila md:text-3xl">
               Pola Perilaku
