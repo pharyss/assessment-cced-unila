@@ -206,33 +206,85 @@ export default function CareerPathClient({
   };
 
   // Save current page answers using PUT method
+  // First GET existing answers, merge with current page selections, then PUT all
   const saveCurrentPageAnswers = async () => {
     if (!testSubmissionId) {
       toast.error("Submission ID tidak ditemukan.");
       return false;
     }
 
-    const answersToSave: Array<{
+    const currentPageAnswers: Array<{
       testQuestionId: string;
       selectedOptionId: string;
     }> = [];
 
     currentQuestions.forEach((q) => {
       if (answers[q.key]) {
-        answersToSave.push({
+        currentPageAnswers.push({
           testQuestionId: q.id,
           selectedOptionId: answers[q.key],
         });
       }
     });
 
-    if (answersToSave.length === 0) {
+    if (currentPageAnswers.length === 0) {
       return true;
     }
 
     setIsSaving(true);
     try {
-      // Save answers using PUT endpoint to batch update
+      // Step 1: GET existing answers from backend
+      const existingResponse =
+        await resultsApi.getSubmissionAnswers(testSubmissionId);
+
+      let existingAnswers: Array<{
+        id?: string;
+        testQuestionId: string;
+        selectedOptionId: string;
+      }> = [];
+
+      if (
+        existingResponse.status === "success" &&
+        (existingResponse.data as any)?.answers
+      ) {
+        existingAnswers = (existingResponse.data as any).answers.map(
+          (answer: any) => ({
+            id: answer.id,
+            testQuestionId: answer.testQuestionId,
+            selectedOptionId: answer.selectedOptionId,
+          }),
+        );
+      }
+
+      // Step 2: Merge existing answers with current page answers
+      const mergedAnswersMap = new Map<
+        string,
+        {
+          id?: string;
+          testQuestionId: string;
+          selectedOptionId: string;
+        }
+      >();
+
+      // Add existing answers to map
+      existingAnswers.forEach((answer) => {
+        mergedAnswersMap.set(answer.testQuestionId, answer);
+      });
+
+      // Overwrite/add current page answers
+      currentPageAnswers.forEach((answer) => {
+        const existing = mergedAnswersMap.get(answer.testQuestionId);
+        mergedAnswersMap.set(answer.testQuestionId, {
+          id: existing?.id, // Keep existing ID if available
+          testQuestionId: answer.testQuestionId,
+          selectedOptionId: answer.selectedOptionId,
+        });
+      });
+
+      // Convert map to array
+      const answersToSave = Array.from(mergedAnswersMap.values());
+
+      // Step 3: PUT all merged answers using batch update
       const response = await resultsApi.batchUpdateTestSubmissionAnswers(
         testSubmissionId,
         answersToSave,
