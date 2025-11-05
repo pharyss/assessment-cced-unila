@@ -159,4 +159,23 @@ export const testsApi = {
 // Students API
 export const studentsApi = {
   getFilters: () => apiClient.get(`/filters/students`),
+  createStudent: (data: {
+    npm: string;
+    name: string;
+    email: string;
+    enrollmentYearId: number;
+    majorId: number;
+    facultyId: number;
+    degreeId: number;
+  }) => apiClient.post(`/students`, data),
+};
+
+// Results API
+export const resultsApi = {
+  createTestSubmission: (data: {
+    studentId: string;
+    testId: number;
+    status: "in_progress" | "completed";
+    completedAt?: string | null;
+  }) => apiClient.post(`/results/test-submission`, data),
 };

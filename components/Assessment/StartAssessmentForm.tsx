@@ -6,7 +6,11 @@ import { useAssessmentFlow } from "@/components/Assessment/useAssessmentFlow";
 import toast from "react-hot-toast";
 import { Loader2 } from "lucide-react";
 import Select from "react-select";
-import { StudentFilters } from "@/types/api";
+import { StudentFilters, Student, TestSubmission } from "@/types/api";
+import { studentsApi, resultsApi, ApiError } from "@/lib/api-client";
+
+// Test ID for "Talenta Mahasiswa" assessment
+const TALENTA_MAHASISWA_TEST_ID = 1;
 
 interface FormData {
   nama: string;
@@ -22,7 +26,9 @@ interface StartAssessmentFormProps {
   filters: StudentFilters;
 }
 
-export default function StartAssessmentForm({ filters }: StartAssessmentFormProps) {
+export default function StartAssessmentForm({
+  filters,
+}: StartAssessmentFormProps) {
   const router = useRouter();
   const { answers, saveAnswer, next, currentStep } = useAssessmentFlow();
 
@@ -109,11 +115,87 @@ export default function StartAssessmentForm({ filters }: StartAssessmentFormProp
     }
 
     try {
-      const updatedAnswers = { ...answers, ...formData };
+      // Step 1: Find the IDs from filters
+      const enrollmentYear = filters?.enrollmentYears.find(
+        (item) => item.name === formData.angkatan,
+      );
+      const faculty = filters?.faculties.find(
+        (item) => item.name === formData.fakultas,
+      );
+      const major = filters?.majors.find(
+        (item) => item.name === formData.prodi,
+      );
+      const degree = filters?.degrees.find(
+        (item) => item.name === formData.jenjang,
+      );
+
+      if (!enrollmentYear || !faculty || !major || !degree) {
+        toast.error("Data filter tidak valid. Silakan coba lagi.");
+        setIsSubmitting(false);
+        return;
+      }
+
+      // Step 2: Create student
+      const studentData = {
+        npm: formData.npm,
+        name: formData.nama,
+        email: formData.email,
+        enrollmentYearId: enrollmentYear.id,
+        majorId: major.id,
+        facultyId: faculty.id,
+        degreeId: degree.id,
+      };
+
+      const studentResponse = await studentsApi.createStudent(studentData);
+
+      if (studentResponse.status !== "success" || !studentResponse.data) {
+        throw new Error("Gagal membuat data mahasiswa");
+      }
+
+      const student = studentResponse.data as Student;
+
+      // Step 3: Create test submission with status "in_progress"
+      const submissionData = {
+        studentId: student.id,
+        testId: TALENTA_MAHASISWA_TEST_ID,
+        status: "in_progress" as const,
+        completedAt: null,
+      };
+
+      const submissionResponse =
+        await resultsApi.createTestSubmission(submissionData);
+
+      if (submissionResponse.status !== "success" || !submissionResponse.data) {
+        throw new Error("Gagal membuat submission test");
+      }
+
+      const submission = submissionResponse.data as TestSubmission;
+
+      // Step 4: Save all data including studentId and submissionId
+      const updatedAnswers = {
+        ...answers,
+        ...formData,
+        studentId: student.id,
+        testSubmissionId: submission.id,
+      };
+
+      toast.success("Data berhasil disimpan!");
       next(updatedAnswers);
     } catch (error) {
       console.error("Error saat menyimpan:", error);
-      toast.error("Gagal menyimpan data. Coba lagi.");
+
+      if (error instanceof ApiError) {
+        if (error.errors && error.errors.length > 0) {
+          // Show validation errors
+          error.errors.forEach((err) => {
+            toast.error(`${err.field}: ${err.message}`);
+          });
+        } else {
+          toast.error(error.message || "Gagal menyimpan data. Coba lagi.");
+        }
+      } else {
+        toast.error("Gagal menyimpan data. Coba lagi.");
+      }
     } finally {
       setIsSubmitting(false);
     }
@@ -184,10 +266,7 @@ export default function StartAssessmentForm({ filters }: StartAssessmentFormProp
           <span className="hidden h-[1px] w-full max-w-[50px] bg-gray-300 dark:bg-gray-700 sm:block" />
         </div>
 
-        <form
-          onSubmit={handleSubmit}
-          className="flex flex-col gap-6 sm:gap-8"
-        >
+        <form onSubmit={handleSubmit} className="flex flex-col gap-6 sm:gap-8">
           {/* Baris 1 */}
           <div className="flex flex-col gap-6 sm:flex-row sm:gap-4">
             <InputField
