@@ -23,13 +23,13 @@ const Header = () => {
     }
   };
   useEffect(() => {
-  window.addEventListener("scroll", handleStickyNavbar);
-  return () => window.removeEventListener("scroll", handleStickyNavbar);
+    window.addEventListener("scroll", handleStickyNavbar);
+    return () => window.removeEventListener("scroll", handleStickyNavbar);
   }, []);
 
   // submenu handler
   const [openIndex, setOpenIndex] = useState(-1);
-  const handleSubmenu = (index) => {
+  const handleSubmenu = (index: number) => {
     if (openIndex === index) {
       setOpenIndex(-1);
     } else {
@@ -44,7 +44,7 @@ const Header = () => {
       <header
         className={`header left-0 top-0 z-40 flex w-full items-center ${
           sticky
-            ? "dark:bg-gray-dark dark:shadow-sticky-dark fixed z-[9999] bg-white !bg-opacity-80 shadow-sticky backdrop-blur-sm transition"
+            ? "fixed z-[9999] bg-white !bg-opacity-80 shadow-sticky backdrop-blur-sm transition dark:bg-gray-dark dark:shadow-sticky-dark"
             : "absolute bg-transparent"
         }`}
       >
@@ -73,7 +73,7 @@ const Header = () => {
                 />
               </Link>
             </div>
-            
+
             <div className="flex w-full items-center justify-between px-4">
               <div>
                 <button
@@ -143,9 +143,9 @@ const Header = () => {
                                 openIndex === index ? "block" : "hidden"
                               }`}
                             >
-                              {menuItem.submenu.map((submenuItem, index) => (
+                              {menuItem.submenu?.map((submenuItem, index) => (
                                 <Link
-                                  href={submenuItem.path}
+                                  href={submenuItem.path ?? "/"}
                                   key={index}
                                   className="block rounded-md py-2.5 text-sm text-dark hover:text-myunila dark:text-white/70 dark:hover:text-white lg:px-3"
                                 >
@@ -160,7 +160,7 @@ const Header = () => {
                   </ul>
 
                   {navbarOpen && (
-                    <div className="mt-4 border-t border-gray-200 dark:border-gray-700 pt-4 lg:hidden">
+                    <div className="mt-4 border-t border-gray-200 pt-4 dark:border-gray-700 lg:hidden">
                       <Link
                         href="/signin"
                         className="block w-full rounded-full bg-myunila px-6 py-2 text-center text-sm font-medium text-white hover:bg-myunila-700"
@@ -172,17 +172,16 @@ const Header = () => {
                 </nav>
               </div>
               <div className="flex items-center justify-end pr-16 lg:pr-0">
-
                 <Link
                   href="/signin"
-                  className="ease-in-up shadow-btn hover:shadow-btn-hover hidden rounded-full bg-myunila px-8 py-3 text-base font-medium text-white transition duration-300 hover:bg-myunila-700 md:block md:px-9 lg:px-6 xl:px-9"
+                  className="ease-in-up hidden rounded-full bg-myunila px-8 py-3 text-base font-medium text-white shadow-btn transition duration-300 hover:bg-myunila-700 hover:shadow-btn-hover md:block md:px-9 lg:px-6 xl:px-9"
                 >
                   Masuk
                 </Link>
                 <div className="ml-4">
                   <ThemeToggler />
                 </div>
-            </div>
+              </div>
             </div>
           </div>
         </div>

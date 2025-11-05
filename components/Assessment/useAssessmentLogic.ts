@@ -106,10 +106,12 @@ export function useAssessmentLogic(answers: Record<string, any>) {
         (q) => q.id === i,
       );
       const option = question?.options.find((opt) => opt.label === value);
-      if (option?.category) score[option.category] += 1;
+      if (option?.category) score[option.category as keyof typeof score] += 1;
     }
 
-    return Object.keys(score).reduce((a, b) => (score[a] > score[b] ? a : b));
+    return Object.keys(score).reduce((a, b) =>
+      score[a as keyof typeof score] > score[b as keyof typeof score] ? a : b,
+    );
   }, [answers]);
 
   // -----------------------------
@@ -127,7 +129,7 @@ export function useAssessmentLogic(answers: Record<string, any>) {
         (q) => q.id === i,
       );
       const option = question?.options.find((opt) => opt.label === value);
-      if (option?.dimension) dim[option.dimension] += 1;
+      if (option?.dimension) dim[option.dimension as keyof typeof dim] += 1;
     }
 
     const EI = dim.E >= dim.I ? "E" : "I";
@@ -142,7 +144,7 @@ export function useAssessmentLogic(answers: Record<string, any>) {
   // KORELASI BIDANG & MBTI
   // -----------------------------
   const analyzeCareerCompatibility = useMemo(() => {
-    const map = MBTI_MAPPING[calculateMBTI];
+    const map = MBTI_MAPPING[calculateMBTI as keyof typeof MBTI_MAPPING];
     if (!map) return "Tidak Diketahui";
 
     if (calculateCareerField === map.dominan) return "Sangat Sesuai";
@@ -151,43 +153,42 @@ export function useAssessmentLogic(answers: Record<string, any>) {
   }, [calculateCareerField, calculateMBTI]);
 
   // -----------------------------
-// PART 2: POLA PERILAKU
-// -----------------------------
-const calculateBehaviorScores = useMemo(() => {
-  const result: Record<string, { percentage: number; level: string }> = {};
-  const dimensions = Object.entries(behaviorPatternData.part2.dimensions);
+  // PART 2: POLA PERILAKU
+  // -----------------------------
+  const calculateBehaviorScores = useMemo(() => {
+    const result: Record<string, { percentage: number; level: string }> = {};
+    const dimensions = Object.entries(behaviorPatternData.part2.dimensions);
 
-  dimensions.forEach(([dimKey, dimValue], dimIndex) => {
-    const baseId = 40 + dimIndex * 6;
-    const scores: number[] = [];
+    dimensions.forEach(([dimKey, dimValue], dimIndex) => {
+      const baseId = 40 + dimIndex * 6;
+      const scores: number[] = [];
 
-    dimValue.questions.forEach((q, idx) => {
-      const id = baseId + idx;
-      const value = answers[id];
-      if (value === undefined) return;
+      dimValue.questions.forEach((q, idx) => {
+        const id = baseId + idx;
+        const value = answers[id];
+        if (value === undefined) return;
 
-      const adjusted = q.type === "unfavorable" ? 6 - value : value;
-      scores.push(adjusted);
+        const adjusted = q.type === "unfavorable" ? 6 - value : value;
+        scores.push(adjusted);
+      });
+
+      if (scores.length > 0) {
+        const avg = scores.reduce((a, b) => a + b, 0) / scores.length;
+        const percentage = ((avg - 1) / 4) * 100;
+
+        let level = "Sedang";
+        if (percentage < 40) level = "Rendah";
+        else if (percentage > 70) level = "Tinggi";
+
+        result[dimKey] = {
+          percentage: Math.round(percentage),
+          level,
+        };
+      }
     });
 
-    if (scores.length > 0) {
-      const avg = scores.reduce((a, b) => a + b, 0) / scores.length;
-      const percentage = ((avg - 1) / 4) * 100;
-
-      let level = "Sedang";
-      if (percentage < 40) level = "Rendah";
-      else if (percentage > 70) level = "Tinggi";
-
-      result[dimKey] = {
-        percentage: Math.round(percentage),
-        level,
-      };
-    }
-  });
-
-  return result;
-}, [answers]);
-
+    return result;
+  }, [answers]);
 
   // -----------------------------
   // HASIL AKHIR
@@ -197,14 +198,18 @@ const calculateBehaviorScores = useMemo(() => {
     const kesesuaian = analyzeCareerCompatibility;
     const behavior = calculateBehaviorScores;
 
-    const mbtiMap = MBTI_MAPPING[mbti] || { dominan: "N/A", sekunder: "N/A" };
+    const mbtiMap = MBTI_MAPPING[mbti as keyof typeof MBTI_MAPPING] || {
+      dominan: "N/A",
+      sekunder: "N/A",
+    };
 
     return {
       mbtiType: mbti,
       kesesuaian,
-      thinkingStyle: THINKING_STYLE[mbti],
-      communicationStyle: COMMUNICATION_STYLE[mbti],
-      workingStyle: WORKING_STYLE[mbti],
+      thinkingStyle: THINKING_STYLE[mbti as keyof typeof THINKING_STYLE],
+      communicationStyle:
+        COMMUNICATION_STYLE[mbti as keyof typeof COMMUNICATION_STYLE],
+      workingStyle: WORKING_STYLE[mbti as keyof typeof WORKING_STYLE],
       behaviorDimensions: behavior,
       karirDominanMBTI: mbtiMap.dominan,
       karirSekunderMBTI: mbtiMap.sekunder,

@@ -52,18 +52,20 @@ export default function BehaviorPatternFill() {
     };
   }, [currentDimIndex, dimValue, getRenumberedQuestions]);
 
-const allQuestionIds = dimensions.flatMap(([_, d], dimIndex) =>
-  getRenumberedQuestions(dimIndex, d.questions).map((q) => q.id)
-);
+  const allQuestionIds = dimensions.flatMap(([_, d], dimIndex) =>
+    getRenumberedQuestions(dimIndex, d.questions).map((q) => q.id),
+  );
 
-const totalAnsweredAll = allQuestionIds.filter(id => answers[id] != null && answers[id] !== undefined).length;
-const totalAnsweredCurrent = currentDimension.questions.filter(
-  (q) => answers[q.id] != null && answers[q.id] !== undefined
-).length;
+  const totalAnsweredAll = allQuestionIds.filter(
+    (id) => answers[id] != null && answers[id] !== undefined,
+  ).length;
+  const totalAnsweredCurrent = currentDimension.questions.filter(
+    (q) => answers[q.id] != null && answers[q.id] !== undefined,
+  ).length;
 
-const isCurrentDimComplete =
-  totalAnsweredCurrent === currentDimension.questions.length;
-const isAllComplete = totalAnsweredAll === totalQuestions;
+  const isCurrentDimComplete =
+    totalAnsweredCurrent === currentDimension.questions.length;
+  const isAllComplete = totalAnsweredAll === totalQuestions;
 
   const handleSelect = (qid: number, value: number) => {
     saveAnswer(qid.toString(), value);
@@ -139,19 +141,26 @@ const isAllComplete = totalAnsweredAll === totalQuestions;
             <div className="mb-6 space-y-3 text-base text-myunila dark:text-gray-300">
               <div className="flex items-center gap-3 rounded-lg border border-myunila bg-myunila-50 p-3 dark:border-myunila-800 dark:bg-myunila-300">
                 <ClipboardCheck className="h-5 w-5 text-gray-900 dark:text-gray-300" />
-                <p>Cermati setiap pernyataan dan renungkan seberapa cocok dengan dirimu saat ini.</p>
+                <p>
+                  Cermati setiap pernyataan dan renungkan seberapa cocok dengan
+                  dirimu saat ini.
+                </p>
               </div>
 
               <div className="flex items-center gap-3 rounded-lg border border-myunila bg-myunila-50 p-3 dark:border-myunila-800 dark:bg-myunila-300">
                 <ListOrdered className="h-5 w-5 text-gray-900 dark:text-gray-300" />
-                <p>Pilih angka <strong>1–5</strong> sesuai tingkat kesesuaianmu.</p>
+                <p>
+                  Pilih angka <strong>1–5</strong> sesuai tingkat kesesuaianmu.
+                </p>
               </div>
 
               <div className="flex items-center gap-3 rounded-lg border border-myunila bg-myunila-50 p-3 dark:border-myunila-800 dark:bg-myunila-300">
                 <Smile className="h-5 w-5 text-gray-900 dark:text-gray-300" />
                 <p>
-                  <strong>1</strong> berarti <strong className="text-danger">“nggak juga”</strong>,{" "}
-                  <strong>5</strong> berarti <strong className="text-success">“iya banget”</strong>.
+                  <strong>1</strong> berarti{" "}
+                  <strong className="text-danger">“nggak juga”</strong>,{" "}
+                  <strong>5</strong> berarti{" "}
+                  <strong className="text-success">“iya banget”</strong>.
                 </p>
               </div>
             </div>
@@ -194,7 +203,8 @@ const isAllComplete = totalAnsweredAll === totalQuestions;
                 />
               </div>
               <p className="mt-2 text-center text-sm text-gray-500 dark:text-gray-400">
-                Halaman <strong>{currentDimIndex + 1}</strong> dari <strong>{totalDimensions}</strong>
+                Halaman <strong>{currentDimIndex + 1}</strong> dari{" "}
+                <strong>{totalDimensions}</strong>
               </p>
             </div>
 
@@ -206,8 +216,12 @@ const isAllComplete = totalAnsweredAll === totalQuestions;
                     {idx + 1}. {q.text}
                   </p>
                   <div className="flex items-center justify-between gap-3">
-                    <span className="text-xs md:text-base font-medium text-danger">
-                      {scale.labels[scale.min]}
+                    <span className="text-xs font-medium text-danger md:text-base">
+                      {
+                        scale.labels[
+                          scale.min.toString() as keyof typeof scale.labels
+                        ]
+                      }
                     </span>
                     <div className="flex flex-1 justify-center gap-4 md:gap-16">
                       {[...Array(scale.max)].map((_, i) => {
@@ -224,9 +238,9 @@ const isAllComplete = totalAnsweredAll === totalQuestions;
                               className="hidden"
                             />
                             <span
-                              className={`flex h-8 w-8 md:h-12 md:w-12 items-center justify-center rounded-full border transition-all ${
+                              className={`flex h-8 w-8 items-center justify-center rounded-full border transition-all md:h-12 md:w-12 ${
                                 isSelected
-                                  ? "scale-110 border-myunila bg-myunila-100/50 text-myunila dark:border-myunila-400 dark:bg-myunila-700/40 dark:text-white font-bold shadow-md dark:shadow-myunila/20"
+                                  ? "scale-110 border-myunila bg-myunila-100/50 font-bold text-myunila shadow-md dark:border-myunila-400 dark:bg-myunila-700/40 dark:text-white dark:shadow-myunila/20"
                                   : "border-gray-400 bg-white text-gray-700 hover:scale-105 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-200 hover:dark:bg-gray-700"
                               }`}
                             >
@@ -236,8 +250,12 @@ const isAllComplete = totalAnsweredAll === totalQuestions;
                         );
                       })}
                     </div>
-                    <span className="text-xs md:text-base font-medium text-success">
-                      {scale.labels[scale.max]}
+                    <span className="text-xs font-medium text-success md:text-base">
+                      {
+                        scale.labels[
+                          scale.max.toString() as keyof typeof scale.labels
+                        ]
+                      }
                     </span>
                   </div>
                 </div>
@@ -257,12 +275,11 @@ const isAllComplete = totalAnsweredAll === totalQuestions;
               <button
                 onClick={handleNext}
                 disabled={!isCurrentDimComplete}
-className={`flex items-center justify-center gap-2 rounded-full px-6 py-2.5 text-sm font-medium transition-all ${
-  isCurrentDimComplete
-    ? "bg-myunila text-white hover:bg-myunila-700"
-    : "bg-gray-300 text-gray-500 cursor-not-allowed"
-}`}
-
+                className={`flex items-center justify-center gap-2 rounded-full px-6 py-2.5 text-sm font-medium transition-all ${
+                  isCurrentDimComplete
+                    ? "bg-myunila text-white hover:bg-myunila-700"
+                    : "cursor-not-allowed bg-gray-300 text-gray-500"
+                }`}
               >
                 {currentDimIndex === totalDimensions - 1
                   ? "Selesai Asesmen"
@@ -276,11 +293,11 @@ className={`flex items-center justify-center gap-2 rounded-full px-6 py-2.5 text
 
       {/* ===== MODAL KONFIRMASI SELESAI ===== */}
       {showConfirmModal && (
-        <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/40 backdrop-blur-sm animate-fadeIn">
-          <div className="mx-4 w-full max-w-md rounded-2xl border border-gray-200 bg-white p-8 dark:border-gray-700 dark:bg-gray-800 animate-scaleIn">
+        <div className="animate-fadeIn fixed inset-0 z-[9999] flex items-center justify-center bg-black/40 backdrop-blur-sm">
+          <div className="animate-scaleIn mx-4 w-full max-w-md rounded-2xl border border-gray-200 bg-white p-8 dark:border-gray-700 dark:bg-gray-800">
             <div className="mb-2 flex flex-col items-center text-center">
-              <AlertCircle className="text-warning h-16 w-16 mb-3" />
-              <h3 className="text-warning text-2xl font-bold dark:text-white">
+              <AlertCircle className="mb-3 h-16 w-16 text-warning" />
+              <h3 className="text-2xl font-bold text-warning dark:text-white">
                 Konfirmasi Selesai
               </h3>
             </div>

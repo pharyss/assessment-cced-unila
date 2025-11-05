@@ -33,6 +33,7 @@ interface AssessmentResult {
   behaviorDimensions: Record<string, { percentage: number; level: string }>;
   karirDominanMBTI: keyof ReportTextData["careerField"];
   karirSekunderMBTI: keyof ReportTextData["careerField"];
+  karirMinat?: keyof ReportTextData["careerField"];
 }
 
 const PWB_TITLES: Record<string, string> = {
@@ -346,15 +347,15 @@ export default function TalentResultPage() {
                   level === "Tinggi"
                     ? "text-success"
                     : level === "Rendah"
-                    ? "text-danger"
-                    : "text-warning";
+                      ? "text-danger"
+                      : "text-warning";
 
                 const barColor =
                   level === "Tinggi"
                     ? "bg-success"
                     : level === "Rendah"
-                    ? "bg-danger"
-                    : "bg-warning";
+                      ? "bg-danger"
+                      : "bg-warning";
 
                 return (
                   <div key={key}>
@@ -421,8 +422,8 @@ export default function TalentResultPage() {
                   kesesuaian === "Sangat Sesuai"
                     ? "text-success"
                     : kesesuaian === "Cukup Sesuai"
-                    ? "text-warning"
-                    : "text-danger"
+                      ? "text-warning"
+                      : "text-danger"
                 }`}
               >
                 {kesesuaian}
@@ -530,8 +531,8 @@ export default function TalentResultPage() {
                   level === "Tinggi"
                     ? "text-success"
                     : level === "Sedang"
-                    ? "text-warning"
-                    : "text-danger";
+                      ? "text-warning"
+                      : "text-danger";
 
                 return (
                   <div
