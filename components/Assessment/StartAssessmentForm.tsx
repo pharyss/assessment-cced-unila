@@ -1,16 +1,23 @@
 "use client";
 
-import { useEffect, useState, useCallback, useRef, useMemo } from "react";
+import React, {
+  useEffect,
+  useState,
+  useCallback,
+  useRef,
+  useMemo,
+} from "react";
 import { useRouter } from "next/navigation";
-import { useAssessmentFlow } from "@/components/Assessment/useAssessmentFlow";
 import toast from "react-hot-toast";
 import { Loader2 } from "lucide-react";
 import Select from "react-select";
 import { StudentFilters, Student, TestSubmission } from "@/types/api";
 import { studentsApi, resultsApi, ApiError } from "@/lib/api-client";
-
-// Test ID for "Talenta Mahasiswa" assessment
-const TALENTA_MAHASISWA_TEST_ID = 1;
+import {
+  ASSESSMENT_STORAGE_KEY,
+  TEST_IDS,
+  ASSESSMENT_ROUTES,
+} from "@/lib/constants";
 
 interface FormData {
   nama: string;
@@ -30,16 +37,15 @@ export default function StartAssessmentForm({
   filters,
 }: StartAssessmentFormProps) {
   const router = useRouter();
-  const { answers, saveAnswer, next, currentStep } = useAssessmentFlow();
 
   const [formData, setFormData] = useState<FormData>({
-    nama: answers.nama ?? "",
-    npm: answers.npm ?? "",
-    email: answers.email ?? "",
-    angkatan: answers.angkatan ?? "",
-    fakultas: answers.fakultas ?? "",
-    prodi: answers.prodi ?? "",
-    jenjang: answers.jenjang ?? "",
+    nama: "",
+    npm: "",
+    email: "",
+    angkatan: "",
+    fakultas: "",
+    prodi: "",
+    jenjang: "",
   });
 
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -60,8 +66,8 @@ export default function StartAssessmentForm({
   };
 
   useEffect(() => {
-    if (currentStep === "start" && refs.nama.current) refs.nama.current.focus();
-  }, [currentStep]);
+    if (refs.nama.current) refs.nama.current.focus();
+  }, []);
 
   const validateField = useCallback((field: keyof FormData, value: string) => {
     let msg = "";
@@ -102,6 +108,11 @@ export default function StartAssessmentForm({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    // REQUIREMENT 2.0: Clear localStorage FIRST before anything else
+    localStorage.removeItem(ASSESSMENT_STORAGE_KEY);
+    console.log("✓ Cleared localStorage");
+
     setIsSubmitting(true);
 
     const valid = Object.entries(formData).every(([k, v]) =>
@@ -115,7 +126,7 @@ export default function StartAssessmentForm({
     }
 
     try {
-      // Step 1: Find the IDs from filters
+      // Find the IDs from filters
       const enrollmentYear = filters?.enrollmentYears.find(
         (item) => item.name === formData.angkatan,
       );
@@ -135,121 +146,117 @@ export default function StartAssessmentForm({
         return;
       }
 
-      // Step 2: Check if student exists and has an in-progress submission
-      let student: Student;
-      let submission: TestSubmission | null = null;
-      let existingSubmissionId: string | null = null;
+      // REQUIREMENT 2.1: Upsert student (POST /students)
+      const studentData = {
+        npm: formData.npm,
+        name: formData.nama,
+        email: formData.email,
+        enrollmentYearId: enrollmentYear.id,
+        majorId: major.id,
+        facultyId: faculty.id,
+        degreeId: degree.id,
+      };
 
-      try {
-        // Try to get existing student by NPM
-        const studentResponse = await studentsApi.getStudentByNpm(formData.npm);
+      const upsertResponse = await studentsApi.createStudent(studentData);
 
-        if (studentResponse.status === "success" && studentResponse.data) {
-          student = studentResponse.data as Student;
-          console.log("Found existing student:", student.id);
-
-          // Check if there are any test submissions for this student
-          const studentWithSubmissions = student as any;
-          if (
-            studentWithSubmissions.submissions &&
-            Array.isArray(studentWithSubmissions.submissions)
-          ) {
-            // Find an in-progress submission for this test
-            const inProgressSubmission =
-              studentWithSubmissions.submissions.find(
-                (sub: TestSubmission) =>
-                  sub.testId === TALENTA_MAHASISWA_TEST_ID &&
-                  sub.status === "in_progress",
-              );
-
-            if (inProgressSubmission) {
-              submission = inProgressSubmission;
-              existingSubmissionId = inProgressSubmission.id;
-              console.log(
-                "Found in-progress submission:",
-                inProgressSubmission.id,
-              );
-              toast.success("Melanjutkan tes yang sedang berlangsung...");
-            }
-          }
-        } else {
-          throw new Error("Student not found");
-        }
-      } catch (error) {
-        // Student doesn't exist, create new one
-        console.log("Student not found, creating new student");
-        const studentData = {
-          npm: formData.npm,
-          name: formData.nama,
-          email: formData.email,
-          enrollmentYearId: enrollmentYear.id,
-          majorId: major.id,
-          facultyId: faculty.id,
-          degreeId: degree.id,
-        };
-
-        const studentResponse = await studentsApi.createStudent(studentData);
-
-        if (studentResponse.status !== "success" || !studentResponse.data) {
-          throw new Error("Gagal membuat data mahasiswa");
-        }
-
-        student = studentResponse.data as Student;
-        console.log("Created new student:", student.id);
+      if (upsertResponse.status !== "success" || !upsertResponse.data) {
+        toast.error("Gagal menyimpan data mahasiswa");
+        setIsSubmitting(false);
+        return;
       }
 
-      // Step 3: Create test submission if no in-progress submission exists
+      const student = upsertResponse.data as Student;
+      console.log("✓ Upserted student:", student.id);
+
+      // REQUIREMENT 2.2: Fetch student with submissions (GET /students/{npm})
+      const fetchResponse = await studentsApi.getStudentByNpm(formData.npm);
+
+      if (fetchResponse.status !== "success" || !fetchResponse.data) {
+        toast.error("Gagal mengambil data mahasiswa");
+        setIsSubmitting(false);
+        return;
+      }
+
+      const studentWithSubmissions = fetchResponse.data as any;
+      console.log("✓ Fetched student with submissions");
+
+      // Check for in_progress submission
+      let submission: TestSubmission | null = null;
+      if (
+        studentWithSubmissions.submissions &&
+        Array.isArray(studentWithSubmissions.submissions)
+      ) {
+        submission =
+          studentWithSubmissions.submissions.find(
+            (sub: TestSubmission) =>
+              sub.testId === TEST_IDS.TALENTA_MAHASISWA &&
+              sub.status === "in_progress",
+          ) || null;
+
+        if (submission) {
+          console.log("✓ Found in_progress submission:", submission.id);
+          toast.success("Melanjutkan tes yang sedang berlangsung...");
+        }
+      }
+
+      // REQUIREMENT 2.3: Create new submission if none in_progress
       if (!submission) {
-        console.log("Creating new test submission");
         const submissionData = {
           studentId: student.id,
-          testId: TALENTA_MAHASISWA_TEST_ID,
+          testId: TEST_IDS.TALENTA_MAHASISWA,
           status: "in_progress" as const,
           completedAt: null,
         };
 
-        const submissionResponse =
+        const createResponse =
           await resultsApi.createTestSubmission(submissionData);
 
-        if (
-          submissionResponse.status !== "success" ||
-          !submissionResponse.data
-        ) {
-          throw new Error("Gagal membuat submission test");
+        if (createResponse.status !== "success" || !createResponse.data) {
+          toast.error("Gagal membuat submission test");
+          setIsSubmitting(false);
+          return;
         }
 
-        submission = submissionResponse.data as TestSubmission;
-        console.log("Created new submission:", submission.id);
+        submission = createResponse.data as TestSubmission;
+        console.log("✓ Created new submission:", submission.id);
         toast.success("Data berhasil disimpan!");
       }
 
-      // Step 4: Ensure we have a submission before proceeding
-      if (!submission) {
-        throw new Error("Gagal mendapatkan submission ID");
-      }
-
-      // Step 5: Save all data including studentId and submissionId
-      const updatedAnswers = {
-        ...answers,
-        ...formData,
+      // Save submission data to localStorage
+      const submissionInfo = {
         studentId: student.id,
         testSubmissionId: submission.id,
-        hasExistingSubmission: !!existingSubmissionId,
+        nama: formData.nama,
+        npm: formData.npm,
+        email: formData.email,
+        angkatan: formData.angkatan,
+        fakultas: formData.fakultas,
+        prodi: formData.prodi,
+        jenjang: formData.jenjang,
       };
 
-      console.log("Proceeding with submission:", {
-        studentId: student.id,
-        submissionId: submission.id,
-        hasExisting: !!existingSubmissionId,
-      });
+      localStorage.setItem(
+        ASSESSMENT_STORAGE_KEY,
+        JSON.stringify(submissionInfo),
+      );
+      console.log("✓ Saved submission info to localStorage");
 
-      next(updatedAnswers);
+      // REQUIREMENT 3: Navigate to career-path
+      // Verify data is saved before navigation
+      const savedData = localStorage.getItem(ASSESSMENT_STORAGE_KEY);
+      if (savedData) {
+        console.log("✓ Verified localStorage data before navigation");
+        router.push(ASSESSMENT_ROUTES.CAREER_PATH);
+      } else {
+        toast.error("Gagal menyimpan data ke browser. Coba lagi.");
+        setIsSubmitting(false);
+        return;
+      }
     } catch (error) {
       console.error("Error saat menyimpan:", error);
 
       if (error instanceof ApiError) {
         if (error.errors && error.errors.length > 0) {
-          // Show validation errors
           error.errors.forEach((err) => {
             toast.error(`${err.field}: ${err.message}`);
           });
@@ -277,7 +284,6 @@ export default function StartAssessmentForm({
     [errors, formData],
   );
 
-  // Prepare options for searchable dropdowns
   const angkatanOptions = useMemo(
     () =>
       filters?.enrollmentYears.map((item) => ({
@@ -335,7 +341,7 @@ export default function StartAssessmentForm({
             <InputField
               label="Nama"
               value={formData.nama}
-              onChange={(v) => handleChange("nama", v)}
+              onChange={(v: string) => handleChange("nama", v)}
               onBlur={() => validateField("nama", formData.nama)}
               error={errors.nama}
               ref={refs.nama}
@@ -345,7 +351,7 @@ export default function StartAssessmentForm({
             <InputField
               label="Email"
               value={formData.email}
-              onChange={(v) => handleChange("email", v)}
+              onChange={(v: string) => handleChange("email", v)}
               onBlur={() => validateField("email", formData.email)}
               error={errors.email}
               ref={refs.email}
@@ -359,7 +365,7 @@ export default function StartAssessmentForm({
             <InputField
               label="NPM"
               value={formData.npm}
-              onChange={(v) =>
+              onChange={(v: string) =>
                 handleChange("npm", v.replace(/\D/g, "").slice(0, 10))
               }
               onBlur={() => validateField("npm", formData.npm)}
@@ -371,7 +377,7 @@ export default function StartAssessmentForm({
             <SearchableSelectField
               label="Angkatan"
               value={formData.angkatan}
-              onChange={(v) => handleChange("angkatan", v)}
+              onChange={(v: string) => handleChange("angkatan", v)}
               error={errors.angkatan}
               options={angkatanOptions}
               disabled={isSubmitting}
@@ -384,7 +390,7 @@ export default function StartAssessmentForm({
             <SearchableSelectField
               label="Fakultas"
               value={formData.fakultas}
-              onChange={(v) => handleChange("fakultas", v)}
+              onChange={(v: string) => handleChange("fakultas", v)}
               error={errors.fakultas}
               options={fakultasOptions}
               disabled={isSubmitting}
@@ -393,7 +399,7 @@ export default function StartAssessmentForm({
             <SearchableSelectField
               label="Program Studi"
               value={formData.prodi}
-              onChange={(v) => handleChange("prodi", v)}
+              onChange={(v: string) => handleChange("prodi", v)}
               error={errors.prodi}
               options={prodiOptions}
               disabled={isSubmitting}
@@ -406,7 +412,7 @@ export default function StartAssessmentForm({
             <SearchableSelectField
               label="Jenjang Pendidikan"
               value={formData.jenjang}
-              onChange={(v) => handleChange("jenjang", v)}
+              onChange={(v: string) => handleChange("jenjang", v)}
               error={errors.jenjang}
               options={jenjangOptions}
               disabled={isSubmitting}
@@ -438,122 +444,76 @@ export default function StartAssessmentForm({
   );
 }
 
-/* ---------- Input Field ---------- */
 interface InputFieldProps {
   label: string;
   value: string;
   onChange: (value: string) => void;
-  onBlur?: () => void;
-  error?: string;
+  onBlur: () => void;
+  error: string;
   placeholder?: string;
   disabled?: boolean;
-  ref?: React.RefObject<HTMLInputElement | null>;
 }
 
-const InputField = ({
-  label,
-  value,
-  onChange,
-  onBlur,
-  error,
-  placeholder,
-  disabled,
-  ref,
-}: InputFieldProps) => (
-  <div className="flex w-full flex-col">
-    <label className="mb-2 block text-base font-medium text-gray-800 dark:text-gray-200">
-      {label}
-    </label>
-    <input
-      ref={ref}
-      type="text"
-      value={value}
-      onChange={(e) => onChange(e.target.value)}
-      onBlur={onBlur}
-      placeholder={placeholder}
-      disabled={disabled}
-      className={`w-full rounded-lg border px-4 py-3 text-base outline-none transition
-        focus:border-myunila focus:ring-2 focus:ring-myunila
-        dark:border-gray-700 dark:bg-gray-800 dark:text-white
-        ${error ? "border-danger focus:ring-danger" : "border-gray-300"}`}
-    />
-    {error && <p className="mt-1 text-xs text-danger">{error}</p>}
-  </div>
+const InputField = React.forwardRef<HTMLInputElement, InputFieldProps>(
+  ({ label, value, onChange, onBlur, error, placeholder, disabled }, ref) => (
+    <div className="w-full">
+      <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-200">
+        {label}
+      </label>
+      <input
+        ref={ref}
+        type="text"
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        onBlur={onBlur}
+        placeholder={placeholder}
+        disabled={disabled}
+        className="dark:border-dark-3 w-full rounded-lg border border-stroke bg-transparent px-5 py-3 text-base text-dark outline-none transition focus:border-myunila dark:text-white dark:focus:border-myunila"
+      />
+      {error && <p className="mt-1 text-sm text-red-500">{error}</p>}
+    </div>
+  ),
 );
 
-/* ---------- Searchable Select Field ---------- */
 interface SearchableSelectFieldProps {
   label: string;
   value: string;
   onChange: (value: string) => void;
-  error?: string;
-  options: readonly { label: string; value: string }[];
-  disabled?: boolean;
+  error: string;
+  options: Array<{ label: string; value: string }>;
   placeholder?: string;
+  disabled?: boolean;
 }
 
-const SearchableSelectField = ({
+const SearchableSelectField: React.FC<SearchableSelectFieldProps> = ({
   label,
   value,
   onChange,
   error,
   options,
-  disabled,
   placeholder,
-}: SearchableSelectFieldProps) => (
-  <div className="flex w-full flex-col">
-    <label className="mb-2 block text-base font-medium text-gray-800 dark:text-gray-200">
+  disabled,
+}) => (
+  <div className="w-full">
+    <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-200">
       {label}
     </label>
     <Select
-      value={value ? { label: value, value } : null}
-      onChange={(opt) => onChange(opt?.value ?? "")}
+      value={options.find((opt) => opt.value === value) || null}
+      onChange={(opt) => onChange(opt?.value || "")}
       options={options}
+      placeholder={placeholder}
       isDisabled={disabled}
-      placeholder={placeholder || `Pilih ${label.toLowerCase()}`}
-      className="text-base"
-      classNamePrefix="select"
       isClearable
-      isSearchable
-      noOptionsMessage={() => "Tidak ada opsi"}
-      styles={{
-        control: (base, state) => ({
-          ...base,
-          borderRadius: 8,
-          minHeight: 48,
-          borderColor: error
-            ? "#EF4444"
-            : state.isFocused
-              ? "#085EA8"
-              : "#d1d5db",
-          boxShadow: state.isFocused
-            ? error
-              ? "0 0 0 1px #EF4444"
-              : "0 0 0 1px #085EA8"
-            : "none",
-          backgroundColor: disabled ? "#f9fafb" : "white",
-          "&:hover": {
-            borderColor: error ? "#EF4444" : "#085EA8",
-          },
-        }),
-        menu: (base) => ({
-          ...base,
-          zIndex: 50,
-        }),
-        option: (base, state) => ({
-          ...base,
-          backgroundColor: state.isSelected
-            ? "#085EA8"
-            : state.isFocused
-              ? "#E0F2FE"
-              : "white",
-          color: state.isSelected ? "white" : "#1f2937",
-          "&:active": {
-            backgroundColor: "#085EA8",
-          },
-        }),
+      classNamePrefix="select"
+      className="react-select-container"
+      classNames={{
+        control: () =>
+          "!rounded-lg !border-stroke dark:!border-dark-3 !bg-transparent !min-h-[48px]",
+        menu: () => "!rounded-lg !border !border-stroke dark:!border-dark-3",
+        option: () => "!text-dark dark:!text-white",
       }}
     />
-    {error && <p className="mt-1 text-xs text-danger">{error}</p>}
+    {error && <p className="mt-1 text-sm text-red-500">{error}</p>}
   </div>
 );
