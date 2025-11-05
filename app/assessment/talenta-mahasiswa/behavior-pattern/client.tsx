@@ -83,8 +83,12 @@ export default function BehaviorPatternClient({
           const existingAnswers: Record<string, string> = {};
 
           if (submissionData.answers && Array.isArray(submissionData.answers)) {
+            const validQuestionIds = new Set(test.questions.map((q) => q.id));
             submissionData.answers.forEach((answer: any) => {
-              existingAnswers[answer.testQuestionId] = answer.selectedOptionId;
+              if (validQuestionIds.has(answer.testQuestionId)) {
+                existingAnswers[answer.testQuestionId] =
+                  answer.selectedOptionId;
+              }
             });
           }
 
@@ -175,13 +179,17 @@ export default function BehaviorPatternClient({
         existingResponse.status === "success" &&
         (existingResponse.data as any)?.answers
       ) {
-        existingAnswers = (existingResponse.data as any).answers.map(
-          (answer: any) => ({
+        const validQuestionIds = new Set(test.questions.map((q) => q.id));
+
+        existingAnswers = (existingResponse.data as any).answers
+          .map((answer: any) => ({
             id: answer.id,
+
             testQuestionId: answer.testQuestionId,
+
             selectedOptionId: answer.selectedOptionId,
-          }),
-        );
+          }))
+          .filter((answer: any) => validQuestionIds.has(answer.testQuestionId));
       }
 
       // Step 2: Merge existing answers with current page answers
@@ -240,7 +248,10 @@ export default function BehaviorPatternClient({
   ).length;
 
   const isCurrentDimComplete = totalAnsweredCurrent === currentQuestions.length;
-  const isAllComplete = totalAnsweredAll === test.questions.length;
+
+  const isAllComplete = test.questions.every(
+    (q) => answers[q.id] !== undefined,
+  );
 
   const handleNext = async () => {
     if (!isCurrentDimComplete) {
@@ -261,29 +272,36 @@ export default function BehaviorPatternClient({
       setCurrentDimIndex(nextIndex);
       window.scrollTo({ top: 0, behavior: "smooth" });
     } else {
-      // Recalculate isAllComplete after saving to ensure accurate count
-      const currentAnsweredCount = Object.keys(answers).length;
+      // Validate using per-question check scoped to this test
+      const allQuestionIds = test.questions.map((q) => q.id);
+
+      const answeredIds = test.questions
+        .filter((q) => answers[q.id] !== undefined)
+        .map((q) => q.id);
+
+      const currentAnsweredCount = answeredIds.length;
       const isNowComplete = currentAnsweredCount === test.questions.length;
 
       if (isNowComplete) {
         setShowConfirmModal(true);
       } else {
-        const answeredIds = Object.keys(answers);
-        const allQuestionIds = test.questions.map((q) => q.id);
         const missingIds = allQuestionIds.filter(
           (id) => !answeredIds.includes(id),
         );
-        const extraIds = answeredIds.filter(
+        // For debugging: any extra keys in answers not part of this test
+        const extraIds = Object.keys(answers).filter(
           (id) => !allQuestionIds.includes(id),
         );
 
         console.log("❌ Validation failed:");
-        console.log("  Total answered:", currentAnsweredCount);
+
+        console.log("  Total answered (relevant):", currentAnsweredCount);
+
         console.log("  Total questions:", test.questions.length);
+
         console.log("  Missing question IDs:", missingIds);
+
         console.log("  Extra/Invalid question IDs:", extraIds);
-        console.log("  Answered IDs:", answeredIds);
-        console.log("  Expected IDs:", allQuestionIds);
 
         toast.error(
           `Lengkapi semua ${test.questions.length} pernyataan terlebih dahulu. (Terjawab: ${currentAnsweredCount}, Kurang: ${missingIds.length})`,
