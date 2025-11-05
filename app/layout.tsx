@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 import { Poppins } from "next/font/google";
 import type { Metadata } from "next";
 import { ClientProviders } from "./ClientProviders";
@@ -43,6 +44,16 @@ export const metadata: Metadata = {
     follow: true,
   },
 };
+=======
+"use client";
+
+import Footer from "@/components/Footer";
+import Header from "@/components/Header";
+import ScrollToTop from "@/components/ScrollToTop";
+import { Inter } from "next/font/google";
+import "../styles/index.css";
+const inter = Inter({ subsets: ["latin"] });
+>>>>>>> 880ec58fb4eb94d770c441b8e71cd182a492ccfc
 
 export default function RootLayout({
   children,
@@ -50,10 +61,32 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
+<<<<<<< HEAD
     <html lang="id" className={poppins.variable} suppressHydrationWarning>
       <body className="font-poppins bg-[#FCFCFC] dark:bg-black text-gray-900 dark:text-gray-100">
         <ClientProviders>{children}</ClientProviders>
+=======
+    <html suppressHydrationWarning lang="en">
+      {/*
+        <head /> will contain the components returned by the nearest parent
+        head.js. Find out more at https://beta.nextjs.org/docs/api-reference/file-conventions/head
+      */}
+      <head />
+
+      <body className={`bg-[#FCFCFC] dark:bg-black ${inter.className}`}>
+        <Providers>
+          <Header />
+          {children}
+          <Footer />
+          <ScrollToTop />
+        </Providers>
+>>>>>>> 880ec58fb4eb94d770c441b8e71cd182a492ccfc
       </body>
     </html>
   );
 }
+<<<<<<< HEAD
+=======
+
+import { Providers } from "./providers";
+>>>>>>> 880ec58fb4eb94d770c441b8e71cd182a492ccfc

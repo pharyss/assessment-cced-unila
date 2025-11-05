@@ -11,6 +11,7 @@ module.exports = {
       center: true,
       padding: "1rem",
     },
+<<<<<<< HEAD
     screens: {
       xs: "450px",
       sm: "575px",
@@ -18,6 +19,27 @@ module.exports = {
       lg: "992px",
       xl: "1200px",
       "2xl": "1400px",
+=======
+
+    screens: {
+      xs: "450px",
+      // => @media (min-width: 450px) { ... }
+
+      sm: "575px",
+      // => @media (min-width: 576px) { ... }
+
+      md: "768px",
+      // => @media (min-width: 768px) { ... }
+
+      lg: "992px",
+      // => @media (min-width: 992px) { ... }
+
+      xl: "1200px",
+      // => @media (min-width: 1200px) { ... }
+
+      "2xl": "1400px",
+      // => @media (min-width: 1400px) { ... }
+>>>>>>> 880ec58fb4eb94d770c441b8e71cd182a492ccfc
     },
     extend: {
       colors: {
@@ -26,12 +48,18 @@ module.exports = {
         white: "#FFFFFF",
         black: "#121723",
         dark: "#1D2430",
+<<<<<<< HEAD
+=======
+        primary: "#2b81cdff",
+        yellow: "#FBB040",
+>>>>>>> 880ec58fb4eb94d770c441b8e71cd182a492ccfc
         "body-color": "#788293",
         "body-color-dark": "#959CB1",
         "gray-dark": "#1E232E",
         "gray-light": "#F0F2F9",
         stroke: "#E3E8EF",
         "stroke-dark": "#353943",
+<<<<<<< HEAD
         "bg-color-dark": "#161b27ff",
 
         // Warna status
@@ -66,6 +94,9 @@ module.exports = {
 
       fontFamily: {
         poppins: ["Poppins", "sans-serif"],
+=======
+        "bg-color-dark": "#171C28",
+>>>>>>> 880ec58fb4eb94d770c441b8e71cd182a492ccfc
       },
 
       boxShadow: {
@@ -82,7 +113,10 @@ module.exports = {
         "btn-hover": "0px 1px 2px rgba(0, 0, 0, 0.15)",
         "btn-light": "0px 1px 2px rgba(0, 0, 0, 0.1)",
       },
+<<<<<<< HEAD
 
+=======
+>>>>>>> 880ec58fb4eb94d770c441b8e71cd182a492ccfc
       dropShadow: {
         three: "0px 5px 15px rgba(6, 8, 15, 0.05)",
       },

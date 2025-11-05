@@ -14,7 +14,11 @@ const Breadcrumb = ({
           <div className="-mx-4 flex flex-wrap items-center">
             <div className="w-full px-4 md:w-8/12 lg:w-7/12">
               <div className="mb-8 max-w-[570px] md:mb-0 lg:mb-12">
+<<<<<<< HEAD
                 <h1 className="mb-5 text-2xl font-bold text-myunila dark:text-white sm:text-3xl">
+=======
+                <h1 className="mb-5 text-2xl font-bold text-black dark:text-white sm:text-3xl">
+>>>>>>> 880ec58fb4eb94d770c441b8e71cd182a492ccfc
                   {pageName}
                 </h1>
                 <p className="text-base font-medium leading-relaxed text-body-color">
@@ -28,13 +32,21 @@ const Breadcrumb = ({
                   <li className="flex items-center">
                     <Link
                       href="/"
+<<<<<<< HEAD
                       className="pr-1 text-base font-medium text-body-color hover:text-myunila"
+=======
+                      className="pr-1 text-base font-medium text-body-color hover:text-primary"
+>>>>>>> 880ec58fb4eb94d770c441b8e71cd182a492ccfc
                     >
                       Beranda
                     </Link>
                     <span className="mr-3 block h-2 w-2 rotate-45 border-r-2 border-t-2 border-body-color"></span>
                   </li>
+<<<<<<< HEAD
                   <li className="text-base font-medium text-myunila">
+=======
+                  <li className="text-base font-medium text-primary">
+>>>>>>> 880ec58fb4eb94d770c441b8e71cd182a492ccfc
                     {pageName}
                   </li>
                 </ul>

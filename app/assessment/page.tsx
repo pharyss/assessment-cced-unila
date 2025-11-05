@@ -1,3 +1,8 @@
+<<<<<<< HEAD
+=======
+import SingleAssessment from "@/components/Assessment/SingleAssessment";
+import assessmentData from "@/components/Assessment/assessmentData";
+>>>>>>> 880ec58fb4eb94d770c441b8e71cd182a492ccfc
 import Breadcrumb from "@/components/Common/Breadcrumb";
 
 import { Metadata } from "next";
@@ -38,7 +43,11 @@ const Assessment = () => {
                 <li className="mx-1">
                   <a
                     href="#0"
+<<<<<<< HEAD
                     className="flex h-9 min-w-[36px] items-center justify-center rounded-md bg-body-color bg-opacity-[15%] px-4 text-sm text-body-color transition hover:bg-myunila hover:bg-opacity-100 hover:text-white"
+=======
+                    className="flex h-9 min-w-[36px] items-center justify-center rounded-md bg-body-color bg-opacity-[15%] px-4 text-sm text-body-color transition hover:bg-primary hover:bg-opacity-100 hover:text-white"
+>>>>>>> 880ec58fb4eb94d770c441b8e71cd182a492ccfc
                   >
                     Sebelumnya
                   </a>
@@ -46,7 +55,11 @@ const Assessment = () => {
                 <li className="mx-1">
                   <a
                     href="#0"
+<<<<<<< HEAD
                     className="flex h-9 min-w-[36px] items-center justify-center rounded-md bg-body-color bg-opacity-[15%] px-4 text-sm text-body-color transition hover:bg-myunila hover:bg-opacity-100 hover:text-white"
+=======
+                    className="flex h-9 min-w-[36px] items-center justify-center rounded-md bg-body-color bg-opacity-[15%] px-4 text-sm text-body-color transition hover:bg-primary hover:bg-opacity-100 hover:text-white"
+>>>>>>> 880ec58fb4eb94d770c441b8e71cd182a492ccfc
                   >
                     1
                   </a>
@@ -54,7 +67,11 @@ const Assessment = () => {
                 <li className="mx-1">
                   <a
                     href="#0"
+<<<<<<< HEAD
                     className="flex h-9 min-w-[36px] items-center justify-center rounded-md bg-body-color bg-opacity-[15%] px-4 text-sm text-body-color transition hover:bg-myunila hover:bg-opacity-100 hover:text-white"
+=======
+                    className="flex h-9 min-w-[36px] items-center justify-center rounded-md bg-body-color bg-opacity-[15%] px-4 text-sm text-body-color transition hover:bg-primary hover:bg-opacity-100 hover:text-white"
+>>>>>>> 880ec58fb4eb94d770c441b8e71cd182a492ccfc
                   >
                     2
                   </a>
@@ -62,7 +79,11 @@ const Assessment = () => {
                 <li className="mx-1">
                   <a
                     href="#0"
+<<<<<<< HEAD
                     className="flex h-9 min-w-[36px] items-center justify-center rounded-md bg-body-color bg-opacity-[15%] px-4 text-sm text-body-color transition hover:bg-myunila hover:bg-opacity-100 hover:text-white"
+=======
+                    className="flex h-9 min-w-[36px] items-center justify-center rounded-md bg-body-color bg-opacity-[15%] px-4 text-sm text-body-color transition hover:bg-primary hover:bg-opacity-100 hover:text-white"
+>>>>>>> 880ec58fb4eb94d770c441b8e71cd182a492ccfc
                   >
                     3
                   </a>
@@ -75,7 +96,11 @@ const Assessment = () => {
                 <li className="mx-1">
                   <a
                     href="#0"
+<<<<<<< HEAD
                     className="flex h-9 min-w-[36px] items-center justify-center rounded-md bg-body-color bg-opacity-[15%] px-4 text-sm text-body-color transition hover:bg-myunila hover:bg-opacity-100 hover:text-white"
+=======
+                    className="flex h-9 min-w-[36px] items-center justify-center rounded-md bg-body-color bg-opacity-[15%] px-4 text-sm text-body-color transition hover:bg-primary hover:bg-opacity-100 hover:text-white"
+>>>>>>> 880ec58fb4eb94d770c441b8e71cd182a492ccfc
                   >
                     12
                   </a>
@@ -83,7 +108,11 @@ const Assessment = () => {
                 <li className="mx-1">
                   <a
                     href="#0"
+<<<<<<< HEAD
                     className="flex h-9 min-w-[36px] items-center justify-center rounded-md bg-body-color bg-opacity-[15%] px-4 text-sm text-body-color transition hover:bg-myunila hover:bg-opacity-100 hover:text-white"
+=======
+                    className="flex h-9 min-w-[36px] items-center justify-center rounded-md bg-body-color bg-opacity-[15%] px-4 text-sm text-body-color transition hover:bg-primary hover:bg-opacity-100 hover:text-white"
+>>>>>>> 880ec58fb4eb94d770c441b8e71cd182a492ccfc
                   >
                     Selanjutnya
                   </a>

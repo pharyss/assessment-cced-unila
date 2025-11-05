@@ -10,11 +10,19 @@ const menuData: Menu[] = [
   {
     id: 2,
     title: "Tes Asesmen",
+<<<<<<< HEAD
     path: "/assessment/talenta-mahasiswa",
     newTab: false,
   },
   {
     id: 3,
+=======
+    path: "/assessment",
+    newTab: false,
+  },
+  {
+    id: 33,
+>>>>>>> 880ec58fb4eb94d770c441b8e71cd182a492ccfc
     title: "Statistik",
     path: "/statistics",
     newTab: false,
@@ -38,7 +46,11 @@ const menuData: Menu[] = [
       },
       {
         id: 43,
+<<<<<<< HEAD
         title: "FAQ",
+=======
+        title: "FaQ",
+>>>>>>> 880ec58fb4eb94d770c441b8e71cd182a492ccfc
         path: "/about-us/faq",
         newTab: false,
       },

@@ -24,12 +24,20 @@ const Header = () => {
   };
   useEffect(() => {
     window.addEventListener("scroll", handleStickyNavbar);
+<<<<<<< HEAD
     return () => window.removeEventListener("scroll", handleStickyNavbar);
   }, []);
 
   // submenu handler
   const [openIndex, setOpenIndex] = useState(-1);
   const handleSubmenu = (index: number) => {
+=======
+  });
+
+  // submenu handler
+  const [openIndex, setOpenIndex] = useState(-1);
+  const handleSubmenu = (index) => {
+>>>>>>> 880ec58fb4eb94d770c441b8e71cd182a492ccfc
     if (openIndex === index) {
       setOpenIndex(-1);
     } else {
@@ -44,7 +52,11 @@ const Header = () => {
       <header
         className={`header left-0 top-0 z-40 flex w-full items-center ${
           sticky
+<<<<<<< HEAD
             ? "fixed z-[9999] bg-white !bg-opacity-80 shadow-sticky backdrop-blur-sm transition dark:bg-gray-dark dark:shadow-sticky-dark"
+=======
+            ? "dark:bg-gray-dark dark:shadow-sticky-dark fixed z-[9999] bg-white !bg-opacity-80 shadow-sticky backdrop-blur-sm transition"
+>>>>>>> 880ec58fb4eb94d770c441b8e71cd182a492ccfc
             : "absolute bg-transparent"
         }`}
       >
@@ -73,14 +85,21 @@ const Header = () => {
                 />
               </Link>
             </div>
+<<<<<<< HEAD
 
+=======
+>>>>>>> 880ec58fb4eb94d770c441b8e71cd182a492ccfc
             <div className="flex w-full items-center justify-between px-4">
               <div>
                 <button
                   onClick={navbarToggleHandler}
                   id="navbarToggler"
                   aria-label="Mobile Menu"
+<<<<<<< HEAD
                   className="absolute right-4 top-1/2 block translate-y-[-50%] rounded-md px-3 py-[6px] ring-myunila focus:ring-2 lg:hidden"
+=======
+                  className="absolute right-4 top-1/2 block translate-y-[-50%] rounded-md px-3 py-[6px] ring-primary focus:ring-2 lg:hidden"
+>>>>>>> 880ec58fb4eb94d770c441b8e71cd182a492ccfc
                 >
                   <span
                     className={`relative my-1.5 block h-0.5 w-[30px] bg-black transition-all duration-300 dark:bg-white ${
@@ -114,8 +133,13 @@ const Header = () => {
                             href={menuItem.path}
                             className={`flex py-2 text-base lg:mr-0 lg:inline-flex lg:px-0 lg:py-6 ${
                               usePathName === menuItem.path
+<<<<<<< HEAD
                                 ? "text-myunila dark:text-white"
                                 : "text-dark hover:text-myunila dark:text-white/70 dark:hover:text-white"
+=======
+                                ? "text-primary dark:text-white"
+                                : "text-dark hover:text-primary dark:text-white/70 dark:hover:text-white"
+>>>>>>> 880ec58fb4eb94d770c441b8e71cd182a492ccfc
                             }`}
                           >
                             {menuItem.title}
@@ -124,7 +148,11 @@ const Header = () => {
                           <>
                             <p
                               onClick={() => handleSubmenu(index)}
+<<<<<<< HEAD
                               className="flex cursor-pointer items-center justify-between py-2 text-base text-dark group-hover:text-myunila dark:text-white/70 dark:group-hover:text-white lg:mr-0 lg:inline-flex lg:px-0 lg:py-6"
+=======
+                              className="flex cursor-pointer items-center justify-between py-2 text-base text-dark group-hover:text-primary dark:text-white/70 dark:group-hover:text-white lg:mr-0 lg:inline-flex lg:px-0 lg:py-6"
+>>>>>>> 880ec58fb4eb94d770c441b8e71cd182a492ccfc
                             >
                               {menuItem.title}
                               <span className="pl-3">
@@ -143,11 +171,19 @@ const Header = () => {
                                 openIndex === index ? "block" : "hidden"
                               }`}
                             >
+<<<<<<< HEAD
                               {menuItem.submenu?.map((submenuItem, index) => (
                                 <Link
                                   href={submenuItem.path ?? "/"}
                                   key={index}
                                   className="block rounded-md py-2.5 text-sm text-dark hover:text-myunila dark:text-white/70 dark:hover:text-white lg:px-3"
+=======
+                              {menuItem.submenu.map((submenuItem, index) => (
+                                <Link
+                                  href={submenuItem.path}
+                                  key={index}
+                                  className="block rounded-md py-2.5 text-sm text-dark hover:text-primary dark:text-white/70 dark:hover:text-white lg:px-3"
+>>>>>>> 880ec58fb4eb94d770c441b8e71cd182a492ccfc
                                 >
                                   {submenuItem.title}
                                 </Link>
@@ -158,6 +194,7 @@ const Header = () => {
                       </li>
                     ))}
                   </ul>
+<<<<<<< HEAD
 
                   {navbarOpen && (
                     <div className="mt-4 border-t border-gray-200 pt-4 dark:border-gray-700 lg:hidden">
@@ -169,16 +206,26 @@ const Header = () => {
                       </Link>
                     </div>
                   )}
+=======
+>>>>>>> 880ec58fb4eb94d770c441b8e71cd182a492ccfc
                 </nav>
               </div>
               <div className="flex items-center justify-end pr-16 lg:pr-0">
                 <Link
                   href="/signin"
+<<<<<<< HEAD
                   className="ease-in-up hidden rounded-full bg-myunila px-8 py-3 text-base font-medium text-white shadow-btn transition duration-300 hover:bg-myunila-700 hover:shadow-btn-hover md:block md:px-9 lg:px-6 xl:px-9"
                 >
                   Masuk
                 </Link>
                 <div className="ml-4">
+=======
+                  className="ease-in-up shadow-btn hover:shadow-btn-hover hidden rounded-full bg-primary px-8 py-3 text-base font-medium text-white transition duration-300 hover:bg-opacity-90 md:block md:px-9 lg:px-6 xl:px-9"
+                >
+                  Masuk
+                </Link>
+                <div>
+>>>>>>> 880ec58fb4eb94d770c441b8e71cd182a492ccfc
                   <ThemeToggler />
                 </div>
               </div>

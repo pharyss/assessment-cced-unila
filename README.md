@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # 🎓 Website Asesmen Talenta Mahasiswa Universitas Lampung
 
 <div align="center">
@@ -448,3 +449,8 @@ Dikembangkan dengan ❤️ oleh tim CCED Universitas Lampung untuk mendukung pen
 ⭐ Star this repo if you find it helpful!
 
 </div>
+=======
+# Website Layanan Asesmen UPA CCED Universitas Lampung
+
+Website ini dikembangkan untuk mendukung layanan asesmen karakteristik, minat, dan bakat mahasiswa Universitas Lampung. Melalui platform ini, mahasiswa dapat mengikuti asesmen secara online dan memperoleh hasil berupa karakteristik pribadi, tipe emosi, gaya komunikasi, serta gaya berpikir. Hasil asesmen dirancang untuk membantu mahasiswa mengenali potensi diri, menentukan arah pengembangan, serta mendukung perencanaan karier dan masa depan yang lebih terarah.
+>>>>>>> 880ec58fb4eb94d770c441b8e71cd182a492ccfc

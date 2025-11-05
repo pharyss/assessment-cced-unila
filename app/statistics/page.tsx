@@ -1,5 +1,9 @@
 import Breadcrumb from "@/components/Common/Breadcrumb";
+<<<<<<< HEAD
 import Contact from "@/components/Contact/ContactForm";
+=======
+import Contact from "@/components/Contact";
+>>>>>>> 880ec58fb4eb94d770c441b8e71cd182a492ccfc
 
 import { Metadata } from "next";
 

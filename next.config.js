@@ -10,6 +10,7 @@ const nextConfig = {
       },
     ],
   },
+<<<<<<< HEAD
   // Proxy API requests to backend during development (bypasses CORS)
   async rewrites() {
     return [
@@ -20,6 +21,8 @@ const nextConfig = {
       },
     ];
   },
+=======
+>>>>>>> 880ec58fb4eb94d770c441b8e71cd182a492ccfc
 };
 
 module.exports = nextConfig;
