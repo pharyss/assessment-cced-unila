@@ -175,7 +175,7 @@ const Header = () => {
 
                 <Link
                   href="/signin"
-                  className="ease-in-up shadow-btn hover:shadow-btn-hover hidden rounded-full bg-myunila px-8 py-3 text-base font-medium text-white transition duration-300 hover:bg-myunila-700 md:block md:px-9 lg:px-6 xl:px-9"
+                  className="ease-in-up hidden rounded-full px-8 py-3 btn-gradient-primary md:block md:px-9 lg:px-6 xl:px-9"
                 >
                   Masuk
                 </Link>
