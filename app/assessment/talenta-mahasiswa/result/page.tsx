@@ -87,60 +87,59 @@ export default function TalentResultPage() {
   }, [answers, getFinalResult, currentStep]);
 
   const handleBackAndClear = () => {
-  clear?.();
-  router.push("/assessment/talenta-mahasiswa");
-};
+    clear?.();
+    router.push("/assessment/talenta-mahasiswa");
+  };
 
-const handleDownloadPDF = async () => {
-  const element = reportRef.current;
-  if (!element || !result) return;
+  const handleDownloadPDF = async () => {
+    const element = reportRef.current;
+    if (!element || !result) return;
 
-  setIsDownloading(true);
+    setIsDownloading(true);
 
-  const { default: jsPDF } = await import("jspdf");
-  const { default: html2canvas } = await import("html2canvas");
+    const { default: jsPDF } = await import("jspdf");
+    const { default: html2canvas } = await import("html2canvas");
 
-  const buttonContainer = element.querySelector<HTMLDivElement>(
-    '[data-id="button-container"]'
-  );
-  if (buttonContainer) buttonContainer.style.display = "none";
+    const buttonContainer = element.querySelector<HTMLDivElement>(
+      '[data-id="button-container"]',
+    );
+    if (buttonContainer) buttonContainer.style.display = "none";
 
-  const pdf = new jsPDF("p", "mm", "a4");
+    const pdf = new jsPDF("p", "mm", "a4");
 
-  const backgroundColor = document.documentElement.classList.contains("dark")
-    ? "#030712"
-    : "#FFFFFF";
+    const backgroundColor = document.documentElement.classList.contains("dark")
+      ? "#030712"
+      : "#FFFFFF";
 
-  const canvas = await html2canvas(element, {
-    scale: 2,
-    backgroundColor,
-    useCORS: true,
-  });
+    const canvas = await html2canvas(element, {
+      scale: 2,
+      backgroundColor,
+      useCORS: true,
+    });
 
-  const imgData = canvas.toDataURL("image/png");
-  const pdfWidth = pdf.internal.pageSize.getWidth();
-  const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
+    const imgData = canvas.toDataURL("image/png");
+    const pdfWidth = pdf.internal.pageSize.getWidth();
+    const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
 
-  let heightLeft = pdfHeight;
-  let position = 0;
-  const pageHeight = pdf.internal.pageSize.getHeight();
+    let heightLeft = pdfHeight;
+    let position = 0;
+    const pageHeight = pdf.internal.pageSize.getHeight();
 
-  pdf.addImage(imgData, "PNG", 0, position, pdfWidth, pdfHeight);
-  heightLeft -= pageHeight;
-
-  while (heightLeft > 0) {
-    position = heightLeft - pdfHeight;
-    pdf.addPage();
     pdf.addImage(imgData, "PNG", 0, position, pdfWidth, pdfHeight);
     heightLeft -= pageHeight;
-  }
 
-  pdf.save(`Hasil Asesmen - ${result.nama || "Siswa"}.pdf`);
+    while (heightLeft > 0) {
+      position = heightLeft - pdfHeight;
+      pdf.addPage();
+      pdf.addImage(imgData, "PNG", 0, position, pdfWidth, pdfHeight);
+      heightLeft -= pageHeight;
+    }
 
-  if (buttonContainer) buttonContainer.style.display = "flex";
-  setIsDownloading(false);
-};
+    pdf.save(`Hasil Asesmen - ${result.nama || "Siswa"}.pdf`);
 
+    if (buttonContainer) buttonContainer.style.display = "flex";
+    setIsDownloading(false);
+  };
 
   if (isLoading)
     return (
@@ -153,10 +152,10 @@ const handleDownloadPDF = async () => {
   if (!result)
     return (
       <div className="flex h-screen flex-col items-center justify-center text-gray-600 dark:text-gray-300">
-        <p className="text-lg">Belum ada hasil asesmen ditemukan.</p>
+        <p className="text-xl mb-4">Belum ada hasil asesmen ditemukan.</p>
         <button
           onClick={() => goTo("start")}
-          className="mt-4 rounded-full bg-myunila px-6 py-2 text-sm font-medium text-white hover:bg-myunila/90"
+          className="inline-flex items-center gap-2 rounded-full bg-myunila px-8 py-4 text-base font-semibold text-white shadow-lg transition-all duration-300 hover:scale-105 hover:bg-myunila-700 dark:hover:bg-myunila-400"
         >
           Kembali ke Awal
         </button>
@@ -204,36 +203,39 @@ const handleDownloadPDF = async () => {
   return (
     <section className="relative z-10 bg-gradient-to-b from-white via-myunila-50 to-myunila-100 pb-20 pt-24 dark:from-gray-950 dark:via-gray-900 dark:to-gray-800 sm:pb-24 sm:pt-32 md:pb-[120px] md:pt-[150px]">
       <div className="container mx-auto px-4 md:px-16 lg:px-32">
-        <div ref={reportRef} className="printable-area mx-auto max-w-4xl rounded-2xl border border-gray-200 bg-white p-6 dark:border-gray-700 dark:bg-gray-900 sm:p-10">
+        <div
+          ref={reportRef}
+          className="printable-area mx-auto max-w-4xl rounded-2xl border border-gray-200 bg-white p-6 dark:border-gray-700 dark:bg-gray-900 sm:p-10"
+        >
           <div
-  data-id="button-container"
-  className="no-print mb-6 flex flex-wrap items-center justify-between gap-4"
->
-  <button
-    onClick={handleBackAndClear}
-    className="flex items-center gap-2 rounded-full border border-gray-300 px-4 py-2 text-sm text-gray-600 transition hover:bg-gray-100 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-800"
-  >
-    <ArrowLeft size={16} />
-    Kembali
-  </button>
+            data-id="button-container"
+            className="no-print mb-6 flex flex-wrap items-center justify-between gap-4"
+          >
+            <button
+              onClick={handleBackAndClear}
+              className="flex items-center gap-2 rounded-full border border-gray-300 px-4 py-2 text-sm text-gray-600 transition hover:bg-gray-100 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-800"
+            >
+              <ArrowLeft size={16} />
+              Kembali
+            </button>
 
-  <button
-    onClick={() => window.print()}
-    disabled={isDownloading}
-    className="flex items-center gap-2 rounded-full bg-myunila px-4 py-2 text-sm font-medium text-white transition hover:bg-myunila/80 disabled:cursor-not-allowed disabled:bg-myunila/50"
-  >
-    {isDownloading ? (
-      <Loader2 size={16} className="animate-spin" />
-    ) : (
-      <Download size={16} />
-    )}
-    {isDownloading ? "Mengunduh..." : "Unduh PDF"}
-  </button>
-</div>
+            <button
+              onClick={() => window.print()}
+              disabled={isDownloading}
+              className="flex items-center gap-2 rounded-full bg-myunila px-4 py-2 text-sm font-medium text-white transition hover:bg-myunila/80 disabled:cursor-not-allowed disabled:bg-myunila/50"
+            >
+              {isDownloading ? (
+                <Loader2 size={16} className="animate-spin" />
+              ) : (
+                <Download size={16} />
+              )}
+              {isDownloading ? "Mengunduh..." : "Unduh PDF"}
+            </button>
+          </div>
 
-<h1 className="mb-8 text-xl font-semibold text-gray-800 dark:text-gray-100 md:text-2xl lg:text-3xl">
-  Hasil Asesmen Talenta Mahasiswa
-</h1>
+          <h1 className="mb-8 text-xl font-bold text-myunila dark:text-gray-100 md:text-2xl lg:text-3xl">
+            Profil Talenta Mahasiswa
+          </h1>
 
           {(nama || npm || email) && (
             <div className="mb-8 rounded-2xl border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-700 dark:bg-gray-800">
@@ -536,7 +538,7 @@ const handleDownloadPDF = async () => {
                     key={key}
                     className="border-b border-gray-100 pb-6 last:border-b-0 dark:border-gray-800"
                   >
-                    <h3 className="font-bold text-base text-gray-800 dark:text-gray-100">
+                    <h3 className="text-base font-bold text-gray-800 dark:text-gray-100">
                       {PWB_TITLES[key] || key}
                     </h3>
                     <p className="mt-1 text-base text-gray-600 dark:text-gray-400">
@@ -583,7 +585,8 @@ const handleDownloadPDF = async () => {
               </h3>
 
               <p className="mb-4 text-sm text-gray-600 dark:text-gray-400">
-                Berikut beberapa saran pengembangan yang dapat kamu lakukan untuk meningkatkan keterampilan psikologis mu.
+                Berikut beberapa saran pengembangan yang dapat kamu lakukan
+                untuk meningkatkan keterampilan psikologis mu.
               </p>
 
               <div className="space-y-4">
@@ -606,7 +609,7 @@ const handleDownloadPDF = async () => {
                         key={key}
                         className="rounded-lg bg-gray-50 p-4 dark:bg-gray-800"
                       >
-                        <h4 className="font-bold text-base text-gray-800 dark:text-gray-100">
+                        <h4 className="text-base font-bold text-gray-800 dark:text-gray-100">
                           {PWB_TITLES[key] || key}
                         </h4>
                         <p className="mt-1 text-base text-gray-700 dark:text-gray-200">
