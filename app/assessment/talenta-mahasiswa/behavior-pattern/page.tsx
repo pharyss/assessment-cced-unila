@@ -137,18 +137,18 @@ const isAllComplete = totalAnsweredAll === totalQuestions;
             </p>
 
             <div className="mb-6 space-y-3 text-base text-myunila dark:text-gray-300">
-              <div className="flex items-center gap-3 rounded-lg border border-myunila bg-myunila-50 p-3 dark:border-myunila-800 dark:bg-myunila-300">
-                <ClipboardCheck className="h-5 w-5 text-gray-900 dark:text-gray-300" />
+              <div className="flex items-center gap-3 rounded-lg border border-myunila bg-myunila-50 p-3 dark:border-myunila-400 dark:bg-myunila-700/40">
+                <ClipboardCheck className="h-5 w-5 text-gray-900 dark:text-white" />
                 <p>Cermati setiap pernyataan dan renungkan seberapa cocok dengan dirimu saat ini.</p>
               </div>
 
-              <div className="flex items-center gap-3 rounded-lg border border-myunila bg-myunila-50 p-3 dark:border-myunila-800 dark:bg-myunila-300">
-                <ListOrdered className="h-5 w-5 text-gray-900 dark:text-gray-300" />
+              <div className="flex items-center gap-3 rounded-lg border border-myunila bg-myunila-50 p-3 dark:border-myunila-400 dark:bg-myunila-700/40">
+                <ListOrdered className="h-5 w-5 text-gray-900 dark:text-white" />
                 <p>Pilih angka <strong>1–5</strong> sesuai tingkat kesesuaianmu.</p>
               </div>
 
-              <div className="flex items-center gap-3 rounded-lg border border-myunila bg-myunila-50 p-3 dark:border-myunila-800 dark:bg-myunila-300">
-                <Smile className="h-5 w-5 text-gray-900 dark:text-gray-300" />
+              <div className="flex items-center gap-3 rounded-lg border border-myunila bg-myunila-50 p-3 dark:border-myunila-400 dark:bg-myunila-700/40">
+                <Smile className="h-5 w-5 text-gray-900 dark:text-white" />
                 <p>
                   <strong>1</strong> berarti <strong className="text-danger">“nggak juga”</strong>,{" "}
                   <strong>5</strong> berarti <strong className="text-success">“iya banget”</strong>.
