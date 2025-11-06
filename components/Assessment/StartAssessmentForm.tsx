@@ -18,6 +18,7 @@ import {
   TEST_IDS,
   ASSESSMENT_ROUTES,
 } from "@/lib/constants";
+import { useAssessmentFlow } from "@/components/Assessment/useAssessmentFlow";
 
 interface FormData {
   nama: string;
@@ -37,6 +38,7 @@ export default function StartAssessmentForm({
   filters,
 }: StartAssessmentFormProps) {
   const router = useRouter();
+  const { saveAnswer } = useAssessmentFlow();
 
   const [formData, setFormData] = useState<FormData>({
     nama: "",
@@ -240,6 +242,12 @@ export default function StartAssessmentForm({
         JSON.stringify(submissionInfo),
       );
       console.log("✓ Saved submission info to localStorage");
+
+      // Save student info to useAssessmentFlow for Result page
+      saveAnswer("nama", formData.nama);
+      saveAnswer("npm", formData.npm);
+      saveAnswer("email", formData.email);
+      console.log("✓ Saved student info to assessment flow");
 
       // REQUIREMENT 3: Navigate to career-path
       // Verify data is saved before navigation

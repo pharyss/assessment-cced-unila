@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { resultsApi } from "@/lib/api-client";
 import { Test } from "@/types/api";
 import { ASSESSMENT_STORAGE_KEY } from "@/lib/constants";
+import { useAssessmentFlow } from "@/components/Assessment/useAssessmentFlow";
 import {
   ArrowLeft,
   ArrowRight,
@@ -24,6 +25,7 @@ export default function BehaviorPatternClient({
   test,
 }: BehaviorPatternClientProps) {
   const router = useRouter();
+  const { saveAnswer, answers: flowAnswers } = useAssessmentFlow();
   const [answers, setAnswers] = useState<Record<string, string>>({});
   const [currentDimIndex, setCurrentDimIndex] = useState(0);
   const [showIntroModal, setShowIntroModal] = useState(true);
@@ -54,6 +56,22 @@ export default function BehaviorPatternClient({
         localStorage.removeItem(oldAnswersKey);
         localStorage.removeItem(oldDimKey);
         console.log("✓ Cleared old localStorage answers");
+
+        // Load existing answers from useAssessmentFlow (localStorage)
+        const loadedFromFlow: Record<string, string> = {};
+        test.questions.forEach((q) => {
+          const qId = String(q.id);
+          if (flowAnswers[qId]) {
+            loadedFromFlow[qId] = flowAnswers[qId];
+          }
+        });
+        if (Object.keys(loadedFromFlow).length > 0) {
+          setAnswers(loadedFromFlow);
+          console.log(
+            "✓ Loaded answers from flow:",
+            Object.keys(loadedFromFlow).length,
+          );
+        }
 
         // REQUIREMENT 2.1: Get testSubmissionId from localStorage
         const storedData = localStorage.getItem(ASSESSMENT_STORAGE_KEY);
@@ -88,6 +106,11 @@ export default function BehaviorPatternClient({
               if (validQuestionIds.has(answer.testQuestionId)) {
                 existingAnswers[answer.testQuestionId] =
                   answer.selectedOptionId;
+                // Sync to flow
+                saveAnswer(
+                  String(answer.testQuestionId),
+                  answer.selectedOptionId,
+                );
               }
             });
           }
@@ -105,7 +128,7 @@ export default function BehaviorPatternClient({
           );
 
           if (Object.keys(existingAnswers).length > 0) {
-            setAnswers(existingAnswers);
+            setAnswers((prev) => ({ ...prev, ...existingAnswers }));
             console.log(
               "✓ Pre-selected answers:",
               Object.keys(existingAnswers).length,
@@ -127,6 +150,8 @@ export default function BehaviorPatternClient({
       ...prev,
       [questionId]: optionId,
     }));
+    // Also save to useAssessmentFlow for Result page
+    saveAnswer(String(questionId), optionId);
   };
 
   // REQUIREMENT 4: Save answers on "Lanjut" button using PUT method
@@ -179,17 +204,14 @@ export default function BehaviorPatternClient({
         existingResponse.status === "success" &&
         (existingResponse.data as any)?.answers
       ) {
-        const validQuestionIds = new Set(test.questions.map((q) => q.id));
-
-        existingAnswers = (existingResponse.data as any).answers
-          .map((answer: any) => ({
+        // DO NOT filter by validQuestionIds - we need to preserve answers from other tests (e.g., career-path)
+        existingAnswers = (existingResponse.data as any).answers.map(
+          (answer: any) => ({
             id: answer.id,
-
             testQuestionId: answer.testQuestionId,
-
             selectedOptionId: answer.selectedOptionId,
-          }))
-          .filter((answer: any) => validQuestionIds.has(answer.testQuestionId));
+          }),
+        );
       }
 
       // Step 2: Merge existing answers with current page answers
@@ -328,22 +350,62 @@ export default function BehaviorPatternClient({
     setIsSaving(true);
 
     try {
-      // Save all remaining answers
-      const allAnswersToSave: Array<{
+      // Step 1: GET existing answers from backend to ensure we don't lose any saved data from other tests
+      const existingResponse =
+        await resultsApi.getSubmissionAnswers(testSubmissionId);
+
+      let existingAnswers: Array<{
+        id?: string;
         testQuestionId: string;
         selectedOptionId: string;
       }> = [];
 
+      if (
+        existingResponse.status === "success" &&
+        (existingResponse.data as any)?.answers
+      ) {
+        // DO NOT filter - preserve ALL answers including from career-path test
+        existingAnswers = (existingResponse.data as any).answers.map(
+          (answer: any) => ({
+            id: answer.id,
+            testQuestionId: answer.testQuestionId,
+            selectedOptionId: answer.selectedOptionId,
+          }),
+        );
+      }
+
+      // Step 2: Merge existing answers with current test answers
+      const mergedAnswersMap = new Map<
+        string,
+        {
+          id?: string;
+          testQuestionId: string;
+          selectedOptionId: string;
+        }
+      >();
+
+      // Add existing answers to map (including from other tests)
+      existingAnswers.forEach((answer) => {
+        mergedAnswersMap.set(answer.testQuestionId, answer);
+      });
+
+      // Overwrite/add current test answers
       test.questions.forEach((question) => {
         const selectedOptionId = answers[question.id];
         if (selectedOptionId) {
-          allAnswersToSave.push({
+          const existing = mergedAnswersMap.get(question.id);
+          mergedAnswersMap.set(question.id, {
+            id: existing?.id,
             testQuestionId: question.id,
             selectedOptionId,
           });
         }
       });
 
+      // Convert map to array
+      const allAnswersToSave = Array.from(mergedAnswersMap.values());
+
+      // Step 3: PUT all merged answers
       if (allAnswersToSave.length > 0) {
         await resultsApi.batchUpdateTestSubmissionAnswers(
           testSubmissionId,

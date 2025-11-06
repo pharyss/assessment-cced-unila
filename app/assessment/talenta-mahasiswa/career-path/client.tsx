@@ -14,6 +14,7 @@ import toast from "react-hot-toast";
 import { resultsApi, ApiError } from "@/lib/api-client";
 import { TestQuestion } from "@/types/api";
 import { ASSESSMENT_STORAGE_KEY, ASSESSMENT_ROUTES } from "@/lib/constants";
+import { useAssessmentFlow } from "@/components/Assessment/useAssessmentFlow";
 
 interface ProcessedQuestion {
   id: string;
@@ -38,6 +39,7 @@ export default function CareerPathClient({
   test5Questions,
 }: CareerPathClientProps) {
   const router = useRouter();
+  const { saveAnswer, answers: flowAnswers } = useAssessmentFlow();
   const [answers, setAnswers] = useState<Record<string, string>>({});
   const [questions, setQuestions] = useState<ProcessedQuestion[]>([]);
   const [pageIndex, setPageIndex] = useState(0);
@@ -114,7 +116,22 @@ export default function CareerPathClient({
         const allQuestions = [...processedTest4, ...processedTest5];
         setQuestions(allQuestions);
 
-        // 2. Get testSubmissionId from localStorage
+        // 2. Load existing answers from useAssessmentFlow (localStorage)
+        const loadedFromFlow: Record<string, string> = {};
+        allQuestions.forEach((q) => {
+          if (flowAnswers[q.key]) {
+            loadedFromFlow[q.key] = flowAnswers[q.key];
+          }
+        });
+        if (Object.keys(loadedFromFlow).length > 0) {
+          setAnswers(loadedFromFlow);
+          console.log(
+            "✓ Loaded answers from flow:",
+            Object.keys(loadedFromFlow).length,
+          );
+        }
+
+        // 3. Get testSubmissionId from localStorage
         const storedData = localStorage.getItem(ASSESSMENT_STORAGE_KEY);
         console.log("✓ Checking localStorage for key:", ASSESSMENT_STORAGE_KEY);
 
@@ -143,7 +160,7 @@ export default function CareerPathClient({
 
         setTestSubmissionId(submissionId);
 
-        // 3. Fetch existing answers from backend to pre-select them (GET method)
+        // 4. Fetch existing answers from backend to pre-select them (GET method)
         try {
           const response = await resultsApi.getSubmissionAnswers(submissionId);
 
@@ -160,11 +177,13 @@ export default function CareerPathClient({
               );
               if (question) {
                 loadedAnswers[question.key] = answer.selectedOptionId;
+                // Sync to flow
+                saveAnswer(question.key, answer.selectedOptionId);
               }
             });
 
             if (Object.keys(loadedAnswers).length > 0) {
-              setAnswers(loadedAnswers);
+              setAnswers((prev) => ({ ...prev, ...loadedAnswers }));
               toast.success(
                 `${Object.keys(loadedAnswers).length} jawaban dimuat`,
               );
@@ -203,6 +222,8 @@ export default function CareerPathClient({
       ...prev,
       [q.key]: selectedOptionId,
     }));
+    // Also save to useAssessmentFlow for Result page
+    saveAnswer(q.key, selectedOptionId);
   };
 
   // Save current page answers using PUT method
@@ -338,106 +359,80 @@ export default function CareerPathClient({
   const handleConfirm = async () => {
     if (!testSubmissionId) {
       toast.error("Submission ID tidak ditemukan.");
-
       return;
     }
 
     setIsSaving(true);
 
     try {
-      // Save all remaining answers
+      // Step 1: GET existing answers from backend to ensure we don't lose any saved data
+      const existingResponse =
+        await resultsApi.getSubmissionAnswers(testSubmissionId);
 
-      const allAnswersToSave: Array<{
+      let existingAnswers: Array<{
+        id?: string;
         testQuestionId: string;
-
         selectedOptionId: string;
       }> = [];
 
+      if (
+        existingResponse.status === "success" &&
+        (existingResponse.data as any)?.answers
+      ) {
+        existingAnswers = (existingResponse.data as any).answers.map(
+          (answer: any) => ({
+            id: answer.id,
+            testQuestionId: answer.testQuestionId,
+            selectedOptionId: answer.selectedOptionId,
+          }),
+        );
+      }
+
+      // Step 2: Merge existing answers with current answers
+      const mergedAnswersMap = new Map<
+        string,
+        {
+          id?: string;
+          testQuestionId: string;
+          selectedOptionId: string;
+        }
+      >();
+
+      // Add existing answers to map
+      existingAnswers.forEach((answer) => {
+        mergedAnswersMap.set(answer.testQuestionId, answer);
+      });
+
+      // Overwrite/add current answers
       questions.forEach((q) => {
         if (answers[q.key]) {
-          allAnswersToSave.push({
+          const existing = mergedAnswersMap.get(q.id);
+          mergedAnswersMap.set(q.id, {
+            id: existing?.id,
             testQuestionId: q.id,
-
             selectedOptionId: answers[q.key],
           });
         }
       });
 
+      // Convert map to array
+      const allAnswersToSave = Array.from(mergedAnswersMap.values());
+
+      // Step 3: PUT all merged answers
       if (allAnswersToSave.length > 0) {
         await resultsApi.batchUpdateTestSubmissionAnswers(
           testSubmissionId,
-
           allAnswersToSave,
         );
       }
-
-      // Compute Test 4 result (mode of option values)
-      const getOptionValue = (q: ProcessedQuestion, selectedId?: string) =>
-        q.options.find((o) => o.id === selectedId)?.value;
-
-      const test4QuestionsOnly = questions.filter((q) => q.testId === 4);
-      const freq4 = new Map<string, number>();
-      for (const q of test4QuestionsOnly) {
-        const selectedId = answers[q.key];
-        const val = getOptionValue(q, selectedId);
-        if (val) freq4.set(val, (freq4.get(val) || 0) + 1);
-      }
-      const finalResult4 =
-        Array.from(freq4.entries()).sort((a, b) => b[1] - a[1])[0]?.[0] || "";
-
-      // Compute Test 5 result (MBTI-like 4 letters)
-      const test5QuestionsOnly = questions.filter((q) => q.testId === 5);
-      const counts5: Record<string, number> = {
-        E: 0,
-        I: 0,
-        S: 0,
-        N: 0,
-        T: 0,
-        F: 0,
-        J: 0,
-        P: 0,
-      };
-      for (const q of test5QuestionsOnly) {
-        const selectedId = answers[q.key];
-        const val = getOptionValue(q, selectedId);
-        if (val && counts5[val] !== undefined) counts5[val] += 1;
-      }
-      const pick = (a: string, b: string) =>
-        (counts5[a] ?? 0) >= (counts5[b] ?? 0) ? a : b;
-      const finalResult5 = `${pick("E", "I")}${pick("S", "N")}${pick(
-        "T",
-        "F",
-      )}${pick("J", "P")}`;
-
-      // POST results for test 4 and 5
-      const postResult = async (payload: {
-        testSubmissionId: string;
-        testId: number;
-        result: string;
-      }) => {
-        await resultsApi.createTestResult(payload);
-      };
-
-      await postResult({
-        testSubmissionId,
-        testId: 4,
-        result: finalResult4,
-      });
-      await postResult({
-        testSubmissionId,
-        testId: 5,
-        result: finalResult5,
-      });
 
       setShowConfirm(false);
       toast.success("Career Path berhasil diselesaikan!");
 
       // Navigate to next route: behavior-pattern
-
       router.push("/assessment/talenta-mahasiswa/behavior-pattern");
     } catch (error) {
       console.error("Error completing:", error);
-
       toast.error("Gagal menyelesaikan test.");
     } finally {
       setIsSaving(false);
