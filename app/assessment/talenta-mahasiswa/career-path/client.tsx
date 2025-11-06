@@ -338,14 +338,18 @@ export default function CareerPathClient({
   const handleConfirm = async () => {
     if (!testSubmissionId) {
       toast.error("Submission ID tidak ditemukan.");
+
       return;
     }
 
     setIsSaving(true);
+
     try {
       // Save all remaining answers
+
       const allAnswersToSave: Array<{
         testQuestionId: string;
+
         selectedOptionId: string;
       }> = [];
 
@@ -353,6 +357,7 @@ export default function CareerPathClient({
         if (answers[q.key]) {
           allAnswersToSave.push({
             testQuestionId: q.id,
+
             selectedOptionId: answers[q.key],
           });
         }
@@ -361,16 +366,78 @@ export default function CareerPathClient({
       if (allAnswersToSave.length > 0) {
         await resultsApi.batchUpdateTestSubmissionAnswers(
           testSubmissionId,
+
           allAnswersToSave,
         );
       }
 
+      // Compute Test 4 result (mode of option values)
+      const getOptionValue = (q: ProcessedQuestion, selectedId?: string) =>
+        q.options.find((o) => o.id === selectedId)?.value;
+
+      const test4QuestionsOnly = questions.filter((q) => q.testId === 4);
+      const freq4 = new Map<string, number>();
+      for (const q of test4QuestionsOnly) {
+        const selectedId = answers[q.key];
+        const val = getOptionValue(q, selectedId);
+        if (val) freq4.set(val, (freq4.get(val) || 0) + 1);
+      }
+      const finalResult4 =
+        Array.from(freq4.entries()).sort((a, b) => b[1] - a[1])[0]?.[0] || "";
+
+      // Compute Test 5 result (MBTI-like 4 letters)
+      const test5QuestionsOnly = questions.filter((q) => q.testId === 5);
+      const counts5: Record<string, number> = {
+        E: 0,
+        I: 0,
+        S: 0,
+        N: 0,
+        T: 0,
+        F: 0,
+        J: 0,
+        P: 0,
+      };
+      for (const q of test5QuestionsOnly) {
+        const selectedId = answers[q.key];
+        const val = getOptionValue(q, selectedId);
+        if (val && counts5[val] !== undefined) counts5[val] += 1;
+      }
+      const pick = (a: string, b: string) =>
+        (counts5[a] ?? 0) >= (counts5[b] ?? 0) ? a : b;
+      const finalResult5 = `${pick("E", "I")}${pick("S", "N")}${pick(
+        "T",
+        "F",
+      )}${pick("J", "P")}`;
+
+      // POST results for test 4 and 5
+      const postResult = async (payload: {
+        testSubmissionId: string;
+        testId: number;
+        result: string;
+      }) => {
+        await resultsApi.createTestResult(payload);
+      };
+
+      await postResult({
+        testSubmissionId,
+        testId: 4,
+        result: finalResult4,
+      });
+      await postResult({
+        testSubmissionId,
+        testId: 5,
+        result: finalResult5,
+      });
+
       setShowConfirm(false);
       toast.success("Career Path berhasil diselesaikan!");
+
       // Navigate to next route: behavior-pattern
+
       router.push("/assessment/talenta-mahasiswa/behavior-pattern");
     } catch (error) {
       console.error("Error completing:", error);
+
       toast.error("Gagal menyelesaikan test.");
     } finally {
       setIsSaving(false);

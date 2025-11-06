@@ -194,11 +194,20 @@ export const resultsApi = {
       selectedOptionId: string;
     }>,
   ) => apiClient.put(`/results/test-submission/${submissionId}/answer`, data),
+
   updateTestSubmission: (
     submissionId: string,
+
     data: {
       status?: "in_progress" | "completed";
+
       completedAt?: string | null;
     },
   ) => apiClient.patch(`/results/test-submission/${submissionId}`, data),
+
+  createTestResult: (data: {
+    testSubmissionId: string;
+    testId: number;
+    result: string;
+  }) => apiClient.post(`/results/test-submission/result`, data),
 };
