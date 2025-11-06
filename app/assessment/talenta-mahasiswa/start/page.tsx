@@ -56,12 +56,13 @@ export default async function StartPage() {
             <p className="mt-2 text-center text-sm text-red-600 dark:text-red-400">
               {errorMessage}
             </p>
-            <button
-              onClick={() => window.location.reload()}
+
+            <a
+              href="/assessment/talenta-mahasiswa/start"
               className="mt-4 rounded-lg bg-myunila px-6 py-2 text-sm font-semibold text-white transition hover:bg-myunila-700"
             >
               Muat Ulang
-            </button>
+            </a>
           </div>
         </div>
       </section>

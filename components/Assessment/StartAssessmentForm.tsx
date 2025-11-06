@@ -374,7 +374,9 @@ export default function StartAssessmentForm({
               placeholder="Masukkan NPM"
               disabled={isSubmitting}
             />
+
             <SearchableSelectField
+              id="angkatan"
               label="Angkatan"
               value={formData.angkatan}
               onChange={(v: string) => handleChange("angkatan", v)}
@@ -388,6 +390,7 @@ export default function StartAssessmentForm({
           {/* Baris 3 */}
           <div className="flex flex-col gap-6 sm:flex-row sm:gap-4">
             <SearchableSelectField
+              id="fakultas"
               label="Fakultas"
               value={formData.fakultas}
               onChange={(v: string) => handleChange("fakultas", v)}
@@ -396,7 +399,9 @@ export default function StartAssessmentForm({
               disabled={isSubmitting}
               placeholder="Pilih fakultas"
             />
+
             <SearchableSelectField
+              id="prodi"
               label="Program Studi"
               value={formData.prodi}
               onChange={(v: string) => handleChange("prodi", v)}
@@ -410,6 +415,7 @@ export default function StartAssessmentForm({
           {/* Baris 4 - Jenjang Pendidikan */}
           <div className="flex flex-col gap-6 sm:flex-row sm:gap-4">
             <SearchableSelectField
+              id="jenjang"
               label="Jenjang Pendidikan"
               value={formData.jenjang}
               onChange={(v: string) => handleChange("jenjang", v)}
@@ -418,6 +424,7 @@ export default function StartAssessmentForm({
               disabled={isSubmitting}
               placeholder="Pilih jenjang pendidikan"
             />
+
             <div className="w-full sm:w-1/2" />
           </div>
 
@@ -476,6 +483,7 @@ const InputField = React.forwardRef<HTMLInputElement, InputFieldProps>(
 );
 
 interface SearchableSelectFieldProps {
+  id?: string;
   label: string;
   value: string;
   onChange: (value: string) => void;
@@ -486,6 +494,7 @@ interface SearchableSelectFieldProps {
 }
 
 const SearchableSelectField: React.FC<SearchableSelectFieldProps> = ({
+  id,
   label,
   value,
   onChange,
@@ -498,7 +507,10 @@ const SearchableSelectField: React.FC<SearchableSelectFieldProps> = ({
     <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-200">
       {label}
     </label>
+
     <Select
+      instanceId={id}
+      inputId={id ? `${id}-input` : undefined}
       value={options.find((opt) => opt.value === value) || null}
       onChange={(opt) => onChange(opt?.value || "")}
       options={options}
@@ -510,10 +522,13 @@ const SearchableSelectField: React.FC<SearchableSelectFieldProps> = ({
       classNames={{
         control: () =>
           "!rounded-lg !border-stroke dark:!border-dark-3 !bg-transparent !min-h-[48px]",
+
         menu: () => "!rounded-lg !border !border-stroke dark:!border-dark-3",
+
         option: () => "!text-dark dark:!text-white",
       }}
     />
+
     {error && <p className="mt-1 text-sm text-red-500">{error}</p>}
   </div>
 );
