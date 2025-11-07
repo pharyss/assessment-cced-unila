@@ -36,6 +36,7 @@ import {
   TEST_ANSWER_KEY,
   TEST_RESULT_KEY,
 } from "@/lib/constants";
+import { resultsApi } from "@/lib/api-client";
 
 type ReportTextData = typeof reportTextData;
 
@@ -122,16 +123,41 @@ export default function TalentResultPage() {
         const test5Questions = JSON.parse(test5QuestionsStr);
         const test6Questions = JSON.parse(test6QuestionsStr);
 
-        // Fetch answers from backend
-        const response = await fetch(
-          `http://localhost:3000/results/test-submission/${submissionId}`,
+        // Fetch answers from backend using API client
+        const response = await resultsApi.getSubmissionAnswers(submissionId);
+
+        console.log(
+          "📊 Full backend response:",
+          JSON.stringify(response, null, 2),
         );
-        if (!response.ok) {
+
+        if (response.status !== "success") {
           throw new Error("Failed to fetch submission data");
         }
 
-        const submissionData = await response.json();
+        const submissionData = response.data as any;
+        console.log(
+          "📊 submissionData.answers type:",
+          typeof submissionData.answers,
+        );
+        console.log(
+          "📊 submissionData.answers length:",
+          submissionData.answers?.length,
+        );
+
         const answers = submissionData.answers || [];
+
+        // Check if answers exist
+        if (answers.length === 0) {
+          console.error(
+            "❌ No answers found in backend response. User may not have completed the assessment yet.",
+          );
+          console.log(
+            "💡 Make sure to complete both Career Path and Behavior Pattern tests before viewing results.",
+          );
+          setIsLoading(false);
+          return;
+        }
 
         // Get user info from localStorage (stored in STUDENT_IDENTITY_KEY)
         const studentIdentityStr = localStorage.getItem(STUDENT_IDENTITY_KEY);
@@ -153,6 +179,24 @@ export default function TalentResultPage() {
         const test5AnswersMap: Record<string, string> = {};
         const test6AnswersMap: Record<string, string> = {};
 
+        console.log("📊 Total answers from backend:", answers.length);
+        console.log("📊 Test 4 questions count:", test4Questions.length);
+        console.log("📊 Test 5 questions count:", test5Questions.length);
+        console.log("📊 Test 6 questions count:", test6Questions.length);
+
+        // Debug: log first few question IDs and answers
+        console.log(
+          "📊 Sample Test 6 question IDs:",
+          test6Questions.slice(0, 3).map((q: any) => q.id),
+        );
+        console.log(
+          "📊 Sample answers:",
+          answers.slice(0, 5).map((a: any) => ({
+            questionId: a.testQuestionId,
+            optionId: a.selectedOptionId,
+          })),
+        );
+
         answers.forEach((a: any) => {
           if (test4Questions.some((q: any) => q.id === a.testQuestionId)) {
             test4AnswersMap[a.testQuestionId] = a.selectedOptionId;
@@ -162,8 +206,31 @@ export default function TalentResultPage() {
           }
           if (test6Questions.some((q: any) => q.id === a.testQuestionId)) {
             test6AnswersMap[a.testQuestionId] = a.selectedOptionId;
+            console.log(
+              "✓ Mapped Test 6 answer:",
+              a.testQuestionId,
+              "->",
+              a.selectedOptionId,
+            );
           }
         });
+
+        console.log(
+          "📊 Test 4 answers mapped:",
+          Object.keys(test4AnswersMap).length,
+        );
+        console.log(
+          "📊 Test 5 answers mapped:",
+          Object.keys(test5AnswersMap).length,
+        );
+        console.log(
+          "📊 Test 6 answers mapped:",
+          Object.keys(test6AnswersMap).length,
+        );
+        console.log(
+          "📊 Test 6 answers map sample:",
+          Object.entries(test6AnswersMap).slice(0, 3),
+        );
 
         // Calculate results
         console.log("Computing Test 6 results...");
@@ -171,12 +238,22 @@ export default function TalentResultPage() {
           test6Questions,
           test6AnswersMap,
         );
+        console.log("✓ Test 6 results:", JSON.stringify(test6Results, null, 2));
+
+        // Debug: Check if questions have the required structure
+        console.log("📊 First Test 6 question structure:", {
+          id: test6Questions[0]?.id,
+          order: test6Questions[0]?.order,
+          optionsCount: test6Questions[0]?.options?.length,
+          firstOption: test6Questions[0]?.options?.[0],
+        });
 
         console.log("Computing Test 5 results...");
         const test5Results = calculateTest5Results(
           test5Questions,
           test5AnswersMap,
         );
+        console.log("✓ Test 5 results:", test5Results);
 
         console.log("Computing Test 4 result...");
         const test4Result = calculateTest4Results(
@@ -205,80 +282,50 @@ export default function TalentResultPage() {
           const test6BackendResults =
             formatTest6ResultsForBackend(test6Results);
           for (const resultStr of test6BackendResults) {
-            await fetch(
-              "http://localhost:3000/results/test-submission/result",
-              {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                  testSubmissionId: parseInt(submissionId),
-                  testId: 6,
-                  result: resultStr,
-                }),
-              },
-            );
+            await resultsApi.createTestResult({
+              testSubmissionId: submissionId,
+              testId: 6,
+              result: resultStr,
+            });
           }
 
           // Save Test 5 results (6 MBTI attributes)
           const test5BackendResults =
             formatTest5ResultsForBackend(test5Results);
           for (const resultStr of test5BackendResults) {
-            await fetch(
-              "http://localhost:3000/results/test-submission/result",
-              {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                  testSubmissionId: parseInt(submissionId),
-                  testId: 5,
-                  result: resultStr,
-                }),
-              },
-            );
+            await resultsApi.createTestResult({
+              testSubmissionId: submissionId,
+              testId: 5,
+              result: resultStr,
+            });
           }
 
           // Save Test 4 result
-          await fetch("http://localhost:3000/results/test-submission/result", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              testSubmissionId: parseInt(submissionId),
-              testId: 4,
-              result: formatTest4ResultForBackend(test4Result),
-            }),
+          await resultsApi.createTestResult({
+            testSubmissionId: submissionId,
+            testId: 4,
+            result: formatTest4ResultForBackend(test4Result),
           });
 
           // Save Test 3 result
-          await fetch("http://localhost:3000/results/test-submission/result", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              testSubmissionId: parseInt(submissionId),
-              testId: 3,
-              result: formatTest3ResultForBackend(test3Result),
-            }),
+          await resultsApi.createTestResult({
+            testSubmissionId: submissionId,
+            testId: 3,
+            result: formatTest3ResultForBackend(test3Result),
           });
 
           // Save Test 2 result
-          await fetch("http://localhost:3000/results/test-submission/result", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              testSubmissionId: parseInt(submissionId),
-              testId: 2,
-              result: formatTest2ResultForBackend(test2Result),
-            }),
+          await resultsApi.createTestResult({
+            testSubmissionId: submissionId,
+            testId: 2,
+            result: formatTest2ResultForBackend(test2Result),
           });
 
           // Save Test 1 result
-          await fetch("http://localhost:3000/results/test-submission/result", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              testSubmissionId: parseInt(submissionId),
-              testId: 1,
-              result: formatTest1ResultForBackend(test1Result),
-            }),
+          await resultsApi.createTestResult({
+            testSubmissionId: submissionId,
+            testId: 1,
+            result: formatTest1ResultForBackend(test1Result),
           });
 
           localStorage.setItem(TEST_RESULT_KEY, "true");
@@ -377,7 +424,13 @@ export default function TalentResultPage() {
   if (!result)
     return (
       <div className="flex h-screen flex-col items-center justify-center text-gray-600 dark:text-gray-300">
-        <p className="text-lg">Belum ada hasil asesmen ditemukan.</p>
+        <p className="mb-2 text-lg font-semibold">
+          Belum ada hasil asesmen ditemukan.
+        </p>
+        <p className="mb-4 text-sm text-gray-500">
+          Pastikan Anda sudah menyelesaikan tes Career Path dan Behavior Pattern
+          sebelum melihat hasil.
+        </p>
         <button
           onClick={() => router.push("/assessment/talenta-mahasiswa")}
           className="mt-4 rounded-full bg-myunila px-6 py-2 text-sm font-medium text-white hover:bg-myunila/90"
@@ -402,17 +455,102 @@ export default function TalentResultPage() {
     karirMinat,
   } = result;
 
-  const thinkingStyleDesc = reportTextData.thinkingStyle[thinkingStyle];
+  // Map lowercase underscore format to PascalCase for ReportText.json
+  const styleMap: Record<string, string> = {
+    analytical: "Analytical",
+    practical: "Practical",
+    creative: "Creative",
+    empathetic: "Empathetic",
+    direct: "Direct",
+    harmonious: "Harmonious",
+    innovative: "Innovative",
+    pragmatic: "Pragmatic",
+    structured_solo: "StructuredSolo",
+    structured_team: "StructuredTeam",
+    flexible_solo: "FlexibleSolo",
+    flexible_team: "FlexibleTeam",
+  };
+
+  const thinkingStyleKey = styleMap[thinkingStyle] || thinkingStyle;
+  const communicationStyleKey =
+    styleMap[communicationStyle] || communicationStyle;
+  const workingStyleKey = styleMap[workingStyle] || workingStyle;
+
+  const thinkingStyleDesc =
+    reportTextData.thinkingStyle[
+      thinkingStyleKey as keyof typeof reportTextData.thinkingStyle
+    ] || `Deskripsi untuk ${thinkingStyle} tidak tersedia`;
   const communicationStyleDesc =
-    reportTextData.communicationStyle[communicationStyle];
-  const workingStyleDesc = reportTextData.workingStyle[workingStyle];
-  const dominantCareerDesc = reportTextData.careerField[karirDominanMBTI];
-  const secondaryCareerDesc = reportTextData.careerField[karirSekunderMBTI];
+    reportTextData.communicationStyle[
+      communicationStyleKey as keyof typeof reportTextData.communicationStyle
+    ] || `Deskripsi untuk ${communicationStyle} tidak tersedia`;
+  const workingStyleDesc =
+    reportTextData.workingStyle[
+      workingStyleKey as keyof typeof reportTextData.workingStyle
+    ] || `Deskripsi untuk ${workingStyle} tidak tersedia`;
+
+  console.log("🎨 UI Data:", {
+    thinkingStyle,
+    thinkingStyleKey,
+    communicationStyle,
+    communicationStyleKey,
+    workingStyle,
+    workingStyleKey,
+    hasThinkingDesc: !!thinkingStyleDesc,
+    hasCommDesc: !!communicationStyleDesc,
+    hasWorkDesc: !!workingStyleDesc,
+  });
+
+  // Map career fields: lowercase -> PascalCase (for Indonesian)
+  const careerFieldMap: Record<string, string> = {
+    praktisi: "Praktisi",
+    akademisi: "Akademisi",
+    pekerja_kreatif: "Pekerja Kreatif",
+    wirausaha: "Wirausaha",
+  };
+
+  const karirDominanKey = careerFieldMap[karirDominanMBTI] || karirDominanMBTI;
+  const karirSekunderKey =
+    careerFieldMap[karirSekunderMBTI] || karirSekunderMBTI;
+  const karirMinatKey = careerFieldMap[karirMinat] || karirMinat;
+
+  // Map MBTI: lowercase -> UPPERCASE
+  const mbtiTypeKey = mbtiType.toUpperCase();
+
+  console.log("📚 Career & Learning Data:", {
+    karirDominanMBTI,
+    karirDominanKey,
+    karirSekunderMBTI,
+    karirSekunderKey,
+    karirMinat,
+    karirMinatKey,
+    mbtiType,
+    mbtiTypeKey,
+  });
+
+  const dominantCareerDesc =
+    reportTextData.careerField[
+      karirDominanKey as keyof typeof reportTextData.careerField
+    ] || `Deskripsi untuk ${karirDominanMBTI} tidak tersedia`;
+  const secondaryCareerDesc =
+    reportTextData.careerField[
+      karirSekunderKey as keyof typeof reportTextData.careerField
+    ] || `Deskripsi untuk ${karirSekunderMBTI} tidak tersedia`;
   const kesesuaianDesc =
     kesesuaian === "Sangat Sesuai"
       ? reportTextData.suitability["Sesuai"]
       : reportTextData.suitability["Tidak Sesuai"];
-  const learningStrategyDesc = reportTextData.learningStrategy[mbtiType];
+  const learningStrategyDesc =
+    reportTextData.learningStrategy[
+      mbtiTypeKey as keyof typeof reportTextData.learningStrategy
+    ] || `Deskripsi untuk ${mbtiType} tidak tersedia`;
+
+  console.log("📚 Description availability:", {
+    hasDominantCareerDesc: !!dominantCareerDesc,
+    hasSecondaryCareerDesc: !!secondaryCareerDesc,
+    hasLearningStrategyDesc: !!learningStrategyDesc,
+  });
+
   const pwbDimensions = Object.entries(behaviorDimensions);
 
   const dominantColorClass =
@@ -507,7 +645,7 @@ export default function TalentResultPage() {
                 Tipe Kepribadian
               </h2>
               <p className="text-2xl font-semibold text-myunila dark:text-myunila-400">
-                {mbtiType}
+                {mbtiType.toLocaleUpperCase()}
               </p>
             </div>
             <div className="rounded-2xl border border-gray-200 bg-white p-6 text-center shadow-sm dark:border-gray-700 dark:bg-gray-800">
@@ -515,7 +653,7 @@ export default function TalentResultPage() {
                 Bidang Karir Dominan
               </h2>
               <p className="text-2xl font-semibold text-myunila dark:text-myunila-400">
-                {karirDominanMBTI}
+                {karirDominanKey}
               </p>
             </div>
             <div className="rounded-2xl border border-gray-200 bg-white p-6 text-center shadow-sm dark:border-gray-700 dark:bg-gray-800">
@@ -523,7 +661,7 @@ export default function TalentResultPage() {
                 Bidang Karir Sekunder
               </h2>
               <p className="text-2xl font-semibold text-myunila dark:text-myunila-400">
-                {karirSekunderMBTI}
+                {karirSekunderKey}
               </p>
             </div>
           </div>
@@ -538,7 +676,7 @@ export default function TalentResultPage() {
                   Gaya Berpikir
                 </h3>
                 <p className="text-lg font-semibold text-danger dark:text-danger">
-                  {thinkingStyle}
+                  {thinkingStyleKey}
                 </p>
               </div>
               <div className="rounded-xl bg-gray-50 p-4 text-center dark:bg-gray-900/40">
@@ -546,7 +684,7 @@ export default function TalentResultPage() {
                   Gaya Komunikasi
                 </h3>
                 <p className="text-lg font-semibold text-warning dark:text-warning">
-                  {communicationStyle}
+                  {communicationStyleKey}
                 </p>
               </div>
               <div className="rounded-xl bg-gray-50 p-4 text-center dark:bg-gray-900/40">
@@ -554,7 +692,7 @@ export default function TalentResultPage() {
                   Pola Kerja
                 </h3>
                 <p className="text-lg font-semibold text-success dark:text-success">
-                  {WORKING_STYLE_TITLES[workingStyle] || workingStyle}
+                  {workingStyleKey}
                 </p>
               </div>
             </div>
@@ -615,7 +753,7 @@ export default function TalentResultPage() {
               Bidang Karir Ideal
             </h2>
             <p className="text-2xl font-bold text-myunila-600 dark:text-myunila-400">
-              {karirDominanMBTI}
+              {karirDominanKey}
             </p>
             <p className="mt-4 whitespace-pre-line text-base text-gray-700 dark:text-gray-300">
               {dominantCareerDesc}
@@ -625,7 +763,7 @@ export default function TalentResultPage() {
               Alternatif Bidang Karir Sekunder
             </h2>
             <p className="text-xl font-bold text-myunila-600/80 dark:text-myunila-400/80">
-              {karirSekunderMBTI}
+              {karirSekunderKey}
             </p>
             <p className="mt-3 whitespace-pre-line text-base text-gray-700 dark:text-gray-300">
               {secondaryCareerDesc}
@@ -658,7 +796,7 @@ export default function TalentResultPage() {
                   Minat Kamu
                 </h3>
                 <p className="text-lg font-bold text-myunila-600 dark:text-myunila-400">
-                  {karirMinat}
+                  {karirMinatKey}
                 </p>
               </div>
 
@@ -667,7 +805,7 @@ export default function TalentResultPage() {
                   Bakat Dominan
                 </h3>
                 <p className={`text-lg font-bold ${dominantColorClass}`}>
-                  {karirDominanMBTI}
+                  {karirDominanKey}
                 </p>
               </div>
 
@@ -676,7 +814,7 @@ export default function TalentResultPage() {
                   Bakat Sekunder
                 </h3>
                 <p className={`text-lg font-bold ${secondaryColorClass}`}>
-                  {karirSekunderMBTI}
+                  {karirSekunderKey}
                 </p>
               </div>
             </div>
@@ -691,7 +829,7 @@ export default function TalentResultPage() {
               <Brain size={20} /> Kecenderungan Gaya Berpikir
             </h2>
             <h3 className="text-xl font-bold text-myunila-600 dark:text-myunila-400">
-              {thinkingStyle}
+              {thinkingStyleKey}
             </h3>
             <p className="mt-3 whitespace-pre-line text-base text-gray-700 dark:text-gray-300">
               {thinkingStyleDesc}
@@ -703,7 +841,7 @@ export default function TalentResultPage() {
               <MessageSquare size={20} /> Kecenderungan Gaya Komunikasi
             </h2>
             <h3 className="text-xl font-bold text-myunila-600 dark:text-myunila-400">
-              {communicationStyle}
+              {communicationStyleKey}
             </h3>
             <p className="mt-3 whitespace-pre-line text-base text-gray-700 dark:text-gray-300">
               {communicationStyleDesc}
@@ -715,7 +853,7 @@ export default function TalentResultPage() {
               <Briefcase size={20} /> Kecenderungan Pola Kerja
             </h2>
             <h3 className="text-xl font-bold text-emerald-600 dark:text-emerald-400">
-              {WORKING_STYLE_TITLES[workingStyle] || workingStyle}
+              {workingStyleKey}
             </h3>
             <p className="mt-3 whitespace-pre-line text-base text-gray-700 dark:text-gray-300">
               {workingStyleDesc}
