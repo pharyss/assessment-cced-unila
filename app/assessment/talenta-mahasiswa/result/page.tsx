@@ -278,55 +278,94 @@ export default function TalentResultPage() {
         if (alreadySaved !== "true") {
           console.log("Saving results to backend...");
 
+          let totalResultsSaved = 0;
+
           // Save Test 6 results (6 dimensions)
           const test6BackendResults =
             formatTest6ResultsForBackend(test6Results);
+          console.log(
+            `📊 Test 6: Saving ${test6BackendResults.length} results`,
+          );
           for (const resultStr of test6BackendResults) {
             await resultsApi.createTestResult({
               testSubmissionId: submissionId,
               testId: 6,
               result: resultStr,
             });
+            totalResultsSaved++;
           }
 
           // Save Test 5 results (6 MBTI attributes)
           const test5BackendResults =
             formatTest5ResultsForBackend(test5Results);
+          console.log(
+            `📊 Test 5: Saving ${test5BackendResults.length} results`,
+          );
           for (const resultStr of test5BackendResults) {
             await resultsApi.createTestResult({
               testSubmissionId: submissionId,
               testId: 5,
               result: resultStr,
             });
+            totalResultsSaved++;
           }
 
           // Save Test 4 result
+          console.log("📊 Test 4: Saving 1 result");
           await resultsApi.createTestResult({
             testSubmissionId: submissionId,
             testId: 4,
             result: formatTest4ResultForBackend(test4Result),
           });
+          totalResultsSaved++;
 
           // Save Test 3 result
+          console.log("📊 Test 3: Saving 1 result");
           await resultsApi.createTestResult({
             testSubmissionId: submissionId,
             testId: 3,
             result: formatTest3ResultForBackend(test3Result),
           });
+          totalResultsSaved++;
 
           // Save Test 2 result
+          console.log("📊 Test 2: Saving 1 result");
           await resultsApi.createTestResult({
             testSubmissionId: submissionId,
             testId: 2,
             result: formatTest2ResultForBackend(test2Result),
           });
+          totalResultsSaved++;
 
           // Save Test 1 result
+          console.log("📊 Test 1: Saving 1 result");
           await resultsApi.createTestResult({
             testSubmissionId: submissionId,
             testId: 1,
             result: formatTest1ResultForBackend(test1Result),
           });
+          totalResultsSaved++;
+
+          console.log(`✅ Total results saved: ${totalResultsSaved}`);
+
+          // Verify we have all 15 results (6 test6 + 6 test5 + 1 test4 + 1 test3 + 1 test2 + 1 test1)
+          if (totalResultsSaved === 15) {
+            console.log(
+              "✅ All 15 results confirmed. Updating submission status to completed...",
+            );
+
+            // Update submission status to completed
+            await resultsApi.updateTestSubmission(submissionId, {
+              status: "completed",
+              completedAt: new Date().toISOString(),
+            });
+
+            console.log("✅ Submission status updated to completed!");
+          } else {
+            console.warn(
+              `⚠️ Expected 15 results but got ${totalResultsSaved}. Not updating submission status.`,
+            );
+          }
 
           localStorage.setItem(TEST_RESULT_KEY, "true");
           console.log("All results saved successfully!");

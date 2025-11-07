@@ -497,6 +497,7 @@ const InputField = React.forwardRef<HTMLInputElement, InputFieldProps>(
     </div>
   ),
 );
+InputField.displayName = "InputField";
 
 interface SearchableSelectFieldProps {
   id?: string;
