@@ -77,6 +77,7 @@ export default function TalentResultPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [isDownloading, setIsDownloading] = useState(false);
   const reportRef = useRef<HTMLDivElement>(null);
+  const hasSavedResults = useRef(false);
 
   useEffect(() => {
     async function computeResults() {
@@ -99,14 +100,6 @@ export default function TalentResultPage() {
         }
 
         console.log("✓ Found submission ID:", submissionId);
-
-        // Check if results already computed
-        const alreadySaved = localStorage.getItem(TEST_RESULT_KEY);
-        if (alreadySaved === "true") {
-          console.log(
-            "Results already computed and saved, loading from backend...",
-          );
-        }
 
         // Load questions from localStorage
         const test4QuestionsStr = localStorage.getItem("test4_questions");
@@ -136,6 +129,16 @@ export default function TalentResultPage() {
         }
 
         const submissionData = response.data as any;
+
+        // Check if results already exist in backend
+        const existingResults = submissionData.results || [];
+        if (existingResults.length > 0) {
+          console.log(
+            `✓ Found ${existingResults.length} existing results in backend, skipping save...`,
+          );
+          hasSavedResults.current = true;
+          localStorage.setItem(TEST_RESULT_KEY, "true");
+        }
         console.log(
           "📊 submissionData.answers type:",
           typeof submissionData.answers,
@@ -275,7 +278,8 @@ export default function TalentResultPage() {
         const test1Result = calculateTest1Results(test3Result, test2Result);
 
         // Save results to backend if not already saved
-        if (alreadySaved !== "true") {
+        if (!hasSavedResults.current) {
+          hasSavedResults.current = true; // Set immediately to prevent race conditions
           console.log("Saving results to backend...");
 
           let totalResultsSaved = 0;
@@ -348,10 +352,10 @@ export default function TalentResultPage() {
 
           console.log(`✅ Total results saved: ${totalResultsSaved}`);
 
-          // Verify we have all 15 results (6 test6 + 6 test5 + 1 test4 + 1 test3 + 1 test2 + 1 test1)
-          if (totalResultsSaved === 15) {
+          // Verify we have all 16 results (6 test6 + 6 test5 + 1 test4 + 1 test3 + 1 test2 + 1 test1)
+          if (totalResultsSaved === 16) {
             console.log(
-              "✅ All 15 results confirmed. Updating submission status to completed...",
+              "✅ All 16 results confirmed. Updating submission status to completed...",
             );
 
             // Update submission status to completed
@@ -363,7 +367,7 @@ export default function TalentResultPage() {
             console.log("✅ Submission status updated to completed!");
           } else {
             console.warn(
-              `⚠️ Expected 15 results but got ${totalResultsSaved}. Not updating submission status.`,
+              `⚠️ Expected 16 results but got ${totalResultsSaved}. Not updating submission status.`,
             );
           }
 

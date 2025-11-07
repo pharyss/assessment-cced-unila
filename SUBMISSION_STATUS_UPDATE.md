@@ -16,7 +16,7 @@ This document describes the implementation of automatic submission status update
   ```
 
 ### Result Count Validation
-The system validates that exactly **15 results** are saved before updating the submission status:
+The system validates that exactly **16 results** are saved before updating the submission status:
 
 | Test ID | Result Format | Count | Description |
 |---------|--------------|-------|-------------|
@@ -26,7 +26,7 @@ The system validates that exactly **15 results** are saved before updating the s
 | Test 3 | `string` | 1 | Readiness level (sangat_siap, siap, cukup_siap, kurang_siap) |
 | Test 2 | `string` | 1 | Compatibility (sangat_sesuai, kurang_sesuai, tidak_sesuai) |
 | Test 1 | `string` | 1 | Classification (various options) |
-| **TOTAL** | | **15** | |
+| **TOTAL** | | **16** | |
 
 ### Code Changes
 
@@ -53,10 +53,10 @@ console.log(`✅ Total results saved: ${totalResultsSaved}`);
 
 **Added validation and status update:**
 ```typescript
-// Verify we have all 15 results
-if (totalResultsSaved === 15) {
+// Verify we have all 16 results
+if (totalResultsSaved === 16) {
   console.log(
-    "✅ All 15 results confirmed. Updating submission status to completed...",
+    "✅ All 16 results confirmed. Updating submission status to completed...",
   );
 
   // Update submission status to completed
@@ -68,7 +68,7 @@ if (totalResultsSaved === 15) {
   console.log("✅ Submission status updated to completed!");
 } else {
   console.warn(
-    `⚠️ Expected 15 results but got ${totalResultsSaved}. Not updating submission status.`,
+    `⚠️ Expected 16 results but got ${totalResultsSaved}. Not updating submission status.`,
   );
 }
 ```
@@ -112,13 +112,13 @@ updateTestSubmission: (
 │  - Test 3: 1 result                 │
 │  - Test 2: 1 result                 │
 │  - Test 1: 1 result                 │
-│  Total: 15 results                  │
+│  Total: 16 results                  │
 └───────────────┬─────────────────────┘
                 │
                 ▼
 ┌─────────────────────────────────────┐
 │  Validate Result Count              │
-│  totalResultsSaved === 15?          │
+│  totalResultsSaved === 16?          │
 └───────────┬───────────┬─────────────┘
             │           │
          YES│           │NO
@@ -141,8 +141,8 @@ updateTestSubmission: (
   - `📊 Test 3: Saving 1 result`
   - `📊 Test 2: Saving 1 result`
   - `📊 Test 1: Saving 1 result`
-  - `✅ Total results saved: 15`
-  - `✅ All 15 results confirmed. Updating submission status to completed...`
+  - `✅ Total results saved: 16`
+  - `✅ All 16 results confirmed. Updating submission status to completed...`
   - `✅ Submission status updated to completed!`
 - [ ] Verify backend receives PATCH request with `status: "completed"`
 - [ ] Verify submission record shows `status = "completed"` and `completedAt` is set
@@ -150,7 +150,7 @@ updateTestSubmission: (
 ### Error Handling
 
 The implementation includes validation:
-- If result count ≠ 15, a warning is logged and status is NOT updated
+- If result count ≠ 16, a warning is logged and status is NOT updated
 - Console logging helps debug if results are missing or duplicated
 - Each test result save is logged separately for tracking
 
