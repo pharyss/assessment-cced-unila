@@ -13,7 +13,11 @@ import {
 import toast from "react-hot-toast";
 import { resultsApi, ApiError } from "@/lib/api-client";
 import { TestQuestion } from "@/types/api";
-import { ASSESSMENT_STORAGE_KEY, ASSESSMENT_ROUTES } from "@/lib/constants";
+import {
+  STUDENT_IDENTITY_KEY,
+  TEST_ANSWER_KEY,
+  ASSESSMENT_ROUTES,
+} from "@/lib/constants";
 import { useAssessmentFlow } from "@/components/Assessment/useAssessmentFlow";
 
 interface ProcessedQuestion {
@@ -84,7 +88,7 @@ export default function CareerPathClient({
           .map((q) => ({
             id: q.id,
             question: q.text,
-            key: `4-${q.id}`,
+            key: `A-${q.order + 1}`, // Convert 0-based order to 1-based (A-1, A-2, etc.)
             testId: 4,
             options: q.options
               .sort((a, b) => a.order - b.order)
@@ -101,7 +105,7 @@ export default function CareerPathClient({
           .map((q) => ({
             id: q.id,
             question: q.text,
-            key: `5-${q.id}`,
+            key: `B-${q.order + 1}`, // Convert 0-based order to 1-based (B-1, B-2, etc.)
             testId: 5,
             options: q.options
               .sort((a, b) => a.order - b.order)
@@ -115,6 +119,39 @@ export default function CareerPathClient({
 
         const allQuestions = [...processedTest4, ...processedTest5];
         setQuestions(allQuestions);
+
+        // 1.5. Save test 4 and test 5 questions+options to localStorage for result calculation
+        const test4ForStorage = test4Questions
+          .sort((a, b) => a.order - b.order)
+          .map((q) => ({
+            id: q.id,
+            order: q.order,
+            options: q.options.map((opt) => ({
+              id: opt.id,
+              value: opt.value,
+            })),
+          }));
+
+        const test5ForStorage = test5Questions
+          .sort((a, b) => a.order - b.order)
+          .map((q) => ({
+            id: q.id,
+            order: q.order,
+            options: q.options.map((opt) => ({
+              id: opt.id,
+              value: opt.value,
+            })),
+          }));
+
+        localStorage.setItem(
+          "test4_questions",
+          JSON.stringify(test4ForStorage),
+        );
+        localStorage.setItem(
+          "test5_questions",
+          JSON.stringify(test5ForStorage),
+        );
+        console.log("✓ Saved test 4 & 5 questions to localStorage");
 
         // 2. Load existing answers from useAssessmentFlow (localStorage)
         const loadedFromFlow: Record<string, string> = {};
@@ -131,26 +168,23 @@ export default function CareerPathClient({
           );
         }
 
-        // 3. Get testSubmissionId from localStorage
-        const storedData = localStorage.getItem(ASSESSMENT_STORAGE_KEY);
-        console.log("✓ Checking localStorage for key:", ASSESSMENT_STORAGE_KEY);
+        // 3. Get testSubmissionId from localStorage (TEST_ANSWER_KEY)
+        const storedAnswerData = localStorage.getItem(TEST_ANSWER_KEY);
+        console.log("✓ Checking localStorage for key:", TEST_ANSWER_KEY);
 
-        if (!storedData) {
-          console.error("❌ No data found in localStorage");
+        if (!storedAnswerData) {
+          console.error("❌ No test answer data found in localStorage");
           toast.error("Data submission tidak ditemukan. Mulai ulang asesmen.");
           router.push(ASSESSMENT_ROUTES.START);
           return;
         }
 
-        console.log("✓ Found localStorage data");
-        const submissionData = JSON.parse(storedData);
-        const submissionId = submissionData.testSubmissionId;
+        console.log("✓ Found localStorage test answer data");
+        const answerData = JSON.parse(storedAnswerData);
+        const submissionId = answerData.testSubmissionId;
 
         if (!submissionId) {
-          console.error(
-            "❌ No testSubmissionId in stored data:",
-            submissionData,
-          );
+          console.error("❌ No testSubmissionId in stored data:", answerData);
           toast.error("ID submission tidak ditemukan. Mulai ulang asesmen.");
           router.push(ASSESSMENT_ROUTES.START);
           return;
@@ -426,10 +460,20 @@ export default function CareerPathClient({
         );
       }
 
+      // Step 4: Update TEST_ANSWER_KEY with careerPathComplete flag
+      const storedAnswerData = localStorage.getItem(TEST_ANSWER_KEY);
+      if (storedAnswerData) {
+        const answerData = JSON.parse(storedAnswerData);
+        answerData.careerPathComplete = true;
+        localStorage.setItem(TEST_ANSWER_KEY, JSON.stringify(answerData));
+        console.log("✓ Marked careerPathComplete in TEST_ANSWER_KEY");
+      }
+
       setShowConfirm(false);
       toast.success("Career Path berhasil diselesaikan!");
 
-      // Navigate to next route: behavior-pattern
+      // Mark as complete in flow and navigate to behavior-pattern
+      saveAnswer("careerPathComplete", true);
       router.push("/assessment/talenta-mahasiswa/behavior-pattern");
     } catch (error) {
       console.error("Error completing:", error);

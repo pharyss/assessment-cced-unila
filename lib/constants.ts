@@ -6,11 +6,10 @@
  */
 
 /**
- * Storage key for assessment submission data in localStorage
+ * Storage key for student identity data in localStorage
  *
  * Used to store:
  * - studentId: string
- * - testSubmissionId: string
  * - nama: string
  * - npm: string
  * - email: string
@@ -18,6 +17,33 @@
  * - fakultas: string
  * - prodi: string
  * - jenjang: string
+ */
+export const STUDENT_IDENTITY_KEY = "cced-student-identity";
+
+/**
+ * Storage key for test submission and answers in localStorage
+ *
+ * Used to store:
+ * - testSubmissionId: string
+ * - answers: Record<string, string> (questionId -> optionId)
+ * - careerPathComplete: boolean
+ * - behaviorPatternComplete: boolean
+ */
+export const TEST_ANSWER_KEY = "cced-test-answer";
+
+/**
+ * Storage key for test results in localStorage
+ *
+ * Used to store:
+ * - testSubmissionId: string
+ * - results: object (calculated results)
+ * - resultsSaved: boolean
+ */
+export const TEST_RESULT_KEY = "cced-test-result";
+
+/**
+ * Legacy storage key - DEPRECATED
+ * @deprecated Use STUDENT_IDENTITY_KEY, TEST_ANSWER_KEY, or TEST_RESULT_KEY instead
  */
 export const ASSESSMENT_STORAGE_KEY = "assessment-cced-unila-submission";
 

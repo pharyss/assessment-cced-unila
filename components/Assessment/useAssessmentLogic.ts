@@ -1,8 +1,6 @@
 "use client";
 
 import { useMemo } from "react";
-import careerPathData from "@/data/CareerPath.json";
-import behaviorPatternData from "@/data/BehaviorPattern.json";
 
 // =============================
 // KONFIGURASI DASAR DATA
@@ -159,18 +157,47 @@ export function useAssessmentLogic(answers: Record<string, any>) {
     const result: Record<string, { percentage: number; level: string }> = {};
     const dimensions = Object.entries(behaviorPatternData.part2.dimensions);
 
+    console.log("🔍 calculateBehaviorScores - All answers:", answers);
+    console.log("🔍 Total dimensions:", dimensions.length);
+
     dimensions.forEach(([dimKey, dimValue], dimIndex) => {
-      const baseId = 40 + dimIndex * 6;
+      // Use 1-based order: dimension 0 has orders 1-6, dimension 1 has orders 7-12, etc.
+      const baseOrder = dimIndex * 6 + 1;
       const scores: number[] = [];
 
-      dimValue.questions.forEach((q, idx) => {
-        const id = baseId + idx;
-        const value = answers[id];
-        if (value === undefined) return;
+      console.log(
+        `📊 Processing dimension ${dimIndex} (${dimKey}), baseOrder: ${baseOrder}`,
+      );
 
-        const adjusted = q.type === "unfavorable" ? 6 - value : value;
+      dimValue.questions.forEach((q, idx) => {
+        const order = baseOrder + idx;
+        const value = answers[String(order)];
+
+        console.log(`  Question ${order}: value="${value}", type="${q.type}"`);
+
+        if (value === undefined) {
+          console.log(`  ❌ Question ${order}: undefined - skipping`);
+          return;
+        }
+
+        // Parse string to number (answers are stored as strings)
+        const numericValue = parseInt(value, 10);
+        if (isNaN(numericValue)) {
+          console.log(
+            `  ❌ Question ${order}: NaN after parsing "${value}" - skipping`,
+          );
+          return;
+        }
+
+        const adjusted =
+          q.type === "unfavorable" ? 6 - numericValue : numericValue;
+        console.log(
+          `  ✓ Question ${order}: numericValue=${numericValue}, adjusted=${adjusted}`,
+        );
         scores.push(adjusted);
       });
+
+      console.log(`  Dimension ${dimKey} scores:`, scores);
 
       if (scores.length > 0) {
         const avg = scores.reduce((a, b) => a + b, 0) / scores.length;
@@ -180,12 +207,20 @@ export function useAssessmentLogic(answers: Record<string, any>) {
         if (percentage < 40) level = "Rendah";
         else if (percentage > 70) level = "Tinggi";
 
+        console.log(
+          `  ✓ Dimension ${dimKey}: avg=${avg}, percentage=${percentage}, level=${level}`,
+        );
+
         result[dimKey] = {
           percentage: Math.round(percentage),
           level,
         };
+      } else {
+        console.log(`  ❌ Dimension ${dimKey}: No valid scores`);
       }
     });
+
+    console.log("📊 Final behaviorDimensions result:", result);
 
     return result;
   }, [answers]);

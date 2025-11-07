@@ -14,7 +14,8 @@ import Select from "react-select";
 import { StudentFilters, Student, TestSubmission } from "@/types/api";
 import { studentsApi, resultsApi, ApiError } from "@/lib/api-client";
 import {
-  ASSESSMENT_STORAGE_KEY,
+  STUDENT_IDENTITY_KEY,
+  TEST_ANSWER_KEY,
   TEST_IDS,
   ASSESSMENT_ROUTES,
 } from "@/lib/constants";
@@ -110,10 +111,6 @@ export default function StartAssessmentForm({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-
-    // REQUIREMENT 2.0: Clear localStorage FIRST before anything else
-    localStorage.removeItem(ASSESSMENT_STORAGE_KEY);
-    console.log("✓ Cleared localStorage");
 
     setIsSubmitting(true);
 
@@ -224,10 +221,9 @@ export default function StartAssessmentForm({
         toast.success("Data berhasil disimpan!");
       }
 
-      // Save submission data to localStorage
-      const submissionInfo = {
+      // Save student identity to localStorage
+      const studentIdentity = {
         studentId: student.id,
-        testSubmissionId: submission.id,
         nama: formData.nama,
         npm: formData.npm,
         email: formData.email,
@@ -238,10 +234,21 @@ export default function StartAssessmentForm({
       };
 
       localStorage.setItem(
-        ASSESSMENT_STORAGE_KEY,
-        JSON.stringify(submissionInfo),
+        STUDENT_IDENTITY_KEY,
+        JSON.stringify(studentIdentity),
       );
-      console.log("✓ Saved submission info to localStorage");
+      console.log("✓ Saved student identity to localStorage");
+
+      // Save test submission info to localStorage
+      const testAnswerData = {
+        testSubmissionId: submission.id,
+        answers: {},
+        careerPathComplete: false,
+        behaviorPatternComplete: false,
+      };
+
+      localStorage.setItem(TEST_ANSWER_KEY, JSON.stringify(testAnswerData));
+      console.log("✓ Saved test submission to localStorage");
 
       // Save student info to useAssessmentFlow for Result page
       saveAnswer("nama", formData.nama);
@@ -251,8 +258,9 @@ export default function StartAssessmentForm({
 
       // REQUIREMENT 3: Navigate to career-path
       // Verify data is saved before navigation
-      const savedData = localStorage.getItem(ASSESSMENT_STORAGE_KEY);
-      if (savedData) {
+      const savedIdentity = localStorage.getItem(STUDENT_IDENTITY_KEY);
+      const savedAnswer = localStorage.getItem(TEST_ANSWER_KEY);
+      if (savedIdentity && savedAnswer) {
         console.log("✓ Verified localStorage data before navigation");
         router.push(ASSESSMENT_ROUTES.CAREER_PATH);
       } else {

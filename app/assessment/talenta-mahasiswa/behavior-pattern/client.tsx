@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { resultsApi } from "@/lib/api-client";
 import { Test } from "@/types/api";
-import { ASSESSMENT_STORAGE_KEY } from "@/lib/constants";
+import { TEST_ANSWER_KEY } from "@/lib/constants";
 import { useAssessmentFlow } from "@/components/Assessment/useAssessmentFlow";
 import {
   ArrowLeft,
@@ -57,32 +57,38 @@ export default function BehaviorPatternClient({
         localStorage.removeItem(oldDimKey);
         console.log("✓ Cleared old localStorage answers");
 
+        // Save test 6 questions+options to localStorage for result calculation
+        const test6ForStorage = test.questions
+          .sort((a, b) => a.order - b.order)
+          .map((q) => ({
+            id: q.id,
+            order: q.order,
+            options: q.options.map((opt) => ({
+              id: opt.id,
+              value: opt.value,
+            })),
+          }));
+
+        localStorage.setItem(
+          "test6_questions",
+          JSON.stringify(test6ForStorage),
+        );
+        console.log("✓ Saved test 6 questions to localStorage");
+
         // Load existing answers from useAssessmentFlow (localStorage)
-        const loadedFromFlow: Record<string, string> = {};
-        test.questions.forEach((q) => {
-          const qId = String(q.id);
-          if (flowAnswers[qId]) {
-            loadedFromFlow[qId] = flowAnswers[qId];
-          }
-        });
-        if (Object.keys(loadedFromFlow).length > 0) {
-          setAnswers(loadedFromFlow);
-          console.log(
-            "✓ Loaded answers from flow:",
-            Object.keys(loadedFromFlow).length,
-          );
-        }
+        // Note: flowAnswers contains numeric values, but we need optionIds for UI
+        // So we skip loading from flow here - we'll load from backend instead
 
         // REQUIREMENT 2.1: Get testSubmissionId from localStorage
-        const storedData = localStorage.getItem(ASSESSMENT_STORAGE_KEY);
+        const storedData = localStorage.getItem(TEST_ANSWER_KEY);
         if (!storedData) {
-          console.error("❌ No submission data in localStorage");
+          console.error("❌ No test answer data in localStorage");
           toast.error("Data submission tidak ditemukan. Silakan mulai ulang.");
           return;
         }
 
-        const submissionData = JSON.parse(storedData);
-        const submissionId = submissionData.testSubmissionId;
+        const answerData = JSON.parse(storedData);
+        const submissionId = answerData.testSubmissionId;
 
         if (!submissionId) {
           console.error("❌ No testSubmissionId in stored data");
@@ -101,16 +107,60 @@ export default function BehaviorPatternClient({
           const existingAnswers: Record<string, string> = {};
 
           if (submissionData.answers && Array.isArray(submissionData.answers)) {
-            const validQuestionIds = new Set(test.questions.map((q) => q.id));
+            // Map question ID to order for conversion
+            const questionIdToOrder = new Map(
+              test.questions.map((q) => [q.id, q.order + 1]), // Convert to 1-based
+            );
+
             submissionData.answers.forEach((answer: any) => {
-              if (validQuestionIds.has(answer.testQuestionId)) {
-                existingAnswers[answer.testQuestionId] =
-                  answer.selectedOptionId;
-                // Sync to flow
-                saveAnswer(
-                  String(answer.testQuestionId),
-                  answer.selectedOptionId,
+              const order = questionIdToOrder.get(answer.testQuestionId);
+              console.log(
+                `🔍 Processing answer: testQuestionId=${answer.testQuestionId}, selectedOptionId=${answer.selectedOptionId}, order=${order}`,
+              );
+              if (order !== undefined) {
+                // Find the question to get option's numeric value from backend
+                const question = test.questions.find(
+                  (q) => q.id === answer.testQuestionId,
                 );
+                console.log(`  Found question:`, question ? "YES" : "NO");
+                if (question) {
+                  // Find the selected option to get its value field
+                  const selectedOption = question.options.find(
+                    (opt) => opt.id === answer.selectedOptionId,
+                  );
+                  console.log(
+                    `  Selected option:`,
+                    selectedOption
+                      ? { id: selectedOption.id, value: selectedOption.value }
+                      : "NOT FOUND",
+                  );
+
+                  if (selectedOption) {
+                    // Parse the value field from backend (should be "1", "2", "3", "4", or "5")
+                    const numericValue = parseInt(selectedOption.value, 10);
+                    console.log(
+                      `  ✓ Converted from backend: value="${selectedOption.value}", numericValue=${numericValue}`,
+                    );
+
+                    if (!isNaN(numericValue)) {
+                      // Store optionId for UI selection
+                      existingAnswers[String(order)] = answer.selectedOptionId;
+                      // Store numeric value for calculation
+                      saveAnswer(String(order), String(numericValue));
+                      console.log(
+                        `  ✓ Saved to flow: key="${order}", value="${numericValue}"`,
+                      );
+                    } else {
+                      console.error(
+                        `  ❌ Invalid numeric value from backend: "${selectedOption.value}"`,
+                      );
+                    }
+                  } else {
+                    console.error(
+                      `  ❌ Selected option not found with id: ${answer.selectedOptionId}`,
+                    );
+                  }
+                }
               }
             });
           }
@@ -121,10 +171,13 @@ export default function BehaviorPatternClient({
             "  Answers loaded from API:",
             Object.keys(existingAnswers).length,
           );
-          console.log("  Loaded question IDs:", Object.keys(existingAnswers));
           console.log(
-            "  Expected question IDs:",
-            test.questions.map((q) => q.id),
+            "  Loaded question orders:",
+            Object.keys(existingAnswers),
+          );
+          console.log(
+            "  Expected question orders (1-based):",
+            test.questions.map((q) => q.order + 1),
           );
 
           if (Object.keys(existingAnswers).length > 0) {
@@ -145,13 +198,30 @@ export default function BehaviorPatternClient({
     initializeAnswers();
   }, []);
 
-  const handleSelect = (questionId: string, optionId: string) => {
+  const handleSelect = (
+    questionOrder: number,
+    optionId: string,
+    optionValue: string,
+  ) => {
+    const orderKey = String(questionOrder + 1); // Convert 0-based to 1-based
     setAnswers((prev) => ({
       ...prev,
-      [questionId]: optionId,
+      [orderKey]: optionId, // Store optionId for backend
     }));
-    // Also save to useAssessmentFlow for Result page
-    saveAnswer(String(questionId), optionId);
+
+    // Parse numeric value from backend option.value field
+    const numericValue = parseInt(optionValue, 10);
+    if (!isNaN(numericValue)) {
+      // Save numeric value to useAssessmentFlow for Result page calculation
+      saveAnswer(orderKey, String(numericValue));
+      console.log(
+        `✓ handleSelect: key="${orderKey}", optionId="${optionId}", value="${optionValue}", numeric=${numericValue}`,
+      );
+    } else {
+      console.error(
+        `❌ handleSelect: Invalid numeric value from option.value: "${optionValue}"`,
+      );
+    }
   };
 
   // REQUIREMENT 4: Save answers on "Lanjut" button using PUT method
@@ -168,10 +238,10 @@ export default function BehaviorPatternClient({
     }> = [];
 
     currentQuestions.forEach((question) => {
-      const selectedOptionId = answers[question.id];
+      const selectedOptionId = answers[String(question.order + 1)]; // Use 1-based
       if (selectedOptionId) {
         currentPageAnswers.push({
-          testQuestionId: question.id,
+          testQuestionId: question.id, // Backend expects question ID
           selectedOptionId,
         });
       }
@@ -186,7 +256,7 @@ export default function BehaviorPatternClient({
       console.log("  Dimension:", currentDimIndex + 1);
       console.log("  Answers to save:", currentPageAnswers.length);
       console.log(
-        "  Question IDs being saved:",
+        "  Question IDs being saved to backend:",
         currentPageAnswers.map((a) => a.testQuestionId),
       );
 
@@ -266,13 +336,13 @@ export default function BehaviorPatternClient({
 
   const totalAnsweredAll = Object.keys(answers).length;
   const totalAnsweredCurrent = currentQuestions.filter(
-    (q) => answers[q.id] !== undefined,
+    (q) => answers[String(q.order + 1)] !== undefined,
   ).length;
 
   const isCurrentDimComplete = totalAnsweredCurrent === currentQuestions.length;
 
   const isAllComplete = test.questions.every(
-    (q) => answers[q.id] !== undefined,
+    (q) => answers[String(q.order + 1)] !== undefined,
   );
 
   const handleNext = async () => {
@@ -295,24 +365,37 @@ export default function BehaviorPatternClient({
       window.scrollTo({ top: 0, behavior: "smooth" });
     } else {
       // Validate using per-question check scoped to this test
-      const allQuestionIds = test.questions.map((q) => q.id);
+      const allQuestionOrders = test.questions.map((q) => q.order + 1); // 1-based
 
-      const answeredIds = test.questions
-        .filter((q) => answers[q.id] !== undefined)
-        .map((q) => q.id);
+      const answeredOrders = test.questions
+        .filter((q) => answers[String(q.order + 1)] !== undefined)
+        .map((q) => q.order + 1); // 1-based
 
-      const currentAnsweredCount = answeredIds.length;
+      const currentAnsweredCount = answeredOrders.length;
       const isNowComplete = currentAnsweredCount === test.questions.length;
 
       if (isNowComplete) {
+        // Update TEST_ANSWER_KEY with behaviorPatternComplete flag
+        const storedAnswerData = localStorage.getItem(TEST_ANSWER_KEY);
+        if (storedAnswerData) {
+          const answerData = JSON.parse(storedAnswerData);
+          answerData.behaviorPatternComplete = true;
+          localStorage.setItem(TEST_ANSWER_KEY, JSON.stringify(answerData));
+          console.log("✓ Marked behaviorPatternComplete in TEST_ANSWER_KEY");
+        }
+
         setShowConfirmModal(true);
       } else {
-        const missingIds = allQuestionIds.filter(
-          (id) => !answeredIds.includes(id),
+        const missingOrders = allQuestionOrders.filter(
+          (order) => !answeredOrders.includes(order),
+        );
+        console.log(
+          "❌ Not all questions answered. Missing orders:",
+          missingOrders,
         );
         // For debugging: any extra keys in answers not part of this test
         const extraIds = Object.keys(answers).filter(
-          (id) => !allQuestionIds.includes(id),
+          (id) => !allQuestionOrders.includes(Number(id)),
         );
 
         console.log("❌ Validation failed:");
@@ -321,12 +404,12 @@ export default function BehaviorPatternClient({
 
         console.log("  Total questions:", test.questions.length);
 
-        console.log("  Missing question IDs:", missingIds);
+        console.log("  Missing question orders:", missingOrders);
 
         console.log("  Extra/Invalid question IDs:", extraIds);
 
         toast.error(
-          `Lengkapi semua ${test.questions.length} pernyataan terlebih dahulu. (Terjawab: ${currentAnsweredCount}, Kurang: ${missingIds.length})`,
+          `Lengkapi semua ${test.questions.length} pernyataan terlebih dahulu. (Terjawab: ${currentAnsweredCount}, Kurang: ${missingOrders.length})`,
         );
       }
     }
@@ -391,7 +474,7 @@ export default function BehaviorPatternClient({
 
       // Overwrite/add current test answers
       test.questions.forEach((question) => {
-        const selectedOptionId = answers[question.id];
+        const selectedOptionId = answers[String(question.order + 1)]; // Use 1-based
         if (selectedOptionId) {
           const existing = mergedAnswersMap.get(question.id);
           mergedAnswersMap.set(question.id, {
@@ -524,7 +607,7 @@ export default function BehaviorPatternClient({
             <div className="space-y-8">
               {currentQuestions.map((question, idx) => {
                 const questionNumber = startIdx + idx + 1;
-                const selectedOptionId = answers[question.id];
+                const selectedOptionId = answers[String(question.order + 1)]; // Use 1-based
 
                 // Sort options by order to ensure 1-5 order
                 const sortedOptions = [...question.options].sort(
@@ -545,7 +628,7 @@ export default function BehaviorPatternClient({
                       </span>
                       <div className="flex flex-1 justify-center gap-4 md:gap-16">
                         {sortedOptions.map((option, i) => {
-                          const val = i + 1;
+                          const displayValue = i + 1; // For display only
                           const isSelected = selectedOptionId === option.id;
                           return (
                             <label key={option.id} className="cursor-pointer">
@@ -555,7 +638,11 @@ export default function BehaviorPatternClient({
                                 value={option.id}
                                 checked={isSelected}
                                 onChange={() =>
-                                  handleSelect(question.id, option.id)
+                                  handleSelect(
+                                    question.order,
+                                    option.id,
+                                    option.value,
+                                  )
                                 }
                                 className="hidden"
                               />
@@ -566,7 +653,7 @@ export default function BehaviorPatternClient({
                                     : "border-gray-400 bg-white text-gray-700 hover:scale-105 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-200 hover:dark:bg-gray-700"
                                 }`}
                               >
-                                {val}
+                                {displayValue}
                               </span>
                             </label>
                           );

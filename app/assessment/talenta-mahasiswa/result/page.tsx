@@ -1,8 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useRouter } from "next/navigation";
-import { useMutation } from "@tanstack/react-query";
 import {
   ArrowLeft,
   Brain,
@@ -13,14 +12,38 @@ import {
   TrendingUp,
   Loader2,
   Target,
+  Download,
+  AlertCircle,
 } from "lucide-react";
 
-import { useAssessmentFlow } from "@/components/Assessment/useAssessmentFlow";
-import { useAssessmentLogic } from "@/components/Assessment/useAssessmentLogic";
-import reportTextData from "@/data/ReportText.json";
-
 import { resultsApi } from "@/lib/api-client";
-import { ASSESSMENT_STORAGE_KEY } from "@/lib/constants";
+import {
+  STUDENT_IDENTITY_KEY,
+  TEST_ANSWER_KEY,
+  TEST_RESULT_KEY,
+} from "@/lib/constants";
+import {
+  calculateTest6Results,
+  calculateTest5Results,
+  calculateTest4Results,
+  calculateTest3Results,
+  calculateTest2Results,
+  calculateTest1Results,
+  getTest6TotalScore,
+  formatTest6ResultsForBackend,
+  formatTest5ResultsForBackend,
+  formatTest4ResultForBackend,
+  formatTest3ResultForBackend,
+  formatTest2ResultForBackend,
+  formatTest1ResultForBackend,
+  Test6Result,
+  Test5Result,
+  Test4Result,
+  Test3Result,
+  Test2Result,
+  Test1Result,
+} from "@/lib/result-calculator";
+import reportTextData from "@/data/ReportText.json";
 
 type ReportTextData = typeof reportTextData;
 
@@ -28,15 +51,17 @@ interface AssessmentResult {
   nama?: string;
   npm?: string;
   email?: string;
-  mbtiType: keyof ReportTextData["learningStrategy"];
+  mbtiType: string;
   kesesuaian: string;
-  thinkingStyle: keyof ReportTextData["thinkingStyle"];
-  communicationStyle: keyof ReportTextData["communicationStyle"];
-  workingStyle: keyof ReportTextData["workingStyle"];
-  behaviorDimensions: Record<string, { percentage: number; level: string }>;
-  karirDominanMBTI: keyof ReportTextData["careerField"];
-  karirSekunderMBTI: keyof ReportTextData["careerField"];
-  karirMinat?: keyof ReportTextData["careerField"];
+  thinkingStyle: string;
+  communicationStyle: string;
+  workingStyle: string;
+  behaviorDimensions: Test6Result[];
+  karirDominanMBTI: string;
+  karirSekunderMBTI: string;
+  karirMinat: string;
+  readiness: string;
+  classification: string;
 }
 
 const PWB_TITLES: Record<string, string> = {
@@ -49,503 +74,556 @@ const PWB_TITLES: Record<string, string> = {
 };
 
 const WORKING_STYLE_TITLES: Record<string, string> = {
-  StructuredSolo: "Structured Solo",
-  StructuredTeam: "Structured Team",
-  FlexibleSolo: "Flexible Solo",
-  FlexibleTeam: "Flexible Team",
+  structured_solo: "Structured Solo",
+  structured_team: "Structured Team",
+  flexible_solo: "Flexible Solo",
+  flexible_team: "Flexible Team",
 };
-
-// Calculate total behavior score for test 3
-function calculateBehaviorReadiness(
-  behaviorDimensions: Record<string, { percentage: number; level: string }>,
-): string {
-  // Sum all raw scores from 6 dimensions
-  // Each dimension has 6 questions, scale 1-5
-  // Max total = 36 questions * 5 = 180
-  // We need to reconstruct total from percentages
-  let totalScore = 0;
-  const dimensionCount = Object.keys(behaviorDimensions).length;
-
-  if (dimensionCount === 0) return "tidak_siap";
-
-  // Each dimension percentage represents avg score for 6 questions
-  // percentage = ((avg - 1) / 4) * 100
-  // So avg = (percentage / 100) * 4 + 1
-  // Total for dimension = avg * 6
-  Object.values(behaviorDimensions).forEach((dim) => {
-    const avg = (dim.percentage / 100) * 4 + 1;
-    totalScore += avg * 6;
-  });
-
-  // Test 3 logic: based on total score
-  if (totalScore >= 120) return "sangat_siap";
-  if (totalScore >= 60) return "kurang_siap";
-  return "tidak_siap";
-}
-
-// Calculate career compatibility (test 2)
-function calculateCareerCompatibility(
-  karirMinat: string,
-  karirDominan: string,
-  karirSekunder: string,
-): string {
-  if (karirMinat === karirDominan) return "sangat_sesuai";
-  if (karirMinat === karirSekunder) return "cukup_sesuai";
-  return "tidak_sesuai";
-}
-
-// Calculate overall classification (test 1)
-function calculateOverallClassification(
-  readiness: string,
-  compatibility: string,
-): string {
-  // Test 1 matrix logic from user requirements
-  if (readiness === "tidak_siap" && compatibility === "tidak_sesuai")
-    return "critical_mismatch";
-  if (readiness === "kurang_siap" && compatibility === "tidak_sesuai")
-    return "inconsistent_fit_zone";
-  if (readiness === "sangat_siap" && compatibility === "tidak_sesuai")
-    return "happy_but_misaligned";
-  if (readiness === "tidak_siap" && compatibility === "cukup_sesuai")
-    return "underdeveloped_potential";
-  if (readiness === "kurang_siap" && compatibility === "cukup_sesuai")
-    return "growth_zone";
-  if (readiness === "sangat_siap" && compatibility === "cukup_sesuai")
-    return "positive_explorers";
-  if (readiness === "tidak_siap" && compatibility === "sangat_sesuai")
-    return "latent_talent_zone";
-  if (readiness === "kurang_siap" && compatibility === "sangat_sesuai")
-    return "aligned_developers";
-  if (readiness === "sangat_siap" && compatibility === "sangat_sesuai")
-    return "high_fit_champions";
-
-  return "unknown";
-}
-
-// Format test 5 MBTI results (6 entries)
-function formatMBTIResults(result: AssessmentResult) {
-  return [
-    { param: "mbti_type", value: result.mbtiType },
-    { param: "primary", value: result.karirDominanMBTI },
-    { param: "secondary", value: result.karirSekunderMBTI },
-    { param: "thinking_style", value: result.thinkingStyle },
-    { param: "communication_style", value: result.communicationStyle },
-    { param: "working_style", value: result.workingStyle },
-  ];
-}
-
-// Format test 6 behavior results (6 entries)
-function formatBehaviorResults(
-  behaviorDimensions: Record<string, { percentage: number; level: string }>,
-) {
-  return Object.entries(behaviorDimensions).map(([dimension, data]) => ({
-    dimension,
-    level: data.level,
-    percentage: data.percentage,
-  }));
-}
 
 export default function TalentResultPage() {
   const router = useRouter();
-  const { answers, goTo } = useAssessmentFlow();
-  const { getFinalResult } = useAssessmentLogic(answers);
   const [result, setResult] = useState<AssessmentResult | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const reportRef = useRef<HTMLDivElement>(null);
+  const hasSavedRef = useRef(false);
+  const [studentIdentity, setStudentIdentity] = useState<{
+    nama?: string;
+    npm?: string;
+    email?: string;
+  }>({});
 
-  // Mutation for saving results
-  const saveResultMutation = useMutation({
-    mutationFn: async (data: {
-      testSubmissionId: string;
-      testId: number;
-      result: string;
-    }) => {
-      return resultsApi.createTestResult(data);
-    },
-  });
-
-  // Load and calculate results
+  // Load and calculate results from localStorage + backend
   useEffect(() => {
-    if (!answers || Object.keys(answers).length === 0) {
-      setIsLoading(false);
-      return;
-    }
-
-    try {
-      const final = getFinalResult as any;
-      setResult({
-        ...final,
-        nama: answers.nama,
-        npm: answers.npm,
-        email: answers.email,
-      });
-    } catch (err) {
-      console.error("Gagal memuat hasil asesmen:", err);
-      setResult(null);
-    } finally {
-      setIsLoading(false);
-    }
-  }, [answers, getFinalResult]);
-
-  // Save all results on mount
-  useEffect(() => {
-    if (!result || isSaving) return;
-
-    const saveResults = async () => {
+    const loadAndCalculateResults = async () => {
       try {
-        setIsSaving(true);
+        setIsLoading(true);
+        console.log("🔄 Starting result calculation...");
 
-        // Get submissionId from localStorage
-        const stored = localStorage.getItem(ASSESSMENT_STORAGE_KEY);
-        if (!stored) {
-          console.warn("No submission found in localStorage");
-          return;
+        // 1. Get testSubmissionId from localStorage
+        const storedAnswers = localStorage.getItem(TEST_ANSWER_KEY);
+        if (!storedAnswers) {
+          throw new Error("Data submission tidak ditemukan di localStorage");
         }
 
-        const parsed = JSON.parse(stored);
-        const submissionId: string | undefined = parsed?.testSubmissionId;
+        const answerData = JSON.parse(storedAnswers);
+        const submissionId: string | undefined = answerData?.testSubmissionId;
         if (!submissionId) {
-          console.warn("No testSubmissionId found");
-          return;
+          throw new Error("ID submission tidak ditemukan");
         }
 
-        // Clear old result localStorage data
-        const oldResultKeys = Object.keys(localStorage).filter(
-          (key) => key.includes("result") || key.includes("posted"),
-        );
-        oldResultKeys.forEach((key) => localStorage.removeItem(key));
+        console.log("✓ Found testSubmissionId:", submissionId);
 
-        // Calculate all test results
-        const readiness = calculateBehaviorReadiness(result.behaviorDimensions);
-        const compatibility = calculateCareerCompatibility(
-          result.karirMinat || "",
-          result.karirDominanMBTI,
-          result.karirSekunderMBTI,
-        );
-        const overall = calculateOverallClassification(
-          readiness,
-          compatibility,
-        );
-
-        // Prepare all results
-        const allResults: Array<{ testId: number; result: string }> = [];
-
-        // Test 1: Overall classification
-        allResults.push({ testId: 1, result: overall });
-
-        // Test 2: Career compatibility
-        allResults.push({ testId: 2, result: compatibility });
-
-        // Test 3: Behavioral readiness
-        allResults.push({ testId: 3, result: readiness });
-
-        // Test 4: Career field (karirMinat)
-        if (result.karirMinat) {
-          allResults.push({
-            testId: 4,
-            result: result.karirMinat,
-          });
+        // 2. Get student identity from localStorage
+        const storedIdentity = localStorage.getItem(STUDENT_IDENTITY_KEY);
+        let identityData = {};
+        if (storedIdentity) {
+          identityData = JSON.parse(storedIdentity);
+          setStudentIdentity(identityData);
         }
 
-        // Test 5: MBTI details (6 results in "param:value" format)
-        const mbtiResults = formatMBTIResults(result);
-        mbtiResults.forEach((mbtiData) => {
-          allResults.push({
-            testId: 5,
-            result: `${mbtiData.param}:${mbtiData.value}`,
-          });
+        // 3. Load test questions from localStorage
+        const test4QuestionsRaw = localStorage.getItem("test4_questions");
+        const test5QuestionsRaw = localStorage.getItem("test5_questions");
+        const test6QuestionsRaw = localStorage.getItem("test6_questions");
+
+        if (!test4QuestionsRaw || !test5QuestionsRaw || !test6QuestionsRaw) {
+          throw new Error(
+            "Data pertanyaan test tidak ditemukan di localStorage",
+          );
+        }
+
+        const test4Questions = JSON.parse(test4QuestionsRaw);
+        const test5Questions = JSON.parse(test5QuestionsRaw);
+        const test6Questions = JSON.parse(test6QuestionsRaw);
+
+        console.log("✓ Loaded questions from localStorage:", {
+          test4: test4Questions.length,
+          test5: test5Questions.length,
+          test6: test6Questions.length,
         });
 
-        // Test 6: Behavior dimensions (6 results in "dimension:level:percentage" format)
-        const behaviorResults = formatBehaviorResults(
-          result.behaviorDimensions,
-        );
-        behaviorResults.forEach((behaviorData) => {
-          allResults.push({
-            testId: 6,
-            result: `${behaviorData.dimension}:${behaviorData.level}:${behaviorData.percentage}`,
-          });
+        // 4. Fetch answers from backend
+        const response = await resultsApi.getSubmissionAnswers(submissionId);
+
+        if (response.status !== "success") {
+          throw new Error("Gagal mengambil jawaban dari server");
+        }
+
+        const submissionData = response.data as any;
+        const backendAnswers = submissionData.answers || [];
+
+        console.log("✓ Fetched answers from backend:", backendAnswers.length);
+
+        // 5. Map backend answers to question IDs
+        const answersMap: Record<string, string> = {};
+        backendAnswers.forEach((answer: any) => {
+          answersMap[answer.testQuestionId] = answer.selectedOptionId;
         });
 
-        // Save all to database
-        const savePromises = allResults.map((testResult) =>
-          saveResultMutation.mutateAsync({
-            testSubmissionId: submissionId,
-            testId: testResult.testId,
-            result: testResult.result,
-          }),
+        // 6. Calculate Test 6 Results (Psychological Well-being)
+        const test6Results = calculateTest6Results(test6Questions, answersMap);
+        console.log("✓ Test 6 Results:", test6Results);
+
+        // 7. Calculate Test 5 Results (MBTI)
+        const test5Results = calculateTest5Results(test5Questions, answersMap);
+        console.log("✓ Test 5 Results:", test5Results);
+
+        // 8. Calculate Test 4 Results (Career Preference)
+        const test4Results = calculateTest4Results(test4Questions, answersMap);
+        console.log("✓ Test 4 Results:", test4Results);
+
+        // 9. Calculate Test 3 Results (Behavioral Readiness)
+        const test6TotalScore = getTest6TotalScore(test6Questions, answersMap);
+        const test3Results = calculateTest3Results(test6TotalScore);
+        console.log(
+          "✓ Test 3 Results:",
+          test3Results,
+          "Total Score:",
+          test6TotalScore,
         );
 
-        await Promise.allSettled(savePromises);
+        // 10. Calculate Test 2 Results (Career Compatibility)
+        const test2Results = calculateTest2Results(test4Results, test5Results);
+        console.log("✓ Test 2 Results:", test2Results);
 
-        // Save consolidated result to localStorage
-        const resultData = {
-          submissionId,
-          timestamp: new Date().toISOString(),
-          results: {
-            test1_overall: overall,
-            test2_compatibility: compatibility,
-            test3_readiness: readiness,
-            test4_career: result.karirMinat,
-            test5_mbti: result.mbtiType,
-            test6_behavior: result.behaviorDimensions,
-          },
-          studentInfo: {
-            nama: result.nama,
-            npm: result.npm,
-            email: result.email,
-          },
-        };
+        // 11. Calculate Test 1 Results (Overall Classification)
+        const test1Results = calculateTest1Results(test3Results, test2Results);
+        console.log("✓ Test 1 Results:", test1Results);
 
-        localStorage.setItem(
-          `${ASSESSMENT_STORAGE_KEY}:results`,
-          JSON.stringify(resultData),
+        // 12. Set result state for UI display
+        setResult({
+          ...identityData,
+          mbtiType: test5Results.mbti_type,
+          kesesuaian: test2Results.compatibility,
+          thinkingStyle: test5Results.thinking_style,
+          communicationStyle: test5Results.communication_style,
+          workingStyle: test5Results.working_style,
+          behaviorDimensions: test6Results,
+          karirDominanMBTI: test5Results.primary,
+          karirSekunderMBTI: test5Results.secondary,
+          karirMinat: test4Results.career_preference,
+          readiness: test3Results.readiness,
+          classification: test1Results.classification,
+        } as AssessmentResult);
+
+        // 13. Save all results to backend (only once)
+        if (!hasSavedRef.current) {
+          hasSavedRef.current = true;
+          await saveAllResultsToBackend(
+            submissionId,
+            test1Results,
+            test2Results,
+            test3Results,
+            test4Results,
+            test5Results,
+            test6Results,
+          );
+        }
+
+        setError(null);
+      } catch (err) {
+        console.error("❌ Error calculating results:", err);
+        setError(
+          err instanceof Error ? err.message : "Gagal memuat hasil asesmen",
         );
-
-        console.log("✅ All results saved successfully");
-      } catch (error) {
-        console.error("❌ Error saving results:", error);
       } finally {
-        setIsSaving(false);
+        setIsLoading(false);
       }
     };
 
-    saveResults();
-  }, [result, isSaving, saveResultMutation]);
+    loadAndCalculateResults();
+  }, []);
 
-  if (isLoading || isSaving) {
+  // Save all results to backend using POST endpoint
+  const saveAllResultsToBackend = async (
+    submissionId: string,
+    test1: Test1Result,
+    test2: Test2Result,
+    test3: Test3Result,
+    test4: Test4Result,
+    test5: Test5Result,
+    test6: Test6Result[],
+  ) => {
+    try {
+      setIsSaving(true);
+      console.log("💾 Saving all results to backend...");
+
+      // Check if already saved
+      const storedResults = localStorage.getItem(TEST_RESULT_KEY);
+      if (storedResults) {
+        const resultData = JSON.parse(storedResults);
+        if (resultData.resultsSaved) {
+          console.log("✓ Results already saved, skipping");
+          return;
+        }
+      }
+
+      const resultsToSave: Array<{ testId: number; result: string }> = [];
+
+      // Test 1: Overall Classification (1 result)
+      resultsToSave.push({
+        testId: 1,
+        result: formatTest1ResultForBackend(test1),
+      });
+
+      // Test 2: Career Compatibility (1 result)
+      resultsToSave.push({
+        testId: 2,
+        result: formatTest2ResultForBackend(test2),
+      });
+
+      // Test 3: Behavioral Readiness (1 result)
+      resultsToSave.push({
+        testId: 3,
+        result: formatTest3ResultForBackend(test3),
+      });
+
+      // Test 4: Career Preference (1 result)
+      resultsToSave.push({
+        testId: 4,
+        result: formatTest4ResultForBackend(test4),
+      });
+
+      // Test 5: MBTI (6 results in "param:value" format)
+      const test5Formatted = formatTest5ResultsForBackend(test5);
+      test5Formatted.forEach((resultString) => {
+        resultsToSave.push({
+          testId: 5,
+          result: resultString,
+        });
+      });
+
+      // Test 6: Psychological Well-being (6 results in "dimension:percentage:level" format)
+      const test6Formatted = formatTest6ResultsForBackend(test6);
+      test6Formatted.forEach((resultString) => {
+        resultsToSave.push({
+          testId: 6,
+          result: resultString,
+        });
+      });
+
+      console.log("📊 Total results to save:", resultsToSave.length);
+      console.log("Results breakdown:", {
+        test1: 1,
+        test2: 1,
+        test3: 1,
+        test4: 1,
+        test5: test5Formatted.length,
+        test6: test6Formatted.length,
+      });
+
+      // POST each result to backend
+      const savePromises = resultsToSave.map(async (resultData) => {
+        return resultsApi.createTestResult({
+          testSubmissionId: submissionId,
+          testId: resultData.testId,
+          result: resultData.result,
+        });
+      });
+
+      await Promise.all(savePromises);
+
+      console.log("✓ All results saved to backend successfully");
+
+      // Mark as saved in localStorage
+      localStorage.setItem(
+        TEST_RESULT_KEY,
+        JSON.stringify({
+          resultsSaved: true,
+          timestamp: new Date().toISOString(),
+        }),
+      );
+    } catch (err) {
+      console.error("❌ Error saving results to backend:", err);
+      throw err;
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleDownloadPDF = async () => {
+    // TODO: Implement PDF download
+    console.log("PDF download not yet implemented");
+  };
+
+  const handleBackToDashboard = () => {
+    router.push("/");
+  };
+
+  if (isLoading) {
     return (
-      <div className="flex h-screen flex-col items-center justify-center text-gray-600 dark:text-gray-300">
-        <Loader2 className="mb-3 h-6 w-6 animate-spin text-myunila" />
-        <p>
-          {isSaving
-            ? "Menyimpan hasil asesmen..."
-            : "Memuat hasil asesmen kamu..."}
-        </p>
-      </div>
+      <section className="relative z-10 flex min-h-screen items-center justify-center bg-gradient-to-b from-white via-myunila-50 to-myunila-100 dark:from-gray-950 dark:via-gray-900 dark:to-gray-800">
+        <div className="text-center">
+          <Loader2 className="mx-auto h-16 w-16 animate-spin text-myunila" />
+          <p className="mt-4 text-lg text-gray-600 dark:text-gray-300">
+            Menghitung hasil asesmen...
+          </p>
+        </div>
+      </section>
     );
   }
 
-  if (!result) {
+  if (error || !result) {
     return (
-      <div className="flex h-screen flex-col items-center justify-center text-gray-600 dark:text-gray-300">
-        <p>Belum ada hasil asesmen ditemukan.</p>
-        <button
-          onClick={() => goTo("start")}
-          className="mt-4 rounded-full bg-myunila px-6 py-2 text-sm font-medium text-white hover:bg-myunila/90"
-        >
-          Mulai Asesmen
-        </button>
-      </div>
+      <section className="relative z-10 flex min-h-screen items-center justify-center bg-gradient-to-b from-white via-myunila-50 to-myunila-100 dark:from-gray-950 dark:via-gray-900 dark:to-gray-800">
+        <div className="mx-4 max-w-md rounded-lg border border-red-200 bg-white p-8 text-center shadow-lg dark:border-red-800 dark:bg-gray-900">
+          <AlertCircle className="mx-auto h-16 w-16 text-red-500" />
+          <h2 className="mt-4 text-xl font-bold text-gray-900 dark:text-white">
+            Gagal Memuat Hasil
+          </h2>
+          <p className="mt-2 text-gray-600 dark:text-gray-300">
+            {error || "Terjadi kesalahan saat memuat hasil asesmen"}
+          </p>
+          <button
+            onClick={handleBackToDashboard}
+            className="mt-6 rounded-full bg-myunila px-6 py-2.5 text-white hover:bg-myunila-700"
+          >
+            Kembali ke Dashboard
+          </button>
+        </div>
+      </section>
     );
   }
 
   return (
-    <div className="mx-auto min-h-screen max-w-5xl bg-gray-50 px-4 py-12 dark:bg-gray-950 sm:px-6 lg:px-8">
-      {/* Header */}
-      <div className="mb-8 text-center">
-        <div className="mb-4 flex items-center justify-center">
-          <CheckCircle className="mr-3 h-12 w-12 text-green-500" />
-        </div>
-        <h1 className="mb-2 text-3xl font-bold text-gray-800 dark:text-gray-100">
-          Hasil Asesmen Talenta
-        </h1>
-        <p className="text-gray-600 dark:text-gray-400">
-          Berikut adalah rangkuman profil talenta dan pengembangan dirimu
-        </p>
-        {result.nama && (
-          <p className="mt-2 text-sm text-gray-500 dark:text-gray-500">
-            {result.nama} ({result.npm})
+    <section className="relative z-10 min-h-screen bg-gradient-to-b from-white via-myunila-50 to-myunila-100 pb-20 pt-24 dark:from-gray-950 dark:via-gray-900 dark:to-gray-800 sm:pb-24 sm:pt-32 md:pb-[120px] md:pt-[150px]">
+      <div className="container mx-auto w-full max-w-[1200px] px-4">
+        {/* Header */}
+        <div className="mb-8 text-center">
+          <div className="mb-4 flex items-center justify-center">
+            <CheckCircle className="h-16 w-16 text-green-500" />
+          </div>
+          <h1 className="mb-2 text-3xl font-bold text-myunila dark:text-white md:text-4xl">
+            Hasil Asesmen Talenta Mahasiswa
+          </h1>
+          <p className="text-gray-600 dark:text-gray-300">
+            Berikut adalah hasil lengkap dari asesmen yang telah Anda selesaikan
           </p>
-        )}
-      </div>
-
-      {/* MBTI Type */}
-      <section className="mb-6 rounded-2xl bg-white p-6 shadow-sm dark:bg-gray-900">
-        <div className="mb-4 flex items-center gap-3">
-          <Brain className="h-6 w-6 text-myunila" />
-          <h2 className="text-xl font-semibold text-gray-800 dark:text-gray-100">
-            Tipe Kepribadian (MBTI)
-          </h2>
-        </div>
-        <div className="rounded-lg bg-myunila/10 p-4">
-          <p className="text-3xl font-bold text-myunila">{result.mbtiType}</p>
-          <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">
-            {typeof reportTextData.learningStrategy[result.mbtiType] ===
-            "string"
-              ? reportTextData.learningStrategy[result.mbtiType]
-              : reportTextData.learningStrategy[result.mbtiType]}
-          </p>
-        </div>
-      </section>
-
-      {/* Career Fields */}
-      <section className="mb-6 rounded-2xl bg-white p-6 shadow-sm dark:bg-gray-900">
-        <div className="mb-4 flex items-center gap-3">
-          <Briefcase className="h-6 w-6 text-myunila" />
-          <h2 className="text-xl font-semibold text-gray-800 dark:text-gray-100">
-            Bidang Karir
-          </h2>
-        </div>
-        <div className="space-y-4">
-          {result.karirMinat && (
-            <div className="rounded-lg border border-gray-200 p-4 dark:border-gray-700">
-              <p className="text-sm font-medium text-gray-500 dark:text-gray-400">
-                Minat Karir (Hasil Tes)
-              </p>
-              <p className="mt-1 text-lg font-semibold text-gray-800 dark:text-gray-100">
-                {result.karirMinat}
-              </p>
+          {isSaving && (
+            <div className="mt-4 flex items-center justify-center gap-2 text-sm text-myunila">
+              <Loader2 className="h-4 w-4 animate-spin" />
+              <span>Menyimpan hasil ke server...</span>
             </div>
           )}
-          <div className="rounded-lg border border-gray-200 p-4 dark:border-gray-700">
-            <p className="text-sm font-medium text-gray-500 dark:text-gray-400">
-              Karir Dominan (Berdasarkan MBTI)
-            </p>
-            <p className="mt-1 text-lg font-semibold text-gray-800 dark:text-gray-100">
-              {result.karirDominanMBTI}
-            </p>
-          </div>
-          <div className="rounded-lg border border-gray-200 p-4 dark:border-gray-700">
-            <p className="text-sm font-medium text-gray-500 dark:text-gray-400">
-              Karir Sekunder (Berdasarkan MBTI)
-            </p>
-            <p className="mt-1 text-lg font-semibold text-gray-800 dark:text-gray-100">
-              {result.karirSekunderMBTI}
-            </p>
-          </div>
         </div>
-      </section>
 
-      {/* Compatibility */}
-      <section className="mb-6 rounded-2xl bg-white p-6 shadow-sm dark:bg-gray-900">
-        <div className="mb-4 flex items-center gap-3">
-          <Target className="h-6 w-6 text-myunila" />
-          <h2 className="text-xl font-semibold text-gray-800 dark:text-gray-100">
-            Kesesuaian Minat & Kepribadian
-          </h2>
-        </div>
-        <div
-          className={`rounded-lg p-4 ${
-            result.kesesuaian === "Sangat Sesuai"
-              ? "bg-green-50 dark:bg-green-900/20"
-              : result.kesesuaian === "Cukup Sesuai"
-                ? "bg-yellow-50 dark:bg-yellow-900/20"
-                : "bg-red-50 dark:bg-red-900/20"
-          }`}
-        >
-          <p
-            className={`text-lg font-bold ${
-              result.kesesuaian === "Sangat Sesuai"
-                ? "text-green-700 dark:text-green-300"
-                : result.kesesuaian === "Cukup Sesuai"
-                  ? "text-yellow-700 dark:text-yellow-300"
-                  : "text-red-700 dark:text-red-300"
-            }`}
-          >
-            {result.kesesuaian}
-          </p>
-        </div>
-      </section>
+        {/* Student Identity */}
+        {(result.nama || result.npm) && (
+          <div className="mb-8 rounded-lg border border-gray-200 bg-white p-6 shadow dark:border-gray-700 dark:bg-gray-900">
+            <h2 className="mb-4 text-xl font-bold text-gray-900 dark:text-white">
+              Informasi Peserta
+            </h2>
+            <div className="grid gap-3 text-sm md:grid-cols-3">
+              {result.nama && (
+                <div>
+                  <span className="font-semibold text-gray-700 dark:text-gray-300">
+                    Nama:
+                  </span>{" "}
+                  <span className="text-gray-600 dark:text-gray-400">
+                    {result.nama}
+                  </span>
+                </div>
+              )}
+              {result.npm && (
+                <div>
+                  <span className="font-semibold text-gray-700 dark:text-gray-300">
+                    NPM:
+                  </span>{" "}
+                  <span className="text-gray-600 dark:text-gray-400">
+                    {result.npm}
+                  </span>
+                </div>
+              )}
+              {result.email && (
+                <div>
+                  <span className="font-semibold text-gray-700 dark:text-gray-300">
+                    Email:
+                  </span>{" "}
+                  <span className="text-gray-600 dark:text-gray-400">
+                    {result.email}
+                  </span>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
 
-      {/* Styles */}
-      <section className="mb-6 rounded-2xl bg-white p-6 shadow-sm dark:bg-gray-900">
-        <div className="mb-4 flex items-center gap-3">
-          <MessageSquare className="h-6 w-6 text-myunila" />
-          <h2 className="text-xl font-semibold text-gray-800 dark:text-gray-100">
-            Gaya Kerja & Komunikasi
-          </h2>
-        </div>
-        <div className="grid gap-4 md:grid-cols-3">
-          <div className="rounded-lg border border-gray-200 p-4 dark:border-gray-700">
-            <p className="text-sm font-medium text-gray-500 dark:text-gray-400">
-              Thinking Style
-            </p>
-            <p className="mt-1 text-lg font-semibold text-gray-800 dark:text-gray-100">
-              {result.thinkingStyle}
-            </p>
+        {/* Overall Classification */}
+        <div className="mb-8 rounded-lg border border-gray-200 bg-white p-6 shadow dark:border-gray-700 dark:bg-gray-900">
+          <div className="mb-4 flex items-center gap-3">
+            <Target className="h-6 w-6 text-myunila" />
+            <h2 className="text-xl font-bold text-gray-900 dark:text-white">
+              Klasifikasi Keseluruhan
+            </h2>
           </div>
-          <div className="rounded-lg border border-gray-200 p-4 dark:border-gray-700">
-            <p className="text-sm font-medium text-gray-500 dark:text-gray-400">
-              Communication Style
+          <div className="rounded-lg bg-myunila-50 p-4 dark:bg-myunila-900/30">
+            <p className="text-lg font-semibold text-myunila dark:text-myunila-300">
+              {result.classification
+                .split("_")
+                .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+                .join(" ")}
             </p>
-            <p className="mt-1 text-lg font-semibold text-gray-800 dark:text-gray-100">
-              {result.communicationStyle}
-            </p>
-          </div>
-          <div className="rounded-lg border border-gray-200 p-4 dark:border-gray-700">
-            <p className="text-sm font-medium text-gray-500 dark:text-gray-400">
-              Working Style
-            </p>
-            <p className="mt-1 text-lg font-semibold text-gray-800 dark:text-gray-100">
-              {WORKING_STYLE_TITLES[result.workingStyle] || result.workingStyle}
+            <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">
+              Kesiapan:{" "}
+              <span className="font-semibold">{result.readiness}</span> |
+              Kesesuaian Karir:{" "}
+              <span className="font-semibold">{result.kesesuaian}</span>
             </p>
           </div>
         </div>
-      </section>
 
-      {/* Behavior Dimensions */}
-      <section className="mb-8 rounded-2xl bg-white p-6 shadow-sm dark:bg-gray-900">
-        <div className="mb-4 flex items-center gap-3">
-          <TrendingUp className="h-6 w-6 text-myunila" />
-          <h2 className="text-xl font-semibold text-gray-800 dark:text-gray-100">
-            Dimensi Kesejahteraan Psikologis
-          </h2>
+        {/* MBTI & Career */}
+        <div className="mb-8 grid gap-6 md:grid-cols-2">
+          {/* MBTI Type */}
+          <div className="rounded-lg border border-gray-200 bg-white p-6 shadow dark:border-gray-700 dark:bg-gray-900">
+            <div className="mb-4 flex items-center gap-3">
+              <Brain className="h-6 w-6 text-myunila" />
+              <h2 className="text-xl font-bold text-gray-900 dark:text-white">
+                Tipe Kepribadian MBTI
+              </h2>
+            </div>
+            <div className="mb-4 rounded-lg bg-myunila-50 p-4 text-center dark:bg-myunila-900/30">
+              <p className="text-3xl font-bold text-myunila dark:text-myunila-300">
+                {result.mbtiType.toUpperCase()}
+              </p>
+            </div>
+            <div className="space-y-2 text-sm">
+              <div className="flex justify-between">
+                <span className="text-gray-600 dark:text-gray-400">
+                  Thinking Style:
+                </span>
+                <span className="font-semibold text-gray-900 dark:text-white">
+                  {result.thinkingStyle}
+                </span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-gray-600 dark:text-gray-400">
+                  Communication:
+                </span>
+                <span className="font-semibold text-gray-900 dark:text-white">
+                  {result.communicationStyle}
+                </span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-gray-600 dark:text-gray-400">
+                  Working Style:
+                </span>
+                <span className="font-semibold text-gray-900 dark:text-white">
+                  {WORKING_STYLE_TITLES[result.workingStyle] ||
+                    result.workingStyle}
+                </span>
+              </div>
+            </div>
+          </div>
+
+          {/* Career Fields */}
+          <div className="rounded-lg border border-gray-200 bg-white p-6 shadow dark:border-gray-700 dark:bg-gray-900">
+            <div className="mb-4 flex items-center gap-3">
+              <Briefcase className="h-6 w-6 text-myunila" />
+              <h2 className="text-xl font-bold text-gray-900 dark:text-white">
+                Bidang Karir
+              </h2>
+            </div>
+            <div className="space-y-3">
+              <div className="rounded-lg bg-green-50 p-3 dark:bg-green-900/30">
+                <p className="text-xs text-gray-600 dark:text-gray-400">
+                  Minat Karir Anda
+                </p>
+                <p className="font-semibold text-green-700 dark:text-green-300">
+                  {result.karirMinat}
+                </p>
+              </div>
+              <div className="rounded-lg bg-blue-50 p-3 dark:bg-blue-900/30">
+                <p className="text-xs text-gray-600 dark:text-gray-400">
+                  Karir Dominan (MBTI)
+                </p>
+                <p className="font-semibold text-blue-700 dark:text-blue-300">
+                  {result.karirDominanMBTI}
+                </p>
+              </div>
+              <div className="rounded-lg bg-purple-50 p-3 dark:bg-purple-900/30">
+                <p className="text-xs text-gray-600 dark:text-gray-400">
+                  Karir Sekunder (MBTI)
+                </p>
+                <p className="font-semibold text-purple-700 dark:text-purple-300">
+                  {result.karirSekunderMBTI}
+                </p>
+              </div>
+            </div>
+          </div>
         </div>
-        <div className="space-y-4">
-          {Object.entries(result.behaviorDimensions).map(
-            ([key, { percentage, level }]) => (
+
+        {/* Psychological Well-being Dimensions */}
+        <div className="mb-8 rounded-lg border border-gray-200 bg-white p-6 shadow dark:border-gray-700 dark:bg-gray-900">
+          <div className="mb-4 flex items-center gap-3">
+            <TrendingUp className="h-6 w-6 text-myunila" />
+            <h2 className="text-xl font-bold text-gray-900 dark:text-white">
+              Dimensi Kesejahteraan Psikologis
+            </h2>
+          </div>
+          <div className="grid gap-4 md:grid-cols-2">
+            {result.behaviorDimensions.map((dim) => (
               <div
-                key={key}
+                key={dim.dimension}
                 className="rounded-lg border border-gray-200 p-4 dark:border-gray-700"
               >
                 <div className="mb-2 flex items-center justify-between">
-                  <p className="font-medium text-gray-700 dark:text-gray-300">
-                    {PWB_TITLES[key] || key}
-                  </p>
+                  <h3 className="font-semibold text-gray-900 dark:text-white">
+                    {PWB_TITLES[dim.dimension] || dim.dimension}
+                  </h3>
                   <span
                     className={`rounded-full px-3 py-1 text-xs font-semibold ${
-                      level === "Tinggi"
+                      dim.level === "Tinggi"
                         ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300"
-                        : level === "Sedang"
+                        : dim.level === "Sedang"
                           ? "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-300"
                           : "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300"
                     }`}
                   >
-                    {level}
+                    {dim.level}
                   </span>
                 </div>
-                <div className="h-3 w-full overflow-hidden rounded-full bg-gray-200 dark:bg-gray-700">
+                <div className="relative h-3 w-full overflow-hidden rounded-full bg-gray-200 dark:bg-gray-700">
                   <div
                     className={`h-full transition-all ${
-                      level === "Tinggi"
+                      dim.level === "Tinggi"
                         ? "bg-green-500"
-                        : level === "Sedang"
+                        : dim.level === "Sedang"
                           ? "bg-yellow-500"
                           : "bg-red-500"
                     }`}
-                    style={{ width: `${percentage}%` }}
+                    style={{ width: `${dim.percentage}%` }}
                   />
                 </div>
-                <p className="mt-1 text-right text-xs text-gray-500 dark:text-gray-400">
-                  {percentage}%
+                <p className="mt-1 text-right text-sm text-gray-600 dark:text-gray-400">
+                  {dim.percentage}%
                 </p>
               </div>
-            ),
-          )}
+            ))}
+          </div>
         </div>
-      </section>
 
-      {/* Back Button */}
-      <div className="flex justify-center">
-        <button
-          onClick={() => router.push("/")}
-          className="flex items-center gap-2 rounded-full border border-gray-300 px-6 py-3 font-medium text-gray-700 transition hover:bg-gray-100 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-800"
-        >
-          <ArrowLeft className="h-4 w-4" />
-          Kembali ke Beranda
-        </button>
+        {/* Actions */}
+        <div className="flex flex-wrap justify-center gap-4">
+          <button
+            onClick={handleBackToDashboard}
+            className="flex items-center gap-2 rounded-full border border-gray-300 bg-white px-6 py-3 font-semibold text-gray-700 transition hover:bg-gray-50 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700"
+          >
+            <ArrowLeft className="h-5 w-5" />
+            Kembali ke Dashboard
+          </button>
+          <button
+            onClick={handleDownloadPDF}
+            disabled
+            className="flex items-center gap-2 rounded-full bg-myunila px-6 py-3 font-semibold text-white transition hover:bg-myunila-700 disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            <Download className="h-5 w-5" />
+            Download PDF (Coming Soon)
+          </button>
+        </div>
       </div>
-    </div>
+    </section>
   );
 }
