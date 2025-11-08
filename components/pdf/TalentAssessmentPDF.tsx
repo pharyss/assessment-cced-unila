@@ -533,88 +533,9 @@ const TalentAssessmentPDF: React.FC<TalentAssessmentPDFProps> = ({
 
         {/* Styles Section */}
         <View style={styles.section}>
-          <View
-            style={{
-              flexDirection: "row",
-              alignItems: "center",
-              marginBottom: 8,
-            }}
-          >
-            <Svg
-              width="18"
-              height="18"
-              viewBox="0 0 24 24"
-              style={{ marginRight: 6 }}
-            >
-              <Path
-                d="M12 18V5"
-                stroke="#000000"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                fill="none"
-              />
-              <Path
-                d="M15 13a4.17 4.17 0 0 1-3-4 4.17 4.17 0 0 1-3 4"
-                stroke="#000000"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                fill="none"
-              />
-              <Path
-                d="M17.598 6.5A3 3 0 1 0 12 5a3 3 0 1 0-5.598 1.5"
-                stroke="#000000"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                fill="none"
-              />
-              <Path
-                d="M17.997 5.125a4 4 0 0 1 2.526 5.77"
-                stroke="#000000"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                fill="none"
-              />
-              <Path
-                d="M18 18a4 4 0 0 0 2-7.464"
-                stroke="#000000"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                fill="none"
-              />
-              <Path
-                d="M19.967 17.483A4 4 0 1 1 12 18a4 4 0 1 1-7.967-.517"
-                stroke="#000000"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                fill="none"
-              />
-              <Path
-                d="M6 18a4 4 0 0 1-2-7.464"
-                stroke="#000000"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                fill="none"
-              />
-              <Path
-                d="M6.003 5.125a4 4 0 0 0-2.526 5.77"
-                stroke="#000000"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                fill="none"
-              />
-            </Svg>
-            <Text style={styles.sectionTitleWithIcon}>
-              Gaya Berpikir, Komunikasi, dan Kerja
-            </Text>
-          </View>
+          <Text style={styles.sectionTitleWithIcon}>
+            Gaya Berpikir, Komunikasi, dan Kerja
+          </Text>
           <View style={styles.stylesContainer}>
             <View style={styles.styleBox}>
               <Text style={styles.styleLabel}>Gaya Berpikir</Text>
@@ -634,7 +555,7 @@ const TalentAssessmentPDF: React.FC<TalentAssessmentPDFProps> = ({
         {/* PWB Overview with Progress Bars */}
         <View style={styles.section}>
           <Text style={styles.sectionTitleWithIcon}>
-            ✓ Overview Keterampilan Psikologis
+            Overview Keterampilan Psikologis
           </Text>
           {pwbDimensions.map(([key, data]) => {
             const { percentage, level } = data;
@@ -676,7 +597,7 @@ const TalentAssessmentPDF: React.FC<TalentAssessmentPDFProps> = ({
       {/* Page 2: Career Talent */}
       <Page size="A4" style={styles.page}>
         <View style={styles.section}>
-          <Text style={styles.sectionTitleWithIcon}>💼 Bakat Bidang Karir</Text>
+          <Text style={styles.sectionTitleWithIcon}>Bakat Bidang Karir</Text>
 
           <Text style={styles.sectionSubtitle}>Bidang Karir Ideal</Text>
           <Text style={styles.careerTitle}>{karirDominanMBTI}</Text>
@@ -692,7 +613,7 @@ const TalentAssessmentPDF: React.FC<TalentAssessmentPDFProps> = ({
         {/* Compatibility Section */}
         <View style={styles.section}>
           <Text style={styles.sectionTitleWithIcon}>
-            🎯 Kesesuaian Bakat & Minat
+            Kesesuaian Bakat & Minat
           </Text>
           <Text style={styles.text}>
             Status Kesesuaian:{" "}
@@ -718,11 +639,13 @@ const TalentAssessmentPDF: React.FC<TalentAssessmentPDFProps> = ({
 
           <Text style={styles.emphasizedText}>{kesesuaianDesc}</Text>
         </View>
+      </Page>
 
+      <Page size="A4" style={styles.page}>
         {/* Thinking Style */}
         <View style={styles.section}>
           <Text style={styles.sectionTitleWithIcon}>
-            ⚡ Kecenderungan Gaya Berpikir
+            Kecenderungan Gaya Berpikir
           </Text>
           <Text style={styles.careerTitle}>{thinkingStyle}</Text>
           <Text style={styles.emphasizedText}>{thinkingStyleDesc}</Text>
@@ -731,10 +654,21 @@ const TalentAssessmentPDF: React.FC<TalentAssessmentPDFProps> = ({
         {/* Communication Style */}
         <View style={styles.section}>
           <Text style={styles.sectionTitleWithIcon}>
-            💬 Kecenderungan Gaya Komunikasi
+            Kecenderungan Gaya Komunikasi
           </Text>
           <Text style={styles.careerTitle}>{communicationStyle}</Text>
           <Text style={styles.emphasizedText}>{communicationStyleDesc}</Text>
+        </View>
+
+        {/* Working Style */}
+        <View style={styles.section}>
+          <Text style={styles.sectionTitleWithIcon}>
+            Kecenderungan Pola Kerja
+          </Text>
+          <Text style={[styles.careerTitle, { color: "#108981" }]}>
+            {workingStyle}
+          </Text>
+          <Text style={styles.emphasizedText}>{workingStyleDesc}</Text>
         </View>
 
         <Text
@@ -748,21 +682,10 @@ const TalentAssessmentPDF: React.FC<TalentAssessmentPDFProps> = ({
 
       {/* Page 3: Working Style & PWB Details */}
       <Page size="A4" style={styles.page}>
-        {/* Working Style */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitleWithIcon}>
-            💼 Kecenderungan Pola Kerja
-          </Text>
-          <Text style={[styles.careerTitle, { color: "#108981" }]}>
-            {workingStyle}
-          </Text>
-          <Text style={styles.emphasizedText}>{workingStyleDesc}</Text>
-        </View>
-
         {/* PWB Detailed Breakdown */}
         <View style={styles.section}>
           <Text style={styles.sectionTitleWithIcon}>
-            ✓ Keterampilan Psikologis - Rincian
+            Keterampilan Psikologis - Rincian
           </Text>
           {pwbDetails &&
             pwbDetails.map((detail, index) => (
@@ -814,14 +737,14 @@ const TalentAssessmentPDF: React.FC<TalentAssessmentPDFProps> = ({
 
         {/* Learning Strategy */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitleWithIcon}>📚 Strategi Belajar</Text>
+          <Text style={styles.sectionTitleWithIcon}>Strategi Belajar</Text>
           <Text style={styles.emphasizedText}>{learningStrategyDesc}</Text>
         </View>
 
         {/* PWB Development Suggestions */}
         <View style={styles.section}>
           <Text style={styles.sectionTitleWithIcon}>
-            📈 Peningkatan Keterampilan Psikologis
+            Peningkatan Keterampilan Psikologis
           </Text>
           <Text style={[styles.textSmall, { marginBottom: 8 }]}>
             Berikut beberapa saran pengembangan yang dapat kamu lakukan untuk
