@@ -10,6 +10,7 @@ import {
   Path,
 } from "@react-pdf/renderer";
 import { Brain } from "lucide-react";
+import { formatStringToTitleCase } from "@/lib/string-utils";
 
 // Register Poppins font using Google Fonts CDN with TTF format
 Font.register({
@@ -523,11 +524,15 @@ const TalentAssessmentPDF: React.FC<TalentAssessmentPDFProps> = ({
           </View>
           <View style={styles.statBox}>
             <Text style={styles.statLabel}>Bidang Karir Dominan</Text>
-            <Text style={styles.statValue}>{karirDominanMBTI}</Text>
+            <Text style={styles.statValue}>
+              {formatStringToTitleCase(karirDominanMBTI)}
+            </Text>
           </View>
           <View style={styles.statBox}>
             <Text style={styles.statLabel}>Bidang Karir Sekunder</Text>
-            <Text style={styles.statValue}>{karirSekunderMBTI}</Text>
+            <Text style={styles.statValue}>
+              {formatStringToTitleCase(karirSekunderMBTI)}
+            </Text>
           </View>
         </View>
 
@@ -539,15 +544,21 @@ const TalentAssessmentPDF: React.FC<TalentAssessmentPDFProps> = ({
           <View style={styles.stylesContainer}>
             <View style={styles.styleBox}>
               <Text style={styles.styleLabel}>Gaya Berpikir</Text>
-              <Text style={styles.styleValueDanger}>{thinkingStyle}</Text>
+              <Text style={styles.styleValueDanger}>
+                {formatStringToTitleCase(thinkingStyle)}
+              </Text>
             </View>
             <View style={styles.styleBox}>
               <Text style={styles.styleLabel}>Gaya Komunikasi</Text>
-              <Text style={styles.styleValueWarning}>{communicationStyle}</Text>
+              <Text style={styles.styleValueWarning}>
+                {formatStringToTitleCase(communicationStyle)}
+              </Text>
             </View>
             <View style={styles.styleBox}>
               <Text style={styles.styleLabel}>Pola Kerja</Text>
-              <Text style={styles.styleValueSuccess}>{workingStyle}</Text>
+              <Text style={styles.styleValueSuccess}>
+                {formatStringToTitleCase(workingStyle)}
+              </Text>
             </View>
           </View>
         </View>
@@ -600,13 +611,17 @@ const TalentAssessmentPDF: React.FC<TalentAssessmentPDFProps> = ({
           <Text style={styles.sectionTitleWithIcon}>Bakat Bidang Karir</Text>
 
           <Text style={styles.sectionSubtitle}>Bidang Karir Ideal</Text>
-          <Text style={styles.careerTitle}>{karirDominanMBTI}</Text>
+          <Text style={styles.careerTitle}>
+            {formatStringToTitleCase(karirDominanMBTI)}
+          </Text>
           <Text style={styles.emphasizedText}>{dominantCareerDesc}</Text>
 
           <Text style={[styles.sectionSubtitle, { marginTop: 12 }]}>
             Alternatif Bidang Karir Sekunder
           </Text>
-          <Text style={styles.careerTitleSecondary}>{karirSekunderMBTI}</Text>
+          <Text style={styles.careerTitleSecondary}>
+            {formatStringToTitleCase(karirSekunderMBTI)}
+          </Text>
           <Text style={styles.emphasizedText}>{secondaryCareerDesc}</Text>
         </View>
 
@@ -625,15 +640,21 @@ const TalentAssessmentPDF: React.FC<TalentAssessmentPDFProps> = ({
           <View style={styles.compatibilityGrid}>
             <View style={styles.compatibilityBox}>
               <Text style={styles.compatibilityLabel}>Minat Kamu</Text>
-              <Text style={styles.compatibilityValue}>{karirMinat}</Text>
+              <Text style={styles.compatibilityValue}>
+                {formatStringToTitleCase(karirMinat)}
+              </Text>
             </View>
             <View style={styles.compatibilityBox}>
               <Text style={styles.compatibilityLabel}>Bakat Dominan</Text>
-              <Text style={styles.compatibilityValue}>{karirDominanMBTI}</Text>
+              <Text style={styles.compatibilityValue}>
+                {formatStringToTitleCase(karirDominanMBTI)}
+              </Text>
             </View>
             <View style={styles.compatibilityBox}>
               <Text style={styles.compatibilityLabel}>Bakat Sekunder</Text>
-              <Text style={styles.compatibilityValue}>{karirSekunderMBTI}</Text>
+              <Text style={styles.compatibilityValue}>
+                {formatStringToTitleCase(karirSekunderMBTI)}
+              </Text>
             </View>
           </View>
 
@@ -647,7 +668,9 @@ const TalentAssessmentPDF: React.FC<TalentAssessmentPDFProps> = ({
           <Text style={styles.sectionTitleWithIcon}>
             Kecenderungan Gaya Berpikir
           </Text>
-          <Text style={styles.careerTitle}>{thinkingStyle}</Text>
+          <Text style={styles.careerTitle}>
+            {formatStringToTitleCase(thinkingStyle)}
+          </Text>
           <Text style={styles.emphasizedText}>{thinkingStyleDesc}</Text>
         </View>
 
@@ -656,7 +679,9 @@ const TalentAssessmentPDF: React.FC<TalentAssessmentPDFProps> = ({
           <Text style={styles.sectionTitleWithIcon}>
             Kecenderungan Gaya Komunikasi
           </Text>
-          <Text style={styles.careerTitle}>{communicationStyle}</Text>
+          <Text style={styles.careerTitle}>
+            {formatStringToTitleCase(communicationStyle)}
+          </Text>
           <Text style={styles.emphasizedText}>{communicationStyleDesc}</Text>
         </View>
 
@@ -666,7 +691,7 @@ const TalentAssessmentPDF: React.FC<TalentAssessmentPDFProps> = ({
             Kecenderungan Pola Kerja
           </Text>
           <Text style={[styles.careerTitle, { color: "#108981" }]}>
-            {workingStyle}
+            {formatStringToTitleCase(workingStyle)}
           </Text>
           <Text style={styles.emphasizedText}>{workingStyleDesc}</Text>
         </View>
