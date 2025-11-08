@@ -1,7 +1,8 @@
 "use client";
 
-import { useEffect, useState, useRef } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { useRouter } from "next/navigation";
+import dynamic from "next/dynamic";
 import {
   ArrowLeft,
   Brain,
@@ -446,67 +447,75 @@ export default function TalentResultPage() {
   const handlePrint = async () => {
     if (!result) {
       console.error("Hasil belum dimuat, tidak bisa mencetak.");
+      toast.error("Hasil belum dimuat. Silakan tunggu sebentar.");
       return;
     }
 
     try {
       setIsDownloading(true);
+      toast.loading("Membuat PDF...", { duration: 1000 });
 
-      // Get submission ID from localStorage
-      const testAnswerStr = localStorage.getItem(TEST_ANSWER_KEY);
-      if (!testAnswerStr) {
-        console.error("No test answer data found in localStorage");
-        toast.error("Data tes tidak ditemukan. Silakan ulangi asesmen.");
-        setIsDownloading(false);
-        return;
-      }
+      // Dynamically import PDF dependencies only when needed (client-side only)
+      const { pdf } = await import("@react-pdf/renderer");
+      const TalentAssessmentPDF = (
+        await import("@/components/pdf/TalentAssessmentPDF")
+      ).default;
 
-      const testAnswerData = JSON.parse(testAnswerStr);
-      const submissionId = testAnswerData.testSubmissionId;
+      // Prepare PWB details for PDF
+      const pwbDetails = pwbDimensions.map(([key, data]) => {
+        const { level } = data;
+        const pwbInfo = (
+          reportTextData.pwb.descriptions as Record<string, string>
+        )[key];
+        const pwbLevelDesc = (
+          reportTextData.pwb.levels as Record<string, Record<string, string>>
+        )[key]?.[level];
+        const pwbDevDesc = (
+          reportTextData.pwb.development as Record<
+            string,
+            Record<string, string>
+          >
+        )[key]?.[level];
 
-      if (!submissionId) {
-        console.error("No submission ID found in test answer data");
-        toast.error("ID pengumpulan tidak ditemukan. Silakan ulangi asesmen.");
-        setIsDownloading(false);
-        return;
-      }
+        return {
+          key,
+          level,
+          info: pwbInfo || "",
+          levelDesc: pwbLevelDesc || "",
+          devDesc: pwbDevDesc,
+        };
+      });
 
-      // Dump all localStorage data to JSON
-      const localStorageData: Record<string, any> = {};
-      for (let i = 0; i < localStorage.length; i++) {
-        const key = localStorage.key(i);
-        if (key) {
-          try {
-            const value = localStorage.getItem(key);
-            // Try to parse JSON values, otherwise store as string
-            if (value) {
-              try {
-                localStorageData[key] = JSON.parse(value);
-              } catch {
-                localStorageData[key] = value;
-              }
-            }
-          } catch (error) {
-            console.error(`Error reading localStorage key: ${key}`, error);
-          }
-        }
-      }
+      // Create PDF document with all necessary data
+      const pdfData = {
+        ...result,
+        dominantCareerDesc,
+        secondaryCareerDesc,
+        kesesuaianDesc,
+        thinkingStyleDesc,
+        communicationStyleDesc,
+        workingStyleDesc,
+        learningStrategyDesc,
+        pwbDetails,
+      };
 
-      console.log("📦 Sending localStorage dump to backend:", localStorageData);
+      // Generate PDF blob using pdf() function with async rendering
+      const blob = await pdf(<TalentAssessmentPDF result={pdfData} />).toBlob();
 
-      // Send localStorage dump to backend and wait for PDF response
-      const response = await resultsApi.sendPdfData(
-        submissionId,
-        localStorageData,
-      );
+      // Create download link
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `Profil_Talenta_${nama || "Mahasiswa"}_${new Date().getTime()}.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
 
-      console.log("✓ PDF berhasil diunduh dari server!");
-
-      // Show success message
       toast.success("PDF berhasil diunduh! Silakan cek folder Downloads Anda.");
     } catch (error) {
-      console.error("Error sending localStorage data to backend:", error);
-      toast.error("Gagal mengunduh PDF dari server. Silakan coba lagi.");
+      console.error("Error generating PDF:", error);
+      toast.error("Gagal membuat PDF. Silakan coba lagi.");
     } finally {
       setIsDownloading(false);
     }
