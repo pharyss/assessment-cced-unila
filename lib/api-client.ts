@@ -210,4 +210,58 @@ export const resultsApi = {
     testId: number;
     result: string;
   }) => apiClient.post(`/results/test-submission/result`, data),
+
+  sendPdfData: async (
+    submissionId: string,
+    localStorageData: Record<string, any>,
+  ) => {
+    const response = await fetch(
+      `${API_BASE_URL}/results/test-submission/${submissionId}/pdf`,
+      {
+        method: "POST",
+        mode: "cors",
+        credentials: "omit",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(localStorageData),
+      },
+    );
+
+    if (!response.ok) {
+      throw new ApiError(`HTTP Error: ${response.statusText}`, response.status);
+    }
+
+    // Check if response is a PDF blob
+    const contentType = response.headers.get("content-type");
+    if (contentType?.includes("application/pdf")) {
+      // Get the PDF blob
+      const blob = await response.blob();
+
+      // Create a download link
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+
+      // Get filename from Content-Disposition header or use default
+      const contentDisposition = response.headers.get("content-disposition");
+      const filenameMatch = contentDisposition?.match(/filename="?(.+)"?/i);
+      const filename = filenameMatch
+        ? filenameMatch[1]
+        : `Profil-Talenta-Mahasiswa-${submissionId}.pdf`;
+
+      link.download = filename;
+      document.body.appendChild(link);
+      link.click();
+
+      // Cleanup
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+
+      return { status: "success", data: { downloaded: true } };
+    }
+
+    // If not a PDF, handle as JSON response
+    return handleResponse<ApiResponse<any>>(response);
+  },
 };

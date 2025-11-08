@@ -15,6 +15,7 @@ import {
   Download,
 } from "lucide-react";
 
+import toast from "react-hot-toast";
 import reportTextData from "@/data/ReportText.json";
 import {
   calculateTest6Results,
@@ -442,18 +443,73 @@ export default function TalentResultPage() {
     router.push("/assessment/talenta-mahasiswa");
   };
 
-  const handlePrint = () => {
+  const handlePrint = async () => {
     if (!result) {
       console.error("Hasil belum dimuat, tidak bisa mencetak.");
       return;
     }
 
-    const originalTitle = document.title;
-    const studentName = result.nama || "Mahasiswa";
+    try {
+      setIsDownloading(true);
 
-    document.title = `Profil Talenta Mahasiswa - ${studentName}`;
-    window.print();
-    document.title = originalTitle;
+      // Get submission ID from localStorage
+      const testAnswerStr = localStorage.getItem(TEST_ANSWER_KEY);
+      if (!testAnswerStr) {
+        console.error("No test answer data found in localStorage");
+        toast.error("Data tes tidak ditemukan. Silakan ulangi asesmen.");
+        setIsDownloading(false);
+        return;
+      }
+
+      const testAnswerData = JSON.parse(testAnswerStr);
+      const submissionId = testAnswerData.testSubmissionId;
+
+      if (!submissionId) {
+        console.error("No submission ID found in test answer data");
+        toast.error("ID pengumpulan tidak ditemukan. Silakan ulangi asesmen.");
+        setIsDownloading(false);
+        return;
+      }
+
+      // Dump all localStorage data to JSON
+      const localStorageData: Record<string, any> = {};
+      for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+        if (key) {
+          try {
+            const value = localStorage.getItem(key);
+            // Try to parse JSON values, otherwise store as string
+            if (value) {
+              try {
+                localStorageData[key] = JSON.parse(value);
+              } catch {
+                localStorageData[key] = value;
+              }
+            }
+          } catch (error) {
+            console.error(`Error reading localStorage key: ${key}`, error);
+          }
+        }
+      }
+
+      console.log("📦 Sending localStorage dump to backend:", localStorageData);
+
+      // Send localStorage dump to backend and wait for PDF response
+      const response = await resultsApi.sendPdfData(
+        submissionId,
+        localStorageData,
+      );
+
+      console.log("✓ PDF berhasil diunduh dari server!");
+
+      // Show success message
+      toast.success("PDF berhasil diunduh! Silakan cek folder Downloads Anda.");
+    } catch (error) {
+      console.error("Error sending localStorage data to backend:", error);
+      toast.error("Gagal mengunduh PDF dari server. Silakan coba lagi.");
+    } finally {
+      setIsDownloading(false);
+    }
   };
 
   if (isLoading)
@@ -607,7 +663,7 @@ export default function TalentResultPage() {
       : "text-gray-500 dark:text-gray-400";
 
   return (
-    <section className="relative z-10 bg-gradient-to-b from-white via-myunila-50 to-myunila-100 pb-20 pt-24 dark:from-gray-950 dark:via-gray-900 dark:to-gray-800 sm:pb-24 sm:pt-32 md:pb-[120px] md:pt-[150px]">
+    <section className="relative z-10 bg-gradient-to-b from-white via-myunila-50 to-myunila-100 pb-20 pt-24 dark:from-gray-950 dark:via-gray-900 dark:to-gray-800 sm:pb-24 sm:pt-32">
       <div className="container mx-auto px-4 md:px-16 lg:px-32">
         <div
           ref={reportRef}
